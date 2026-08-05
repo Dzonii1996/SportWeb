@@ -71,7 +71,102 @@ const joinMatch = async (req, res) => {
     });
   }
 };
+const leaveMatch = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.body;
+
+    await pool.query(
+      `DELETE FROM match_players
+       WHERE match_id = $1
+       AND user_id = $2`,
+      [id, user_id]
+    );
+
+    res.json({
+      success: true,
+      message: "Uspešno ste napustili termin.",
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+const getMatchPlayers = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `
+      SELECT
+        users.id,
+        users.name
+      FROM match_players
+      JOIN users
+      ON users.id = match_players.user_id
+      WHERE match_players.match_id = $1
+      `,
+      [id]
+    );
+
+    res.json({
+      success: true,
+      players: result.rows,
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+const getPlayers = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `
+      SELECT
+        users.id,
+        users.name,
+        users.email
+      FROM match_players
+      JOIN users
+      ON users.id = match_players.user_id
+      WHERE match_players.match_id = $1
+      ORDER BY users.name
+      `,
+      [id]
+    );
+
+    res.json({
+      success: true,
+      players: result.rows,
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 
 module.exports = {
   joinMatch,
+  leaveMatch,
+    getMatchPlayers,
+    getPlayers
+
 };

@@ -7,6 +7,8 @@ import MatchCard from "./components/MatchCard";
 import Matches from "./pages/Matches";
 import CreateMatch from "./pages/CreateMatche";
 import ProtectedRoute from "./components/ProtectedRoute";
+import MyMatches from "./pages/MyMatches";
+import EditMatch from "./pages/EditMatch";
 function App() {
 
   return (
@@ -18,6 +20,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/matches" element={<Matches />} />
+        <Route path="/my-matches" element={<MyMatches />} />
+        <Route path="/matches/:id/edit" element={<EditMatch />} />
 <Route 
   path="/create-match"
   element={

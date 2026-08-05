@@ -1,20 +1,179 @@
 import { MapPin, Calendar, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
-<MatchCard
-  key={match.id}
-  sport={match.sport}
-  location={match.location}
-  date={match.match_date}
-  time={match.match_time}
-  players={0}
-  maxPlayers={match.max_players}
-/>
+
+function MatchCard({
+  id,
+  creatorId,
+  sport,
+  location,
+  date,
+  time,
+  players,
+  maxPlayers,
+}) {
+  const user = JSON.parse(localStorage.getItem("user"));
+  const [showPlayers, setShowPlayers] = useState(false);
+const [playersList, setPlayersList] = useState([]);
+  const [joined, setJoined] = useState(false);
+
   const percentage = (players / maxPlayers) * 100;
+  const formattedDate = new Date(date).toLocaleDateString("sr-RS");
+
+  useEffect(() => {
+    const checkJoined = async () => {
+      const user = JSON.parse(localStorage.getItem("user"));
+
+      if (!user) return;
+
+      try {
+        const res = await fetch(
+          `http://localhost:5000/api/matches/${id}/players`
+        );
+
+        const data = await res.json();
+
+        const exists = data.players.some(
+          (player) => player.id === user.id
+        );
+
+        setJoined(exists);
+
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    if (id) {
+      checkJoined();
+    }
+  }, [id]);
+
+  const joinMatch = async () => {
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!user) {
+      alert("Morate biti prijavljeni.");
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/matches/${id}/join`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            user_id: user.id,
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      alert(data.message);
+
+      if (data.success) {
+        setJoined(true);
+        window.location.reload();
+      }
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const leaveMatch = async () => {
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!user) return;
+
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/matches/${id}/leave`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            user_id: user.id,
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      alert(data.message);
+
+      if (data.success) {
+        setJoined(false);
+        window.location.reload();
+      }
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const deleteMatch = async () => {
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  if (!user) return;
+
+  const confirmDelete = window.confirm(
+    "Da li ste sigurni da želite da obrišete termin?"
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+    const res = await fetch(
+      `http://localhost:5000/api/matches/${id}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: user.id,
+        }),
+      }
+    );
+
+    const data = await res.json();
+
+    alert(data.message);
+
+    if (data.success) {
+      window.location.reload();
+    }
+
+  } catch (error) {
+    console.error(error);
+  }
+};
+const getPlayers = async () => {
+  try {
+    const res = await fetch(
+      `http://localhost:5000/api/matches/${id}/players`
+    );
+
+    const data = await res.json();
+
+setPlayersList(data.players || []);    
+setShowPlayers(true);
+
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   return (
     <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition overflow-hidden">
 
-      {/* Zaglavlje */}
       <div className="bg-green-600 text-white p-5">
         <h2 className="text-2xl font-bold">
           {sport === "Fudbal" ? "⚽ Fudbal" : "🏀 Košarka"}
@@ -25,7 +184,6 @@ import { MapPin, Calendar, Users } from "lucide-react";
         </p>
       </div>
 
-      {/* Sadržaj */}
       <div className="p-5 space-y-4">
 
         <div className="flex items-center gap-3">
@@ -35,7 +193,7 @@ import { MapPin, Calendar, Users } from "lucide-react";
 
         <div className="flex items-center gap-3">
           <Calendar className="text-green-600" size={20} />
-          <span>{date} • {time}</span>
+          <span>{formattedDate} • {time}</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -43,7 +201,6 @@ import { MapPin, Calendar, Users } from "lucide-react";
           <span>{players} / {maxPlayers} igrača</span>
         </div>
 
-        {/* Progress bar */}
         <div>
           <div className="flex justify-between text-sm mb-2">
             <span>Popunjenost</span>
@@ -54,23 +211,84 @@ import { MapPin, Calendar, Users } from "lucide-react";
             <div
               className="h-3 bg-green-600 rounded-full"
               style={{ width: `${percentage}%` }}
-            ></div>
+            />
           </div>
         </div>
 
-        {/* Dugme */}
         <button
+          onClick={joined ? leaveMatch : joinMatch}
           className={`w-full py-3 rounded-xl font-semibold transition ${
-            players >= maxPlayers
+            players >= maxPlayers && !joined
               ? "bg-gray-400 cursor-not-allowed text-white"
+              : joined
+              ? "bg-red-600 hover:bg-red-700 text-white"
               : "bg-green-600 hover:bg-green-700 text-white"
           }`}
-          disabled={players >= maxPlayers}
+          disabled={players >= maxPlayers && !joined}
         >
-          {players >= maxPlayers ? "Termin popunjen" : "Prijavi se"}
+          
+          {joined
+            ? "Napusti termin"
+            : players >= maxPlayers
+            ? "Termin popunjen"
+            : "Prijavi se"}
         </button>
-
+        <button
+  onClick={getPlayers}
+  className="w-full mt-3 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+>
+  👥 Pogledaj učesnike
+</button>
+        
+{JSON.parse(localStorage.getItem("user"))?.id === creatorId && (
+  <button
+    onClick={deleteMatch}
+    className="w-full mt-3 py-3 rounded-xl bg-red-700 hover:bg-red-800 text-white font-semibold"
+  >
+    🗑 Obriši termin
+  </button>
+  
+)}
+{JSON.parse(localStorage.getItem("user"))?.id === creatorId && (
+  <Link
+    to={`/matches/${id}/edit`}
+    className="block w-full mt-3 text-center py-3 rounded-xl bg-yellow-500 hover:bg-yellow-600 text-white font-semibold"
+  >
+    ✏️ Izmeni termin
+  </Link>
+)}
       </div>
+      {showPlayers && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="bg-white rounded-2xl p-6 w-96">
+
+      <h2 className="text-2xl font-bold mb-4">
+        Prijavljeni igrači
+      </h2>
+
+      {playersList.length > 0 ? (
+        playersList.map((player) => (
+          <div key={player.id} className="border-b py-2">
+            <p className="font-semibold">{player.name}</p>
+            <p className="text-gray-500 text-sm">
+              {player.email}
+            </p>
+          </div>
+        ))
+      ) : (
+        <p>Nema prijavljenih igrača.</p>
+      )}
+
+      <button
+        onClick={() => setShowPlayers(false)}
+        className="mt-5 w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-xl"
+      >
+        Zatvori
+      </button>
+
+    </div>
+  </div>
+)}
 
     </div>
   );

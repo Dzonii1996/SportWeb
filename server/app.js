@@ -7,12 +7,12 @@ const pool = require("./database/db");
 const authRoutes = require("./routes/authRoutes");
 const matchRoutes = require("./routes/matchRoutes");
 const matchPlayerRoutes = require("./routes/matchPlayerRoutes");
-// Middleware
-app.use(cors());
+const userRoutes = require("./routes/userRoutes");app.use(cors());
 app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/matches", matchRoutes);
-// Test ruta
+app.use("/api/matches", matchPlayerRoutes);
+app.use("/api/users", userRoutes);
 app.get("/", (req, res) => {
   res.json({
     success: true,

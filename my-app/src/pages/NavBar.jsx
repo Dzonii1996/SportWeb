@@ -73,6 +73,7 @@ useEffect(() => {
               >
                 Kreiraj termin
               </Link>
+              <Link to="/my-matches">Moji termini</Link>
 
               <Link
                 to="/profile"

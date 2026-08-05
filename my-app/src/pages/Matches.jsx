@@ -111,12 +111,14 @@ const fetchMatches = async () => {
             filteredMatches.map((match) => (
               <MatchCard
                 key={match.id}
-                sport={match.sport}
-                location={match.location}
-                date={match.date}
-                time={match.time}
-                players={match.players}
-                maxPlayers={match.maxPlayers}
+  id={match.id}
+  creatorId={match.user_id}
+  sport={match.sport}
+  location={match.location}
+  date={match.match_date}
+  time={match.match_time}
+  players={Number(match.players || 0)}
+  maxPlayers={match.max_players}
               />
             ))
           ) : (
