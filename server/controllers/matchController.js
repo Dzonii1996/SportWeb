@@ -77,8 +77,31 @@ const validateMatch = ({ sport, location, match_date, match_time, max_players })
   return null;
 };
 
+// Koordinate nisu obavezne, ali ako postoje moraju biti obe i ispravne.
+// Vraća { error } ili { latitude, longitude } (oba null kad nisu poslate).
+const parseCoords = ({ latitude, longitude }) => {
+  const empty = (v) => v === undefined || v === null || v === "";
 
+  if (empty(latitude) && empty(longitude)) {
+    return { latitude: null, longitude: null };
+  }
 
+  const lat = Number(latitude);
+  const lng = Number(longitude);
+
+  if (
+    empty(latitude) ||
+    empty(longitude) ||
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng) ||
+    Math.abs(lat) > 90 ||
+    Math.abs(lng) > 180
+  ) {
+    return { error: "Neispravna lokacija na mapi." };
+  }
+
+  return { latitude: lat, longitude: lng };
+};
 
 
 const createMatch = async (req, res) => {
@@ -108,18 +131,19 @@ const createMatch = async (req, res) => {
     }
 
     const validationError = validateMatch(req.body);
+    const coords = parseCoords(req.body);
 
-    if (validationError) {
+    if (validationError || coords.error) {
       return res.status(400).json({
         success: false,
-        message: validationError,
+        message: validationError || coords.error,
       });
     }
 
    const result = await pool.query(
   `INSERT INTO matches
-  (user_id, sport, location, match_date, match_time, max_players)
-  VALUES ($1,$2,$3,$4,$5,$6)
+  (user_id, sport, location, match_date, match_time, max_players, latitude, longitude)
+  VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
   RETURNING *`,
   [
     user_id,
@@ -127,7 +151,9 @@ const createMatch = async (req, res) => {
     location.trim(),
     match_date,
     match_time,
-    max_players
+    max_players,
+    coords.latitude,
+    coords.longitude
   ]
 );
 
@@ -318,11 +344,12 @@ const updateMatch = async (req, res) => {
       match_time,
       max_players,
     });
+    const coords = parseCoords(req.body);
 
-    if (validationError) {
+    if (validationError || coords.error) {
       return res.status(400).json({
         success: false,
-        message: validationError,
+        message: validationError || coords.error,
       });
     }
 
@@ -344,14 +371,18 @@ const updateMatch = async (req, res) => {
          location = $1,
          match_date = $2,
          match_time = $3,
-         max_players = $4
-       WHERE id = $5
+         max_players = $4,
+         latitude = $5,
+         longitude = $6
+       WHERE id = $7
        RETURNING *`,
       [
         location.trim(),
         match_date,
         match_time,
         max_players,
+        coords.latitude,
+        coords.longitude,
         id,
       ]
     );

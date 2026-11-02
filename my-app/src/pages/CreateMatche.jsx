@@ -4,6 +4,7 @@ import axios from "axios";
 import { authHeader } from "../utils/auth";
 import { API_URL } from "../config";
 import { todayKey, maxDateKey } from "../utils/matchDate";
+import { LocationPicker } from "../components/LocationMap";
 
 function CreateMatch() {
   const navigate = useNavigate();
@@ -17,6 +18,9 @@ function CreateMatch() {
     match_time: "",
     max_players: 10,
   });
+
+  // Tačno mesto na mapi [lat, lng], nije obavezno
+  const [position, setPosition] = useState(null);
 
   const handleChange = (e) => {
     setFormData({
@@ -34,6 +38,8 @@ function CreateMatch() {
         {
           user_id: user.id,
           ...formData,
+          latitude: position?.[0] ?? null,
+          longitude: position?.[1] ?? null,
         },
         { headers: authHeader() }
       );
@@ -81,6 +87,8 @@ function CreateMatch() {
             maxLength={100}
             className="w-full border p-3 rounded-xl"
           />
+
+          <LocationPicker value={position} onChange={setPosition} />
 
           <input
             type="date"

@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { MapPin, Calendar, Users, ArrowLeft } from "lucide-react";
 import MatchChat from "../components/MatchChat";
 import MatchRatings from "../components/MatchRatings";
+import { LocationView } from "../components/LocationMap";
+import { hasCoords } from "../utils/geo";
 import { API_URL } from "../config";
 import { authHeader } from "../utils/auth";
 import { isPastMatch } from "../utils/matchDate";
@@ -241,6 +243,13 @@ function MatchDetails() {
                   <MapPin className="text-green-600" size={20} />
                   <span>{match.location}</span>
                 </div>
+
+                {hasCoords(match) && (
+                  <LocationView
+                    latitude={match.latitude}
+                    longitude={match.longitude}
+                  />
+                )}
 
                 <div className="flex items-center gap-3">
                   <Calendar className="text-green-600" size={20} />

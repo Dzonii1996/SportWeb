@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { authHeader } from "../utils/auth";
 import { API_URL } from "../config";
+import { formatDistance } from "../utils/geo";
 
 
 function MatchCard({
@@ -18,6 +19,7 @@ function MatchCard({
   players,
   maxPlayers,
   isPast = false,
+  distance = null,
 }) {
   const [showPlayers, setShowPlayers] = useState(false);
 const [playersList, setPlayersList] = useState([]);
@@ -249,6 +251,12 @@ setShowPlayers(true);
         <div className="flex items-center gap-3">
           <MapPin className="text-green-600" size={20} />
           <span>{location}</span>
+
+          {distance !== null && (
+            <span className="ml-auto text-sm text-green-700 font-semibold whitespace-nowrap">
+              {formatDistance(distance)}
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-3">

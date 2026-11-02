@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { authHeader } from "../utils/auth";
 import { API_URL } from "../config";
 import { localDateKey, todayKey, maxDateKey } from "../utils/matchDate";
+import { hasCoords } from "../utils/geo";
+import { LocationPicker } from "../components/LocationMap";
 
 function EditMatch() {
   const { id } = useParams();
@@ -12,6 +14,8 @@ function EditMatch() {
   const [matchDate, setMatchDate] = useState("");
   const [matchTime, setMatchTime] = useState("");
   const [maxPlayers, setMaxPlayers] = useState("");
+  const [position, setPosition] = useState(null);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     fetch(`${API_URL}/api/matches/${id}`)
@@ -25,7 +29,12 @@ function EditMatch() {
           setMatchDate(localDateKey(match.match_date));
           setMatchTime(match.match_time.slice(0, 5));
           setMaxPlayers(match.max_players);
+          setPosition(
+            hasCoords(match) ? [match.latitude, match.longitude] : null
+          );
         }
+
+        setLoaded(true);
       });
   }, [id]);
 
@@ -45,6 +54,8 @@ function EditMatch() {
           match_date: matchDate,
           match_time: matchTime,
           max_players: Number(maxPlayers),
+          latitude: position?.[0] ?? null,
+          longitude: position?.[1] ?? null,
         }),
       }
     );
@@ -57,6 +68,14 @@ function EditMatch() {
       navigate(`/matches/${id}`);
     }
   };
+
+  if (!loaded) {
+    return (
+      <div className="text-center mt-20 text-xl">
+        Učitavanje...
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-xl mx-auto p-6">
@@ -79,6 +98,8 @@ function EditMatch() {
           maxLength={100}
           placeholder="Lokacija"
         />
+
+        <LocationPicker value={position} onChange={setPosition} />
 
         <input
           type="date"

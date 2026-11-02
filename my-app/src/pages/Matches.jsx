@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import MatchCard from "../components/MatchCard";
 import axios from "axios";
 import { API_URL } from "../config";
@@ -11,6 +12,7 @@ import {
   isPastMatch,
   normalizeText,
 } from "../utils/matchDate";
+import { distanceKm, getMyPosition, hasCoords } from "../utils/geo";
 
 const SPORTS = [
   { value: "Svi", label: "Svi" },
@@ -19,11 +21,21 @@ const SPORTS = [
 ];
 
 function Matches() {
-  const [selectedSport, setSelectedSport] = useState("Svi");
+  // Sport može doći iz linka sa početne strane: /matches?sport=Fudbal
+  const [searchParams] = useSearchParams();
+  const sportParam = searchParams.get("sport");
+
+  const [selectedSport, setSelectedSport] = useState(
+    SPORTS.some((s) => s.value === sportParam) ? sportParam : "Svi"
+  );
   const [selectedDate, setSelectedDate] = useState("");
     const [onlyAvailable, setOnlyAvailable] = useState(false);
   const [locationQuery, setLocationQuery] = useState("");
   const [showPast, setShowPast] = useState(false);
+  // "Blizu mene": moja lokacija [lat, lng] i radijus u km
+  const [myPosition, setMyPosition] = useState(null);
+  const [radiusKm, setRadiusKm] = useState(10);
+  const [locating, setLocating] = useState(false);
 
 
  const [matches, setMatches] = useState([]);
@@ -48,6 +60,29 @@ const fetchMatches = async () => {
 
   const search = normalizeText(locationQuery.trim());
 
+  const toggleNearMe = async () => {
+    if (myPosition) {
+      setMyPosition(null);
+      return;
+    }
+
+    setLocating(true);
+
+    try {
+      setMyPosition(await getMyPosition());
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setLocating(false);
+    }
+  };
+
+  // Udaljenost termina od mene, null ako termin nema tačku na mapi
+  const distanceOf = (match) =>
+    myPosition && hasCoords(match)
+      ? distanceKm(myPosition[0], myPosition[1], match.latitude, match.longitude)
+      : null;
+
  const filteredMatches = matches.filter((match) => {
   const sportFilter =
     selectedSport === "Svi" || match.sport === selectedSport;
@@ -67,21 +102,32 @@ const fetchMatches = async () => {
   const pastFilter =
     showPast || !isPastMatch(match.match_date, match.match_time);
 
+  const distance = distanceOf(match);
+  const nearFilter =
+    !myPosition || (distance !== null && distance <= radiusKm);
+
   return (
     sportFilter &&
     dateFilter &&
     availableFilter &&
     locationFilter &&
-    pastFilter
+    pastFilter &&
+    nearFilter
   );
 });
+
+  // Uz "Blizu mene" najbliži termini idu prvi
+  if (myPosition) {
+    filteredMatches.sort((a, b) => distanceOf(a) - distanceOf(b));
+  }
 
   const hasFilters =
     selectedSport !== "Svi" ||
     selectedDate !== "" ||
     onlyAvailable ||
     locationQuery !== "" ||
-    showPast;
+    showPast ||
+    myPosition !== null;
 
   const resetFilters = () => {
     setSelectedSport("Svi");
@@ -89,6 +135,7 @@ const fetchMatches = async () => {
     setOnlyAvailable(false);
     setLocationQuery("");
     setShowPast(false);
+    setMyPosition(null);
   };
 
   return (
@@ -168,6 +215,34 @@ const fetchMatches = async () => {
               🕓 Prikaži i odigrane termine
             </label>
 
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleNearMe}
+                disabled={locating}
+                className={`px-4 py-2 rounded-full font-semibold transition ${
+                  myPosition
+                    ? "bg-green-600 text-white"
+                    : "bg-gray-200 hover:bg-gray-300"
+                }`}
+              >
+                {locating ? "Tražim lokaciju..." : "📍 Blizu mene"}
+              </button>
+
+              {myPosition && (
+                <select
+                  value={radiusKm}
+                  onChange={(e) => setRadiusKm(Number(e.target.value))}
+                  className="border p-2 rounded-xl"
+                >
+                  {[2, 5, 10, 25, 50].map((km) => (
+                    <option key={km} value={km}>
+                      do {km} km
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
             {hasFilters && (
               <button
                 onClick={resetFilters}
@@ -183,6 +258,7 @@ const fetchMatches = async () => {
 
         <p className="text-gray-600 mb-4">
           Pronađeno termina: {filteredMatches.length}
+          {myPosition && " (prikazani su samo termini označeni na mapi)"}
         </p>
 
         {/* Kartice */}
@@ -204,6 +280,7 @@ creatorName={match.creator_name}
   players={Number(match.players || 0)}
   maxPlayers={match.max_players}
   isPast={isPastMatch(match.match_date, match.match_time)}
+  distance={distanceOf(match)}
               />
             ))
           ) : (

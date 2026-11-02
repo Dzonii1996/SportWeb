@@ -38,6 +38,13 @@ const createTables = async () => {
       )
     `);
 
+    // Tačna lokacija termina na mapi (nije obavezna)
+    await pool.query(`
+      ALTER TABLE matches
+      ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION,
+      ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION
+    `);
+
     // Notifikacija može da vodi na termin; posle brisanja termina ostaje bez linka
     await pool.query(`
       ALTER TABLE notifications
