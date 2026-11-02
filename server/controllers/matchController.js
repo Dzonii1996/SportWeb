@@ -1,4 +1,77 @@
 const pool = require("../database/db");
+const { promoteFromWaitlist } = require("./waitlistController");
+
+const SPORTS = ["Fudbal", "Košarka"];
+const MIN_PLAYERS = 2;
+const MAX_PLAYERS = 30;
+const MAX_DAYS_AHEAD = 365;
+
+// Proverava podatke termina; vraća poruku greške ili null ako je sve u redu
+const validateMatch = ({ sport, location, match_date, match_time, max_players }) => {
+  if (sport !== undefined && !SPORTS.includes(sport)) {
+    return "Nepoznat sport.";
+  }
+
+  if (typeof location !== "string") {
+    return "Neispravna lokacija.";
+  }
+
+  const place = location.trim();
+
+  if (place.length < 2 || place.length > 100) {
+    return "Lokacija mora imati između 2 i 100 znakova.";
+  }
+
+  const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(match_date || "");
+  const timeMatch = /^(\d{2}):(\d{2})(:\d{2})?$/.exec(match_time || "");
+
+  if (!dateMatch) {
+    return "Neispravan datum.";
+  }
+
+  if (!timeMatch) {
+    return "Neispravno vreme.";
+  }
+
+  const [, y, mo, d] = dateMatch.map(Number);
+  const [, h, mi] = timeMatch.map(Number);
+  const start = new Date(y, mo - 1, d, h, mi);
+
+  // new Date "popravlja" npr. 31. 2. u 3. 3, pa proveravamo da li je datum stvaran
+  if (
+    start.getFullYear() !== y ||
+    start.getMonth() !== mo - 1 ||
+    start.getDate() !== d ||
+    h > 23 ||
+    mi > 59
+  ) {
+    return "Neispravan datum ili vreme.";
+  }
+
+  if (start < new Date()) {
+    return "Termin ne može biti u prošlosti.";
+  }
+
+  const latest = new Date();
+  latest.setDate(latest.getDate() + MAX_DAYS_AHEAD);
+
+  if (start > latest) {
+    return "Termin može biti najviše godinu dana unapred.";
+  }
+
+  const playersNum = Number(max_players);
+
+  if (
+    !Number.isInteger(playersNum) ||
+    playersNum < MIN_PLAYERS ||
+    playersNum > MAX_PLAYERS
+  ) {
+    return `Broj igrača mora biti između ${MIN_PLAYERS} i ${MAX_PLAYERS}.`;
+  }
+
+  return null;
+};
+
 
 
 
@@ -29,6 +102,15 @@ const createMatch = async (req, res) => {
       });
     }
 
+    const validationError = validateMatch(req.body);
+
+    if (validationError) {
+      return res.status(400).json({
+        success: false,
+        message: validationError,
+      });
+    }
+
    const result = await pool.query(
   `INSERT INTO matches
   (user_id, sport, location, match_date, match_time, max_players)
@@ -37,7 +119,7 @@ const createMatch = async (req, res) => {
   [
     user_id,
     sport,
-    location,
+    location.trim(),
     match_date,
     match_time,
     max_players
@@ -85,6 +167,47 @@ ORDER BY match_date`
 
   } catch (error) {
     console.log(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Greška servera.",
+    });
+  }
+};
+const getMatch = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `SELECT
+         matches.*,
+         users.name AS creator_name,
+         users.avatar AS creator_avatar,
+         COUNT(match_players.user_id) AS players
+       FROM matches
+       JOIN users
+         ON users.id = matches.user_id
+       LEFT JOIN match_players
+         ON match_players.match_id = matches.id
+       WHERE matches.id = $1
+       GROUP BY matches.id, users.name, users.avatar`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Termin ne postoji.",
+      });
+    }
+
+    res.json({
+      success: true,
+      match: result.rows[0],
+    });
+
+  } catch (error) {
+    console.error(error);
 
     res.status(500).json({
       success: false,
@@ -168,6 +291,32 @@ const updateMatch = async (req, res) => {
       });
     }
 
+    const validationError = validateMatch({
+      location,
+      match_date,
+      match_time,
+      max_players,
+    });
+
+    if (validationError) {
+      return res.status(400).json({
+        success: false,
+        message: validationError,
+      });
+    }
+
+    const playersCount = await pool.query(
+      "SELECT COUNT(*) FROM match_players WHERE match_id = $1",
+      [id]
+    );
+
+    if (Number(max_players) < Number(playersCount.rows[0].count)) {
+      return res.status(400).json({
+        success: false,
+        message: `Na termin je već prijavljeno ${playersCount.rows[0].count} igrača.`,
+      });
+    }
+
     const result = await pool.query(
       `UPDATE matches
        SET
@@ -178,13 +327,20 @@ const updateMatch = async (req, res) => {
        WHERE id = $5
        RETURNING *`,
       [
-        location,
+        location.trim(),
         match_date,
         match_time,
         max_players,
         id,
       ]
     );
+
+    // Ako je kreator povećao broj mesta, popunjavamo ih sa liste čekanja
+    try {
+      await promoteFromWaitlist(id);
+    } catch (error) {
+      console.error("Greška pri popunjavanju sa liste čekanja:", error);
+    }
 
     res.json({
       success: true,
@@ -205,6 +361,7 @@ const updateMatch = async (req, res) => {
 module.exports = {
     createMatch,
     getMatches,
+    getMatch,
     deleteMatch,
     updateMatch
 };

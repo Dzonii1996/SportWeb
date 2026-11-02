@@ -11,6 +11,7 @@ import MyMatches from "./pages/MyMatches";
 import EditMatch from "./pages/EditMatch";
 import Profile from "./pages/Profile";
 import PublicProfile from "./pages/PublicProfile";
+import MatchDetails from "./pages/MatchDetails";
 function App() {
 
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/matches" element={<Matches />} />
         <Route path="/my-matches" element={<MyMatches />} />
+        <Route path="/matches/:id" element={<MatchDetails />} />
         <Route path="/matches/:id/edit" element={<EditMatch />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/users/:id" element={<PublicProfile />} />

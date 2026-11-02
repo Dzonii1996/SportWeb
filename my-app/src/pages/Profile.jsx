@@ -2,26 +2,29 @@ import { useEffect, useState } from "react";
 import { User, Mail, CalendarDays, Users } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { authHeader, logout } from "../utils/auth";
+import { API_URL } from "../config";
 
 function Profile() {
   const navigate = useNavigate();
 
   const user = JSON.parse(localStorage.getItem("user"));
+  const userId = user?.id;
 
   const [profile, setProfile] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
 
   useEffect(() => {
-    if (!user) {
+    if (!userId) {
       navigate("/login");
       return;
     }
 
-    fetch(`http://localhost:5000/api/users/${user.id}`)
+    // Zavisimo od userId, ne od "user" objekta koji je nov pri svakom renderu
+    fetch(`${API_URL}/api/users/${userId}`)
       .then((res) => res.json())
       .then((data) => setProfile(data))
       .catch(console.error);
-  }, [navigate, user]);
+  }, [navigate, userId]);
 
   const uploadAvatar = async () => {
     if (!selectedFile) {
@@ -34,7 +37,7 @@ function Profile() {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/users/${user.id}/avatar`,
+        `${API_URL}/api/users/${user.id}/avatar`,
         {
           method: "POST",
           headers: authHeader(),
@@ -77,7 +80,7 @@ function Profile() {
           <img
             src={
               profile.user.avatar
-                ? `http://localhost:5000${profile.user.avatar}`
+                ? `${API_URL}${profile.user.avatar}`
                 : "/default-avatar.png"
             }
             alt="Profil"
@@ -86,7 +89,7 @@ function Profile() {
 
           <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
             className="mt-4"
             onChange={(e) => setSelectedFile(e.target.files[0])}
           />

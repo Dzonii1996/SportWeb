@@ -1,13 +1,29 @@
 
 
+
 import { useState, useEffect } from "react";
+import { Search } from "lucide-react";
 import MatchCard from "../components/MatchCard";
 import axios from "axios";
+import { API_URL } from "../config";
+import {
+  localDateKey,
+  isPastMatch,
+  normalizeText,
+} from "../utils/matchDate";
+
+const SPORTS = [
+  { value: "Svi", label: "Svi" },
+  { value: "Fudbal", label: "⚽ Fudbal" },
+  { value: "Košarka", label: "🏀 Košarka" },
+];
 
 function Matches() {
   const [selectedSport, setSelectedSport] = useState("Svi");
   const [selectedDate, setSelectedDate] = useState("");
     const [onlyAvailable, setOnlyAvailable] = useState(false);
+  const [locationQuery, setLocationQuery] = useState("");
+  const [showPast, setShowPast] = useState(false);
 
 
  const [matches, setMatches] = useState([]);
@@ -20,7 +36,7 @@ useEffect(() => {
 const fetchMatches = async () => {
   try {
     const response = await axios.get(
-      "http://localhost:5000/api/matches"
+      `${API_URL}/api/matches`
     );
 
     setMatches(response.data.matches);
@@ -30,24 +46,50 @@ const fetchMatches = async () => {
   }
 };
 
+  const search = normalizeText(locationQuery.trim());
+
  const filteredMatches = matches.filter((match) => {
   const sportFilter =
     selectedSport === "Svi" || match.sport === selectedSport;
 
   const dateFilter =
     selectedDate === "" ||
-    match.match_date.slice(0, 10) === selectedDate;
+    localDateKey(match.match_date) === selectedDate;
 
   const availableFilter =
     !onlyAvailable ||
     Number(match.players) < Number(match.max_players);
 
+  const locationFilter =
+    search === "" ||
+    normalizeText(match.location).includes(search);
+
+  const pastFilter =
+    showPast || !isPastMatch(match.match_date, match.match_time);
+
   return (
     sportFilter &&
     dateFilter &&
-    availableFilter
+    availableFilter &&
+    locationFilter &&
+    pastFilter
   );
 });
+
+  const hasFilters =
+    selectedSport !== "Svi" ||
+    selectedDate !== "" ||
+    onlyAvailable ||
+    locationQuery !== "" ||
+    showPast;
+
+  const resetFilters = () => {
+    setSelectedSport("Svi");
+    setSelectedDate("");
+    setOnlyAvailable(false);
+    setLocationQuery("");
+    setShowPast(false);
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -60,48 +102,44 @@ const fetchMatches = async () => {
 
         {/* Filteri */}
 
-        <div className="bg-white shadow rounded-2xl p-6 mb-8">
+        <div className="bg-white shadow rounded-2xl p-6 mb-8 space-y-4">
 
           <div className="grid md:grid-cols-2 gap-4">
 
             <div className="flex flex-wrap gap-3">
+              {SPORTS.map((sport) => (
+                <button
+                  key={sport.value}
+                  onClick={() => setSelectedSport(sport.value)}
+                  className={`px-5 py-2 rounded-full font-semibold transition ${
+                    selectedSport === sport.value
+                      ? "bg-green-600 text-white"
+                      : "bg-gray-200 hover:bg-gray-300"
+                  }`}
+                >
+                  {sport.label}
+                </button>
+              ))}
+            </div>
 
-  <button
-    onClick={() => setSelectedSport("Svi")}
-    className={`px-5 py-2 rounded-full font-semibold transition ${
-      selectedSport === "Svi"
-        ? "bg-green-600 text-white"
-        : "bg-gray-200 hover:bg-gray-300"
-    }`}
-  >
-    Svi
-  </button>
+            <div className="relative">
+              <Search
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
 
-  <button
-    onClick={() => setSelectedSport("Fudbal")}
-    className={`px-5 py-2 rounded-full font-semibold transition ${
-      selectedSport === "Fudbal"
-        ? "bg-green-600 text-white"
-        : "bg-gray-200 hover:bg-gray-300"
-    }`}
-  >
-    ⚽ Fudbal
-  </button>
+              <input
+                type="text"
+                value={locationQuery}
+                onChange={(e) => setLocationQuery(e.target.value)}
+                placeholder="Pretraži po lokaciji..."
+                className="w-full border p-3 pl-10 rounded-xl"
+              />
+            </div>
 
-  <button
-    onClick={() => setSelectedSport("Košarka")}
-    className={`px-5 py-2 rounded-full font-semibold transition ${
-      selectedSport === "Košarka"
-        ? "bg-green-600 text-white"
-        : "bg-gray-200 hover:bg-gray-300"
-    }`}
-  >
-    🏀 Košarka
-  </button>
+          </div>
 
-</div>
-            
-          
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
 
             <input
               type="date"
@@ -109,23 +147,43 @@ const fetchMatches = async () => {
               onChange={(e) => setSelectedDate(e.target.value)}
               className="border p-3 rounded-xl"
             />
-            <div className="flex items-center gap-2 mt-4">
-  <input
-    type="checkbox"
-    id="available"
-    checked={onlyAvailable}
-    onChange={() => setOnlyAvailable(!onlyAvailable)}
-    className="w-4 h-4"
-  />
 
-  <label htmlFor="available" className="font-medium cursor-pointer">
-    👥 Prikaži samo termine sa slobodnim mestima
-  </label>
-</div>
+            <label className="flex items-center gap-2 font-medium cursor-pointer">
+              <input
+                type="checkbox"
+                checked={onlyAvailable}
+                onChange={() => setOnlyAvailable(!onlyAvailable)}
+                className="w-4 h-4"
+              />
+              👥 Samo sa slobodnim mestima
+            </label>
+
+            <label className="flex items-center gap-2 font-medium cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showPast}
+                onChange={() => setShowPast(!showPast)}
+                className="w-4 h-4"
+              />
+              🕓 Prikaži i odigrane termine
+            </label>
+
+            {hasFilters && (
+              <button
+                onClick={resetFilters}
+                className="text-green-700 hover:underline font-medium"
+              >
+                Poništi filtere
+              </button>
+            )}
 
           </div>
 
         </div>
+
+        <p className="text-gray-600 mb-4">
+          Pronađeno termina: {filteredMatches.length}
+        </p>
 
         {/* Kartice */}
 
@@ -145,11 +203,12 @@ creatorName={match.creator_name}
   time={match.match_time}
   players={Number(match.players || 0)}
   maxPlayers={match.max_players}
+  isPast={isPastMatch(match.match_date, match.match_time)}
               />
             ))
           ) : (
-            <div className="col-span-3 text-center text-gray-600 text-xl">
-              Nema dostupnih termina.
+            <div className="col-span-full text-center text-gray-600 text-xl">
+              Nema termina za izabrane filtere.
             </div>
           )}
 

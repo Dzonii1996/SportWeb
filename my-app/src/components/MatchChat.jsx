@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Send } from "lucide-react";
 import { authHeader } from "../utils/auth";
+import { API_URL } from "../config";
 
 const POLL_INTERVAL = 3000;
 
-function MatchChat({ matchId, canWrite, onClose }) {
+function MatchChat({ matchId, canWrite }) {
   const user = JSON.parse(localStorage.getItem("user"));
 
   const [messages, setMessages] = useState([]);
@@ -12,13 +13,13 @@ function MatchChat({ matchId, canWrite, onClose }) {
   const [sending, setSending] = useState(false);
 
   const lastIdRef = useRef(0);
-  const bottomRef = useRef(null);
+  const listRef = useRef(null);
 
   // Učitavamo samo poruke novije od poslednje koju imamo
   const loadMessages = async () => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/matches/${matchId}/messages?after=${lastIdRef.current}`,
+        `${API_URL}/api/matches/${matchId}/messages?after=${lastIdRef.current}`,
         { headers: authHeader() }
       );
 
@@ -52,7 +53,12 @@ function MatchChat({ matchId, canWrite, onClose }) {
   }, [matchId]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Skrolujemo samo listu poruka, ne celu stranicu
+    const list = listRef.current;
+
+    if (list) {
+      list.scrollTop = list.scrollHeight;
+    }
   }, [messages]);
 
   const sendMessage = async (e) => {
@@ -64,7 +70,7 @@ function MatchChat({ matchId, canWrite, onClose }) {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/matches/${matchId}/messages`,
+        `${API_URL}/api/matches/${matchId}/messages`,
         {
           method: "POST",
           headers: {
@@ -96,23 +102,15 @@ function MatchChat({ matchId, canWrite, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-      <div className="bg-white rounded-2xl w-full max-w-md flex flex-col h-[32rem]">
+      <div className="bg-white rounded-2xl shadow-lg flex flex-col h-[32rem]">
 
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="p-4 border-b">
           <h2 className="text-2xl font-bold">
             💬 Čet termina
           </h2>
-
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-800 text-2xl leading-none"
-          >
-            ×
-          </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div ref={listRef} className="flex-1 overflow-y-auto p-4 space-y-3">
           {messages.length === 0 && (
             <p className="text-center text-gray-500">
               Još nema poruka.
@@ -158,8 +156,6 @@ function MatchChat({ matchId, canWrite, onClose }) {
               </div>
             );
           })}
-
-          <div ref={bottomRef} />
         </div>
 
         {canWrite ? (
@@ -190,7 +186,6 @@ function MatchChat({ matchId, canWrite, onClose }) {
         )}
 
       </div>
-    </div>
   );
 }
 

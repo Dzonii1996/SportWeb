@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { logout } from "../utils/auth";
+import NotificationBell from "../components/NotificationBell";
 
 function Navbar() {
 
@@ -78,6 +79,8 @@ useEffect(() => {
 >
   Profil
 </Link>
+
+              <NotificationBell key={user.id} userId={user.id} />
 
               <Link
                 to="/profile"

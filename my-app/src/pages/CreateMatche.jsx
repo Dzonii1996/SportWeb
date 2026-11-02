@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { authHeader } from "../utils/auth";
+import { API_URL } from "../config";
+import { todayKey, maxDateKey } from "../utils/matchDate";
 
 function CreateMatch() {
   const navigate = useNavigate();
@@ -28,7 +30,7 @@ function CreateMatch() {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/matches",
+        `${API_URL}/api/matches`,
         {
           user_id: user.id,
           ...formData,
@@ -74,6 +76,9 @@ function CreateMatch() {
             placeholder="Lokacija"
             value={formData.location}
             onChange={handleChange}
+            required
+            minLength={2}
+            maxLength={100}
             className="w-full border p-3 rounded-xl"
           />
 
@@ -82,6 +87,9 @@ function CreateMatch() {
             name="match_date"
             value={formData.match_date}
             onChange={handleChange}
+            required
+            min={todayKey()}
+            max={maxDateKey()}
             className="w-full border p-3 rounded-xl"
           />
 
@@ -90,12 +98,14 @@ function CreateMatch() {
             name="match_time"
             value={formData.match_time}
             onChange={handleChange}
+            required
             className="w-full border p-3 rounded-xl"
           />
 
           <input
             type="number"
             name="max_players"
+            required
             min="2"
             max="30"
             value={formData.max_players}

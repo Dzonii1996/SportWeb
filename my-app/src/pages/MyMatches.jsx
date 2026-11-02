@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import MatchCard from "../components/MatchCard";
+import { API_URL } from "../config";
+import { isPastMatch } from "../utils/matchDate";
 
 function MyMatches() {
   const [createdMatches, setCreatedMatches] = useState([]);
@@ -10,7 +12,7 @@ function MyMatches() {
 
     if (!user) return;
 
-    fetch(`http://localhost:5000/api/users/${user.id}/matches`)
+    fetch(`${API_URL}/api/users/${user.id}/matches`)
       .then((res) => res.json())
       .then((data) => {
         setCreatedMatches(data.created);
@@ -40,6 +42,7 @@ function MyMatches() {
               time={match.match_time}
               players={Number(match.players || 0)}
               maxPlayers={match.max_players}
+              isPast={isPastMatch(match.match_date, match.match_time)}
             />
           ))
         ) : (
@@ -64,6 +67,7 @@ function MyMatches() {
               time={match.match_time}
               players={Number(match.players || 0)}
               maxPlayers={match.max_players}
+              isPast={isPastMatch(match.match_date, match.match_time)}
             />
           ))
         ) : (

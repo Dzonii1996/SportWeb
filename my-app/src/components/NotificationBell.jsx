@@ -1,0 +1,194 @@
+import { useEffect, useRef, useState } from "react";
+import { Bell } from "lucide-react";
+import { API_URL } from "../config";
+import { authHeader } from "../utils/auth";
+
+const POLL_INTERVAL = 30000;
+
+function NotificationBell({ userId }) {
+  const [open, setOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
+  const [notifications, setNotifications] = useState([]);
+
+  const boxRef = useRef(null);
+
+  const loadUnread = async () => {
+    try {
+      const res = await fetch(
+        `${API_URL}/api/notifications/${userId}/unread`,
+        { headers: authHeader() }
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        setUnread(data.count);
+      }
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const loadNotifications = async () => {
+    try {
+      const res = await fetch(
+        `${API_URL}/api/notifications/${userId}`,
+        { headers: authHeader() }
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        setNotifications(data.notifications);
+      }
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // Broj nepročitanih proveravamo periodično
+  useEffect(() => {
+    loadUnread();
+
+    const interval = setInterval(loadUnread, POLL_INTERVAL);
+
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  // Klik van prozora ga zatvara
+  useEffect(() => {
+    if (!open) return;
+
+    const handleClick = (e) => {
+      if (boxRef.current && !boxRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClick);
+
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  const toggle = () => {
+    if (!open) {
+      loadNotifications();
+    }
+
+    setOpen(!open);
+  };
+
+  const markAsRead = async (notification) => {
+    if (notification.is_read) return;
+
+    try {
+      await fetch(
+        `${API_URL}/api/notifications/read/${notification.id}`,
+        {
+          method: "PUT",
+          headers: authHeader(),
+        }
+      );
+
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === notification.id ? { ...n, is_read: true } : n
+        )
+      );
+
+      setUnread((prev) => Math.max(0, prev - 1));
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      await fetch(
+        `${API_URL}/api/notifications/${userId}/read-all`,
+        {
+          method: "PUT",
+          headers: authHeader(),
+        }
+      );
+
+      setNotifications((prev) =>
+        prev.map((n) => ({ ...n, is_read: true }))
+      );
+
+      setUnread(0);
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return (
+    <div className="relative" ref={boxRef}>
+      <button
+        onClick={toggle}
+        className="relative p-2 rounded-full hover:bg-gray-100"
+        aria-label="Notifikacije"
+      >
+        <Bell size={22} />
+
+        {unread > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full min-w-[1.25rem] h-5 px-1 flex items-center justify-center">
+            {unread > 9 ? "9+" : unread}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-2 w-80 max-w-[90vw] bg-white rounded-2xl shadow-xl border z-50">
+
+          <div className="flex items-center justify-between p-4 border-b">
+            <h3 className="font-bold">
+              Notifikacije
+            </h3>
+
+            {unread > 0 && (
+              <button
+                onClick={markAllAsRead}
+                className="text-sm text-green-600 hover:underline"
+              >
+                Označi sve kao pročitano
+              </button>
+            )}
+          </div>
+
+          <div className="max-h-96 overflow-y-auto">
+            {notifications.length === 0 ? (
+              <p className="p-4 text-center text-gray-500">
+                Nema notifikacija.
+              </p>
+            ) : (
+              notifications.map((n) => (
+                <button
+                  key={n.id}
+                  onClick={() => markAsRead(n)}
+                  className={`block w-full text-left px-4 py-3 border-b last:border-b-0 hover:bg-gray-50 ${
+                    n.is_read ? "text-gray-500" : "bg-green-50 font-semibold"
+                  }`}
+                >
+                  <p>{n.message}</p>
+
+                  <p className="text-xs text-gray-400 mt-1 font-normal">
+                    {new Date(n.created_at).toLocaleString("sr-RS")}
+                  </p>
+                </button>
+              ))
+            )}
+          </div>
+
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default NotificationBell;

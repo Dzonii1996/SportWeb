@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { User, Mail, CalendarDays, Users } from "lucide-react";
+import { API_URL } from "../config";
 
 function PublicProfile() {
   const { id } = useParams();
@@ -9,7 +10,7 @@ function PublicProfile() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/users/${id}`)
+    fetch(`${API_URL}/api/users/${id}`)
       .then((res) => res.json())
       .then((data) => {
         setProfile(data);
@@ -60,7 +61,7 @@ function PublicProfile() {
 
             {user.avatar ? (
               <img
-                src={`http://localhost:5000${user.avatar}`}
+                src={`${API_URL}${user.avatar}`}
                 alt={user.name}
                 className="w-28 h-28 mx-auto rounded-full object-cover border-4 border-white shadow-lg"
               />

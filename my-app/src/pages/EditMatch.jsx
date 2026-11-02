@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { authHeader } from "../utils/auth";
+import { API_URL } from "../config";
+import { localDateKey, todayKey, maxDateKey } from "../utils/matchDate";
 
 function EditMatch() {
   const { id } = useParams();
@@ -12,16 +14,15 @@ function EditMatch() {
   const [maxPlayers, setMaxPlayers] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/matches")
+    fetch(`${API_URL}/api/matches/${id}`)
       .then((res) => res.json())
       .then((data) => {
-        const match = data.matches.find(
-          (m) => m.id === Number(id)
-        );
+        const match = data.match;
 
         if (match) {
           setLocation(match.location);
-          setMatchDate(match.match_date.split("T")[0]);
+          // Lokalni datum; split("T") nad UTC vrednošću daje dan ranije
+          setMatchDate(localDateKey(match.match_date));
           setMatchTime(match.match_time.slice(0, 5));
           setMaxPlayers(match.max_players);
         }
@@ -31,10 +32,8 @@ function EditMatch() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const user = JSON.parse(localStorage.getItem("user"));
-
     const res = await fetch(
-      `http://localhost:5000/api/matches/${id}`,
+      `${API_URL}/api/matches/${id}`,
       {
         method: "PUT",
         headers: {
@@ -42,7 +41,6 @@ function EditMatch() {
           ...authHeader(),
         },
         body: JSON.stringify({
-          user_id: user.id,
           location,
           match_date: matchDate,
           match_time: matchTime,
@@ -56,7 +54,7 @@ function EditMatch() {
     alert(data.message);
 
     if (data.success) {
-      navigate("/matches");
+      navigate(`/matches/${id}`);
     }
   };
 
@@ -76,6 +74,9 @@ function EditMatch() {
           onChange={(e) =>
             setLocation(e.target.value)
           }
+          required
+          minLength={2}
+          maxLength={100}
           placeholder="Lokacija"
         />
 
@@ -86,6 +87,9 @@ function EditMatch() {
           onChange={(e) =>
             setMatchDate(e.target.value)
           }
+          required
+          min={todayKey()}
+          max={maxDateKey()}
         />
 
         <input
@@ -95,6 +99,7 @@ function EditMatch() {
           onChange={(e) =>
             setMatchTime(e.target.value)
           }
+          required
         />
 
         <input
@@ -104,6 +109,9 @@ function EditMatch() {
           onChange={(e) =>
             setMaxPlayers(e.target.value)
           }
+          required
+          min="2"
+          max="30"
         />
 
         <button

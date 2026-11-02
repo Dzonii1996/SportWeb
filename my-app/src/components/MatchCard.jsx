@@ -1,8 +1,8 @@
 import { MapPin, Calendar, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import MatchChat from "./MatchChat";
 import { authHeader } from "../utils/auth";
+import { API_URL } from "../config";
 
 
 function MatchCard({
@@ -17,15 +17,16 @@ function MatchCard({
   time,
   players,
   maxPlayers,
+  isPast = false,
 }) {
-  const user = JSON.parse(localStorage.getItem("user"));
   const [showPlayers, setShowPlayers] = useState(false);
 const [playersList, setPlayersList] = useState([]);
   const [joined, setJoined] = useState(false);
-  const [showChat, setShowChat] = useState(false);
 
   const percentage = (players / maxPlayers) * 100;
   const isFull = Number(players) >= Number(maxPlayers);
+  // Odigran ili pun termin prikazujemo prigušeno
+  const inactive = isFull || isPast;
   const formattedDate = new Date(date).toLocaleDateString("sr-RS");
 
   useEffect(() => {
@@ -36,7 +37,7 @@ const [playersList, setPlayersList] = useState([]);
 
       try {
         const res = await fetch(
-          `http://localhost:5000/api/matches/${id}/players`
+          `${API_URL}/api/matches/${id}/players`
         );
 
         const data = await res.json();
@@ -67,7 +68,7 @@ const [playersList, setPlayersList] = useState([]);
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/matches/${id}/join`,
+        `${API_URL}/api/matches/${id}/join`,
         {
           method: "POST",
           headers: {
@@ -101,7 +102,7 @@ const [playersList, setPlayersList] = useState([]);
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/matches/${id}/leave`,
+        `${API_URL}/api/matches/${id}/leave`,
         {
           method: "DELETE",
           headers: {
@@ -140,7 +141,7 @@ const [playersList, setPlayersList] = useState([]);
 
   try {
     const res = await fetch(
-      `http://localhost:5000/api/matches/${id}`,
+      `${API_URL}/api/matches/${id}`,
       {
         method: "DELETE",
         headers: {
@@ -168,7 +169,7 @@ const [playersList, setPlayersList] = useState([]);
 const getPlayers = async () => {
   try {
     const res = await fetch(
-      `http://localhost:5000/api/matches/${id}/players`
+      `${API_URL}/api/matches/${id}/players`
     );
 
     const data = await res.json();
@@ -184,12 +185,12 @@ setShowPlayers(true);
   return (
 <div
   className={`rounded-2xl shadow-lg hover:shadow-xl transition overflow-hidden ${
-    isFull ? "bg-gray-100 opacity-80" : "bg-white"
+    inactive ? "bg-gray-100 opacity-80" : "bg-white"
   }`}
 >
   <div
     className={`text-white p-5 ${
-      isFull ? "bg-gray-500" : "bg-green-600"
+      inactive ? "bg-gray-500" : "bg-green-600"
     }`}
   >
     <div className="flex items-center justify-between">
@@ -197,7 +198,11 @@ setShowPlayers(true);
         {sport === "Fudbal" ? "⚽ Fudbal" : "🏀 Košarka"}
       </h2>
 
-      {isFull && (
+      {isPast ? (
+        <span className="bg-gray-700 px-3 py-1 rounded-full text-sm font-bold">
+          ODIGRAN
+        </span>
+      ) : isFull && (
         <span className="bg-red-600 px-3 py-1 rounded-full text-sm font-bold">
           POPUNJENO
         </span>
@@ -214,7 +219,7 @@ setShowPlayers(true);
 >
   {creatorAvatar ? (
     <img
-      src={`http://localhost:5000${creatorAvatar}`}
+      src={`${API_URL}${creatorAvatar}`}
       alt={creatorName}
       className="w-12 h-12 rounded-full object-cover border-2 border-white"
     />
@@ -270,38 +275,46 @@ setShowPlayers(true);
           </div>
         </div>
 
+        {isFull && !joined && !isPast ? (
+          // Pun termin: lista čekanja je na stranici termina
+          <Link
+            to={`/matches/${id}`}
+            className="block w-full text-center py-3 rounded-xl font-semibold transition bg-orange-500 hover:bg-orange-600 text-white"
+          >
+            ⏳ Popunjeno — lista čekanja
+          </Link>
+        ) : (
         <button
           onClick={joined ? leaveMatch : joinMatch}
           className={`w-full py-3 rounded-xl font-semibold transition ${
-            players >= maxPlayers && !joined
+            isPast
               ? "bg-gray-400 cursor-not-allowed text-white"
               : joined
               ? "bg-red-600 hover:bg-red-700 text-white"
               : "bg-green-600 hover:bg-green-700 text-white"
           }`}
-          disabled={players >= maxPlayers && !joined}
+          disabled={isPast}
         >
-          
-          {joined
+
+          {isPast
+            ? "Termin je odigran"
+            : joined
             ? "Napusti termin"
-            : players >= maxPlayers
-            ? "Termin popunjen"
             : "Prijavi se"}
         </button>
+        )}
         <button
   onClick={getPlayers}
   className="w-full mt-3 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold"
 >
   👥 Pogledaj učesnike
 </button>
-{user && (
-  <button
-    onClick={() => setShowChat(true)}
-    className="w-full mt-3 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold"
-  >
-    💬 Čet
-  </button>
-)}
+<Link
+  to={`/matches/${id}`}
+  className="block w-full mt-3 text-center py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold"
+>
+  💬 Detalji i čet
+</Link>
         
 {JSON.parse(localStorage.getItem("user"))?.id === creatorId && (
   <button
@@ -321,13 +334,6 @@ setShowPlayers(true);
   </Link>
 )}
       </div>
-      {showChat && (
-        <MatchChat
-          matchId={id}
-          canWrite={joined || user?.id === creatorId}
-          onClose={() => setShowChat(false)}
-        />
-      )}
       {showPlayers && (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
     <div className="bg-white rounded-2xl p-6 w-96">

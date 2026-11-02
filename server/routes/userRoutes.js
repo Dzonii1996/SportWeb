@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const upload = require("../middleware/upload");
+const { uploadSingle } = require("../middleware/upload");
 const { protect, onlySelf } = require("../middleware/authMiddleware");
 
 const {
@@ -17,7 +17,7 @@ router.post(
   "/:id/avatar",
   protect,
   onlySelf,
-  upload.single("avatar"),
+  uploadSingle("avatar"),
   uploadAvatar
 );
 
