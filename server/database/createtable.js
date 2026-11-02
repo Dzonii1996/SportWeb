@@ -119,6 +119,35 @@ const createTables = async () => {
     )
   `);
 
+  // Troškovi terena: ukupna cena u dinarima (nije obavezna) i ko je platio
+  await pool.query(`
+    ALTER TABLE matches
+    ADD COLUMN IF NOT EXISTS field_price INTEGER CHECK (field_price >= 0)
+  `);
+
+  await pool.query(`
+    ALTER TABLE match_series
+    ADD COLUMN IF NOT EXISTS field_price INTEGER CHECK (field_price >= 0)
+  `);
+
+  await pool.query(`
+    ALTER TABLE match_players
+    ADD COLUMN IF NOT EXISTS paid BOOLEAN NOT NULL DEFAULT false
+  `);
+
+  // Potvrda dolaska: kada je igrač potvrdio da dolazi (null = nije još)
+  await pool.query(`
+    ALTER TABLE match_players
+    ADD COLUMN IF NOT EXISTS confirmed_at TIMESTAMP
+  `);
+
+  // Rezultat odigranog termina (Tim A : Tim B); null dok kreator ne upiše
+  await pool.query(`
+    ALTER TABLE matches
+    ADD COLUMN IF NOT EXISTS score_a INTEGER CHECK (score_a BETWEEN 0 AND 999),
+    ADD COLUMN IF NOT EXISTS score_b INTEGER CHECK (score_b BETWEEN 0 AND 999)
+  `);
+
   // Notifikacija može da vodi na termin; posle brisanja termina ostaje bez linka
   await pool.query(`
     ALTER TABLE notifications

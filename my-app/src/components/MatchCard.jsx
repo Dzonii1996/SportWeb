@@ -1,15 +1,26 @@
-import { MapPin, Calendar, Users } from "lucide-react";
+import {
+  MapPin,
+  Calendar,
+  Users,
+  Pencil,
+  Trash2,
+  MessageCircle,
+  Wallet,
+  X,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { authHeader } from "../utils/auth";
 import { API_URL } from "../config";
 import { formatDistance } from "../utils/geo";
+import { formatRSD, pricePerPlayer } from "../utils/price";
+import { matchStart, inConfirmWindow } from "../utils/matchDate";
 
 
 function MatchCard({
   id,
   creatorId,
-    creatorAvatar,
+  creatorAvatar,
   creatorName,
 
   sport,
@@ -21,16 +32,28 @@ function MatchCard({
   isPast = false,
   distance = null,
   repeatWeekly = false,
+  fieldPrice = null,
+  scoreA = null,
+  scoreB = null,
 }) {
   const [showPlayers, setShowPlayers] = useState(false);
-const [playersList, setPlayersList] = useState([]);
+  const [playersList, setPlayersList] = useState([]);
   const [joined, setJoined] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
 
-  const percentage = (players / maxPlayers) * 100;
-  const isFull = Number(players) >= Number(maxPlayers);
+  const isCreator = JSON.parse(localStorage.getItem("user"))?.id === creatorId;
+  const percentage = Math.min(100, (players / maxPlayers) * 100);
+  const freeSpots = Math.max(0, maxPlayers - players);
+  const isFull = freeSpots === 0;
   // Odigran ili pun termin prikazujemo prigušeno
   const inactive = isFull || isPast;
-  const formattedDate = new Date(date).toLocaleDateString("sr-RS");
+
+  // "uto, 10. 11. • 20:30" (sr-Latn: bez toga Chrome piše dane ćirilicom)
+  const formattedDate = matchStart(date, time).toLocaleDateString("sr-Latn-RS", {
+    weekday: "short",
+    day: "numeric",
+    month: "numeric",
+  });
 
   useEffect(() => {
     const checkJoined = async () => {
@@ -45,11 +68,12 @@ const [playersList, setPlayersList] = useState([]);
 
         const data = await res.json();
 
-        const exists = data.players.some(
+        const me = data.players.find(
           (player) => player.id === user.id
         );
 
-        setJoined(exists);
+        setJoined(Boolean(me));
+        setConfirmed(Boolean(me?.confirmed));
 
       } catch (error) {
         console.error(error);
@@ -78,9 +102,6 @@ const [playersList, setPlayersList] = useState([]);
             "Content-Type": "application/json",
             ...authHeader(),
           },
-          body: JSON.stringify({
-            user_id: user.id,
-          }),
         }
       );
 
@@ -99,22 +120,12 @@ const [playersList, setPlayersList] = useState([]);
   };
 
   const leaveMatch = async () => {
-    const user = JSON.parse(localStorage.getItem("user"));
-
-    if (!user) return;
-
     try {
       const res = await fetch(
         `${API_URL}/api/matches/${id}/leave`,
         {
           method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            ...authHeader(),
-          },
-          body: JSON.stringify({
-            user_id: user.id,
-          }),
+          headers: authHeader(),
         }
       );
 
@@ -131,254 +142,336 @@ const [playersList, setPlayersList] = useState([]);
       console.error(error);
     }
   };
+
   const deleteMatch = async () => {
-  const user = JSON.parse(localStorage.getItem("user"));
-
-  if (!user) return;
-
-  const confirmDelete = window.confirm(
-    "Da li ste sigurni da želite da obrišete termin?"
-  );
-
-  if (!confirmDelete) return;
-
-  try {
-    const res = await fetch(
-      `${API_URL}/api/matches/${id}`,
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeader(),
-        },
-        body: JSON.stringify({
-          user_id: user.id,
-        }),
-      }
+    const confirmDelete = window.confirm(
+      "Da li ste sigurni da želite da obrišete termin?"
     );
 
-    const data = await res.json();
+    if (!confirmDelete) return;
 
-    alert(data.message);
+    try {
+      const res = await fetch(
+        `${API_URL}/api/matches/${id}`,
+        {
+          method: "DELETE",
+          headers: authHeader(),
+        }
+      );
 
-    if (data.success) {
-      window.location.reload();
+      const data = await res.json();
+
+      alert(data.message);
+
+      if (data.success) {
+        window.location.reload();
+      }
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const getPlayers = async () => {
+    try {
+      const res = await fetch(
+        `${API_URL}/api/matches/${id}/players`
+      );
+
+      const data = await res.json();
+
+      setPlayersList(data.players || []);
+      setShowPlayers(true);
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // Glavno dugme: prijava, napuštanje ili lista čekanja
+  const primaryAction = () => {
+    const base = "flex items-center justify-center w-full py-3 rounded-xl font-semibold transition";
+
+    if (isPast) {
+      return (
+        <div className={`${base} bg-gray-100 text-gray-500`}>
+          Termin je odigran
+        </div>
+      );
     }
 
-  } catch (error) {
-    console.error(error);
-  }
-};
-const getPlayers = async () => {
-  try {
-    const res = await fetch(
-      `${API_URL}/api/matches/${id}/players`
+    if (joined) {
+      return (
+        <button
+          onClick={leaveMatch}
+          className={`${base} border-2 border-red-200 text-red-600 hover:bg-green-600 hover:border-green-600 hover:text-white`}
+        >
+          Napusti termin
+        </button>
+      );
+    }
+
+    if (isFull) {
+      // Pun termin: lista čekanja je na stranici termina
+      return (
+        <Link
+          to={`/matches/${id}`}
+          className={`${base} bg-orange-500 hover:bg-orange-600 text-white shadow-sm`}
+        >
+          ⏳ Popunjeno · lista čekanja
+        </Link>
+      );
+    }
+
+    return (
+      <button
+        onClick={joinMatch}
+        className={`${base} bg-green-600 hover:bg-green-700 text-white shadow-sm`}
+      >
+        Prijavi se
+      </button>
     );
+  };
 
-    const data = await res.json();
-
-setPlayersList(data.players || []);    
-setShowPlayers(true);
-
-  } catch (error) {
-    console.error(error);
-  }
-};
+  const secondary =
+    "flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 hover:border-gray-300 transition";
 
   return (
-<div
-  className={`rounded-2xl shadow-lg hover:shadow-xl transition overflow-hidden ${
-    inactive ? "bg-gray-100 opacity-80" : "bg-white"
-  }`}
->
-  <div
-    className={`text-white p-5 ${
-      inactive ? "bg-gray-500" : "bg-green-600"
-    }`}
-  >
-    <div className="flex items-center justify-between">
-      <h2 className="text-2xl font-bold">
-        {sport === "Fudbal" ? "⚽ Fudbal" : "🏀 Košarka"}
-        {repeatWeekly && (
-          <span
-            className="ml-2 text-sm font-semibold bg-white/20 px-2 py-0.5 rounded-full align-middle"
-            title="Ponavlja se svake nedelje"
-          >
-            🔁 nedeljno
-          </span>
-        )}
-      </h2>
-
-      {isPast ? (
-        <span className="bg-gray-700 px-3 py-1 rounded-full text-sm font-bold">
-          ODIGRAN
-        </span>
-      ) : isFull && (
-        <span className="bg-red-600 px-3 py-1 rounded-full text-sm font-bold">
-          POPUNJENO
-        </span>
-      )}
-    </div>
-
-    {/* Kreator termina */}
-    
-  {/* Kreator termina */}
-
-<Link
-  to={`/users/${creatorId}`}
-  className="flex items-center gap-3 mt-4 hover:opacity-80 transition"
->
-  {creatorAvatar ? (
-    <img
-      src={`${API_URL}${creatorAvatar}`}
-      alt={creatorName}
-      className="w-12 h-12 rounded-full object-cover border-2 border-white"
-    />
-  ) : (
-    <div className="w-12 h-12 rounded-full bg-white text-green-600 flex items-center justify-center font-bold text-xl">
-      {creatorName?.charAt(0).toUpperCase()}
-    </div>
-  )}
-
-  <div>
-    <p className="text-sm text-green-100">
-      Kreirao
-    </p>
-
-    <p className="font-bold">
-      {creatorName || "Nepoznat korisnik"}
-    </p>
-  </div>
-</Link>
-
-    <p className="text-green-100 mt-3">
-      Rekreativni termin
-    </p>
-  </div>
-      <div className="p-5 space-y-4">
-
-        <div className="flex items-center gap-3">
-          <MapPin className="text-green-600" size={20} />
-          <span>{location}</span>
-
-          {distance !== null && (
-            <span className="ml-auto text-sm text-green-700 font-semibold whitespace-nowrap">
-              {formatDistance(distance)}
+    <div
+      className={`flex flex-col rounded-2xl border shadow-sm hover:shadow-lg transition overflow-hidden ${
+        inactive ? "bg-gray-50 border-gray-200" : "bg-white border-gray-100"
+      }`}
+    >
+      {/* Zaglavlje */}
+      <div
+        className={`relative p-5 text-white ${
+          isPast
+            ? "bg-gray-400"
+            : isFull
+            ? "bg-gradient-to-br from-gray-500 to-gray-600"
+            : "bg-gradient-to-br from-green-600 to-emerald-500"
+        }`}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl">
+              {sport === "Košarka" ? "🏀" : "⚽"}
             </span>
+
+            <div>
+              <h2 className="text-xl font-bold leading-tight">{sport}</h2>
+
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {repeatWeekly && (
+                  <span className="text-xs font-semibold bg-white/20 px-2 py-0.5 rounded-full">
+                    🔁 nedeljno
+                  </span>
+                )}
+
+                {isPast ? (
+                  <span className="text-xs font-bold bg-black/20 px-2 py-0.5 rounded-full">
+                    {scoreA !== null && scoreA !== undefined
+                      ? `🏆 ${scoreA} : ${scoreB}`
+                      : "ODIGRAN"}
+                  </span>
+                ) : isFull ? (
+                  <span className="text-xs font-bold bg-red-500 px-2 py-0.5 rounded-full">
+                    POPUNJENO
+                  </span>
+                ) : (
+                  <span className="text-xs font-bold bg-white text-green-700 px-2 py-0.5 rounded-full">
+                    {freeSpots} {freeSpots === 1 ? "mesto" : "mesta"}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Kreator: izmena i brisanje kao male ikonice */}
+          {isCreator && (
+            <div className="flex gap-1.5">
+              <Link
+                to={`/matches/${id}/edit`}
+                title="Izmeni termin"
+                aria-label="Izmeni termin"
+                className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/35 flex items-center justify-center transition"
+              >
+                <Pencil size={16} />
+              </Link>
+
+              <button
+                onClick={deleteMatch}
+                title="Obriši termin"
+                aria-label="Obriši termin"
+                className="w-9 h-9 rounded-full bg-white/20 hover:bg-red-500 flex items-center justify-center transition"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
           )}
         </div>
 
-        <div className="flex items-center gap-3">
-          <Calendar className="text-green-600" size={20} />
-          <span>{formattedDate} • {time}</span>
-        </div>
+        <Link
+          to={`/users/${creatorId}`}
+          className="inline-flex items-center gap-2 mt-4 text-sm hover:opacity-80 transition"
+        >
+          {creatorAvatar ? (
+            <img
+              src={`${API_URL}${creatorAvatar}`}
+              alt={creatorName}
+              className="w-7 h-7 rounded-full object-cover border-2 border-white/70"
+            />
+          ) : (
+            <span className="w-7 h-7 rounded-full bg-white text-green-700 flex items-center justify-center font-bold text-xs">
+              {creatorName?.charAt(0).toUpperCase()}
+            </span>
+          )}
 
-        <div className="flex items-center gap-3">
-          <Users className="text-green-600" size={20} />
-          <span>{players} / {maxPlayers} igrača</span>
-        </div>
+          {isCreator ? (
+            <span className="font-semibold">Tvoj termin</span>
+          ) : (
+            <>
+              <span className="text-white/80">Organizuje</span>
+              <span className="font-semibold">
+                {creatorName || "Nepoznat korisnik"}
+              </span>
+            </>
+          )}
+        </Link>
+      </div>
 
-        <div>
-          <div className="flex justify-between text-sm mb-2">
-            <span>Popunjenost</span>
-            <span>{Math.round(percentage)}%</span>
+      {/* Detalji */}
+      <div className="flex flex-col flex-1 p-5 gap-4">
+
+        <div className="space-y-2.5 text-gray-700">
+          <div className="flex items-center gap-3">
+            <MapPin className="text-green-600 shrink-0" size={18} />
+            <span className="truncate">{location}</span>
+
+            {distance !== null && (
+              <span className="ml-auto text-xs bg-green-50 text-green-700 font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
+                {formatDistance(distance)}
+              </span>
+            )}
           </div>
 
-          <div className="w-full h-3 bg-gray-200 rounded-full">
+          <div className="flex items-center gap-3">
+            <Calendar className="text-green-600 shrink-0" size={18} />
+            <span>
+              <span className="capitalize">{formattedDate}</span>
+              {" • "}
+              <span className="font-semibold">{time?.slice(0, 5)}</span>
+            </span>
+          </div>
+
+          {fieldPrice !== null && fieldPrice !== undefined && (
+            <div className="flex items-center gap-3">
+              <Wallet className="text-green-600 shrink-0" size={18} />
+              <span>
+                <span className="font-semibold">
+                  {formatRSD(pricePerPlayer(fieldPrice, players))}
+                </span>{" "}
+                po igraču
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Popunjenost */}
+        <div>
+          <div className="flex justify-between text-sm mb-1.5">
+            <span className="flex items-center gap-1.5 text-gray-600">
+              <Users size={15} />
+              {players} / {maxPlayers} igrača
+            </span>
+
+            {joined && !isPast && (
+              <span className="text-green-700 font-semibold">✓ Prijavljen si</span>
+            )}
+          </div>
+
+          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
             <div
-              className="h-3 bg-green-600 rounded-full"
+              className={`h-2 rounded-full ${
+                isFull ? "bg-orange-400" : percentage >= 75 ? "bg-amber-400" : "bg-green-500"
+              }`}
               style={{ width: `${percentage}%` }}
             />
           </div>
         </div>
 
-        {isFull && !joined && !isPast ? (
-          // Pun termin: lista čekanja je na stranici termina
-          <Link
-            to={`/matches/${id}`}
-            className="block w-full text-center py-3 rounded-xl font-semibold transition bg-orange-500 hover:bg-orange-600 text-white"
-          >
-            ⏳ Popunjeno — lista čekanja
-          </Link>
-        ) : (
-        <button
-          onClick={joined ? leaveMatch : joinMatch}
-          className={`w-full py-3 rounded-xl font-semibold transition ${
-            isPast
-              ? "bg-gray-400 cursor-not-allowed text-white"
-              : joined
-              ? "bg-red-600 hover:bg-red-700 text-white"
-              : "bg-green-600 hover:bg-green-700 text-white"
-          }`}
-          disabled={isPast}
-        >
+        {/* Dugmad: glavno + dva sporedna, uvek na dnu kartice */}
+        <div className="mt-auto space-y-2">
+          {joined && !confirmed && inConfirmWindow(date, time) && (
+            <Link
+              to={`/matches/${id}`}
+              className="block text-center text-sm font-semibold bg-amber-50 border border-amber-300 text-amber-900 rounded-xl py-2 hover:bg-amber-100"
+            >
+              ⚠️ Termin je uskoro: potvrdi dolazak
+            </Link>
+          )}
 
-          {isPast
-            ? "Termin je odigran"
-            : joined
-            ? "Napusti termin"
-            : "Prijavi se"}
-        </button>
-        )}
-        <button
-  onClick={getPlayers}
-  className="w-full mt-3 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold"
->
-  👥 Pogledaj učesnike
-</button>
-<Link
-  to={`/matches/${id}`}
-  className="block w-full mt-3 text-center py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold"
->
-  💬 Detalji i čet
-</Link>
-        
-{JSON.parse(localStorage.getItem("user"))?.id === creatorId && (
-  <button
-    onClick={deleteMatch}
-    className="w-full mt-3 py-3 rounded-xl bg-red-700 hover:bg-red-800 text-white font-semibold"
-  >
-    🗑 Obriši termin
-  </button>
-  
-)}
-{JSON.parse(localStorage.getItem("user"))?.id === creatorId && (
-  <Link
-    to={`/matches/${id}/edit`}
-    className="block w-full mt-3 text-center py-3 rounded-xl bg-yellow-500 hover:bg-yellow-600 text-white font-semibold"
-  >
-    ✏️ Izmeni termin
-  </Link>
-)}
-      </div>
-      {showPlayers && (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div className="bg-white rounded-2xl p-6 w-96">
+          {primaryAction()}
 
-      <h2 className="text-2xl font-bold mb-4">
-        Prijavljeni igrači
-      </h2>
+          <div className="grid grid-cols-2 gap-2">
+            <Link to={`/matches/${id}`} className={secondary}>
+              <MessageCircle size={17} />
+              Detalji i čet
+            </Link>
 
-      {playersList.length > 0 ? (
-        playersList.map((player) => (
-          <div key={player.id} className="border-b py-2">
-            <p className="font-semibold">{player.name}</p>
+            <button onClick={getPlayers} className={secondary}>
+              <Users size={17} />
+              Učesnici
+            </button>
           </div>
-        ))
-      ) : (
-        <p>Nema prijavljenih igrača.</p>
+        </div>
+      </div>
+
+      {showPlayers && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
+          onClick={() => setShowPlayers(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-6 w-full max-w-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">
+                Prijavljeni igrači ({playersList.length})
+              </h2>
+
+              <button
+                onClick={() => setShowPlayers(false)}
+                className="p-1.5 rounded-full hover:bg-gray-100"
+                aria-label="Zatvori"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {playersList.length > 0 ? (
+              <ul className="divide-y max-h-80 overflow-y-auto">
+                {playersList.map((player) => (
+                  <li key={player.id}>
+                    <Link
+                      to={`/users/${player.id}`}
+                      className="flex items-center gap-3 py-2.5 hover:text-green-700"
+                    >
+                      <span className="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-sm">
+                        {player.name.charAt(0).toUpperCase()}
+                      </span>
+                      <span className="font-medium">{player.name}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-500">Nema prijavljenih igrača.</p>
+            )}
+          </div>
+        </div>
       )}
-
-      <button
-        onClick={() => setShowPlayers(false)}
-        className="mt-5 w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-xl"
-      >
-        Zatvori
-      </button>
-
-    </div>
-  </div>
-)}
 
     </div>
   );

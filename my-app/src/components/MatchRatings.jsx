@@ -63,7 +63,7 @@ function MatchRatings({ matchId, people }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
       <h2 className="text-2xl font-bold">
         ⭐ Oceni saigrače
       </h2>

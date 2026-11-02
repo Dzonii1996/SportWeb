@@ -5,8 +5,8 @@ const { describeMatch, notifyUsers } = require("./notify");
 const createSeriesForMatch = async (db, match) => {
   const series = await db.query(
     `INSERT INTO match_series
-       (user_id, sport, location, match_time, max_players, latitude, longitude, last_date)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       (user_id, sport, location, match_time, max_players, latitude, longitude, last_date, field_price)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING id`,
     [
       match.user_id,
@@ -17,6 +17,7 @@ const createSeriesForMatch = async (db, match) => {
       match.latitude,
       match.longitude,
       match.match_date,
+      match.field_price ?? null,
     ]
   );
 
@@ -55,7 +56,8 @@ const updateSeriesFromEdit = async (matchId, fields, repeatWeekly) => {
          latitude = $5,
          longitude = $6,
          last_date = CASE WHEN last_date = $7::date THEN $8::date ELSE last_date END,
-         active = COALESCE($9, active)
+         active = COALESCE($9, active),
+         field_price = $10
      WHERE id = $1`,
     [
       match.series_id,
@@ -67,6 +69,7 @@ const updateSeriesFromEdit = async (matchId, fields, repeatWeekly) => {
       match.match_date,
       fields.match_date,
       repeatWeekly === undefined ? null : repeatWeekly,
+      fields.field_price ?? null,
     ]
   );
 };
@@ -115,8 +118,8 @@ const generateNextOccurrences = async () => {
       const inserted = await client.query(
         `INSERT INTO matches
            (user_id, sport, location, match_date, match_time, max_players,
-            latitude, longitude, series_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            latitude, longitude, series_id, field_price)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
          RETURNING *`,
         [
           series.user_id,
@@ -128,6 +131,7 @@ const generateNextOccurrences = async () => {
           series.latitude,
           series.longitude,
           series.id,
+          series.field_price,
         ]
       );
       const match = inserted.rows[0];

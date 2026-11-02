@@ -82,6 +82,23 @@ const validateMatch = ({ sport, location, match_date, match_time, max_players })
   return null;
 };
 
+// Cena terena u dinarima nije obavezna. Vraća { error } ili { price } (null kad nije poslata).
+const MAX_PRICE = 1000000;
+
+const parsePrice = ({ field_price }) => {
+  if (field_price === undefined || field_price === null || field_price === "") {
+    return { price: null };
+  }
+
+  const price = Number(field_price);
+
+  if (!Number.isInteger(price) || price < 0 || price > MAX_PRICE) {
+    return { error: "Cena terena mora biti ceo broj dinara (do 1.000.000)." };
+  }
+
+  return { price };
+};
+
 // Koordinate nisu obavezne, ali ako postoje moraju biti obe i ispravne.
 // Vraća { error } ili { latitude, longitude } (oba null kad nisu poslate).
 const parseCoords = ({ latitude, longitude }) => {
@@ -138,10 +155,12 @@ const createMatch = async (req, res) => {
     const validationError = validateMatch(req.body);
     const coords = parseCoords(req.body);
 
-    if (validationError || coords.error) {
+    const price = parsePrice(req.body);
+
+    if (validationError || coords.error || price.error) {
       return res.status(400).json({
         success: false,
-        message: validationError || coords.error,
+        message: validationError || coords.error || price.error,
       });
     }
 
@@ -154,8 +173,8 @@ const createMatch = async (req, res) => {
 
    const result = await client.query(
   `INSERT INTO matches
-  (user_id, sport, location, match_date, match_time, max_players, latitude, longitude)
-  VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+  (user_id, sport, location, match_date, match_time, max_players, latitude, longitude, field_price)
+  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
   RETURNING *`,
   [
     user_id,
@@ -165,7 +184,8 @@ const createMatch = async (req, res) => {
     match_time,
     max_players,
     coords.latitude,
-    coords.longitude
+    coords.longitude,
+    price.price
   ]
 );
       match = result.rows[0];
@@ -377,10 +397,12 @@ const updateMatch = async (req, res) => {
     });
     const coords = parseCoords(req.body);
 
-    if (validationError || coords.error) {
+    const price = parsePrice(req.body);
+
+    if (validationError || coords.error || price.error) {
       return res.status(400).json({
         success: false,
-        message: validationError || coords.error,
+        message: validationError || coords.error || price.error,
       });
     }
 
@@ -406,6 +428,7 @@ const updateMatch = async (req, res) => {
         max_players,
         latitude: coords.latitude,
         longitude: coords.longitude,
+        field_price: price.price,
       },
       typeof req.body.repeat_weekly === "boolean"
         ? req.body.repeat_weekly
@@ -420,7 +443,8 @@ const updateMatch = async (req, res) => {
          match_time = $3,
          max_players = $4,
          latitude = $5,
-         longitude = $6
+         longitude = $6,
+         field_price = $8
        WHERE id = $7
        RETURNING *`,
       [
@@ -431,6 +455,7 @@ const updateMatch = async (req, res) => {
         coords.latitude,
         coords.longitude,
         id,
+        price.price,
       ]
     );
 
@@ -442,6 +467,12 @@ const updateMatch = async (req, res) => {
     if (before !== after) {
       try {
         await resetReminders(id);
+
+        // Novo vreme ili mesto: igrači treba ponovo da potvrde dolazak
+        await pool.query(
+          "UPDATE match_players SET confirmed_at = NULL WHERE match_id = $1",
+          [id]
+        );
 
         const audience = await matchAudience(id, {
           exceptUserId: user_id,

@@ -1,5 +1,6 @@
 const pool = require("../database/db");
 const { getPlayerStats } = require("./ratingController");
+const { getResultStats } = require("./resultController");
 const bcrypt = require("bcrypt");
 const { validatePassword, signToken } = require("../utils/password");
 
@@ -10,26 +11,36 @@ const getMyMatches = async (req, res) => {
     const created = await pool.query(`
       SELECT
           matches.*,
+          users.name AS creator_name,
+          users.avatar AS creator_avatar,
+          COALESCE(match_series.active, false) AS repeat_weekly,
           COUNT(match_players.user_id) AS players
       FROM matches
+      JOIN users ON users.id = matches.user_id
+      LEFT JOIN match_series ON match_series.id = matches.series_id
       LEFT JOIN match_players
       ON match_players.match_id = matches.id
       WHERE matches.user_id = $1
-      GROUP BY matches.id
+      GROUP BY matches.id, users.name, users.avatar, match_series.active
       ORDER BY match_date
     `, [user_id]);
 
     const joined = await pool.query(`
       SELECT
           matches.*,
+          users.name AS creator_name,
+          users.avatar AS creator_avatar,
+          COALESCE(match_series.active, false) AS repeat_weekly,
           COUNT(mp.user_id) AS players
       FROM matches
+      JOIN users ON users.id = matches.user_id
+      LEFT JOIN match_series ON match_series.id = matches.series_id
       JOIN match_players
       ON matches.id = match_players.match_id
       LEFT JOIN match_players mp
       ON mp.match_id = matches.id
       WHERE match_players.user_id = $1
-      GROUP BY matches.id
+      GROUP BY matches.id, users.name, users.avatar, match_series.active
       ORDER BY match_date
     `, [user_id]);
 
@@ -99,6 +110,7 @@ const getProfile = async (req, res) => {
         created: Number(created.rows[0].total),
         joined: Number(joined.rows[0].total),
         ...(await getPlayerStats(id)),
+        ...(await getResultStats(id)),
       },
     });
 

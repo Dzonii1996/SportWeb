@@ -36,6 +36,8 @@ function MyMatches() {
               key={match.id}
               id={match.id}
               creatorId={match.user_id}
+              creatorName={match.creator_name}
+              creatorAvatar={match.creator_avatar}
               sport={match.sport}
               location={match.location}
               date={match.match_date}
@@ -43,6 +45,10 @@ function MyMatches() {
               players={Number(match.players || 0)}
               maxPlayers={match.max_players}
               isPast={isPastMatch(match.match_date, match.match_time)}
+              repeatWeekly={match.repeat_weekly}
+              fieldPrice={match.field_price}
+              scoreA={match.score_a}
+              scoreB={match.score_b}
             />
           ))
         ) : (
@@ -61,6 +67,8 @@ function MyMatches() {
               key={match.id}
               id={match.id}
               creatorId={match.user_id}
+              creatorName={match.creator_name}
+              creatorAvatar={match.creator_avatar}
               sport={match.sport}
               location={match.location}
               date={match.match_date}
@@ -68,6 +76,10 @@ function MyMatches() {
               players={Number(match.players || 0)}
               maxPlayers={match.max_players}
               isPast={isPastMatch(match.match_date, match.match_time)}
+              repeatWeekly={match.repeat_weekly}
+              fieldPrice={match.field_price}
+              scoreA={match.score_a}
+              scoreB={match.score_b}
             />
           ))
         ) : (

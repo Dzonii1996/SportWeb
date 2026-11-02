@@ -7,6 +7,7 @@ import NotificationBell from "../components/NotificationBell";
 const LINKS = [
   { to: "/", label: "Početna", end: true },
   { to: "/matches", label: "Termini" },
+  { to: "/rang-lista", label: "Rang lista" },
 ];
 
 const USER_LINKS = [

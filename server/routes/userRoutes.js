@@ -11,7 +11,10 @@ const {
   updateProfile,
   changePassword,
 } = require("../controllers/userController");
+const { getLeaderboard } = require("../controllers/resultController");
 
+// Pre "/:id", inače bi "leaderboard" bio shvaćen kao ID korisnika
+router.get("/leaderboard", getLeaderboard);
 router.get("/:user_id/matches", getMyMatches);
 router.get("/:id", optionalAuth, getProfile);
 router.put("/:id", protect, onlySelf, updateProfile);

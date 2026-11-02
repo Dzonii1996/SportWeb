@@ -33,6 +33,15 @@ export const matchStart = (matchDate, matchTime) => {
 export const isPastMatch = (matchDate, matchTime) =>
   matchStart(matchDate, matchTime) < new Date();
 
+// Potvrda dolaska se traži u poslednja 24 sata pred termin (kao i podsetnik)
+export const CONFIRM_HOURS = 24;
+
+export const inConfirmWindow = (matchDate, matchTime, now = new Date()) => {
+  const hoursLeft = (matchStart(matchDate, matchTime) - now) / 3600000;
+
+  return hoursLeft > 0 && hoursLeft <= CONFIRM_HOURS;
+};
+
 // Za pretragu bez obzira na velika slova i kvačice (š, č, ć, ž, đ)
 export const normalizeText = (text) =>
   (text || "")

@@ -44,7 +44,9 @@ describe("podsetnici pred termin", () => {
     expect(notes).toHaveLength(1);
     expect(notes[0].message).toMatch(DAY_BEFORE);
     expect(notes[0].match_id).toBe(match.id);
-    expect(await count(owner, DAY_BEFORE)).toBe(1);
+    // Kreator dobija svoju poruku, ne "sutra igraš"
+    expect(await count(owner, /^⏰ Sutra je tvoj termin/)).toBe(1);
+    expect(await count(owner, DAY_BEFORE)).toBe(0);
     expect(await notificationsOf(outsider)).toHaveLength(0);
   });
 

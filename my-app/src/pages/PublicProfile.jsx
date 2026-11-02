@@ -196,6 +196,48 @@ function PublicProfile() {
 
               </div>
 
+              {/* Učinak iz upisanih rezultata */}
+              {profile.stats.wins + profile.stats.draws + profile.stats.losses > 0 && (
+                <div className="mt-4 bg-gray-50 rounded-xl p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm text-gray-500">Učinak (P / N / I)</p>
+                      <p className="text-xl font-bold">
+                        <span className="text-green-700">{profile.stats.wins}</span>
+                        {" / "}
+                        <span className="text-gray-600">{profile.stats.draws}</span>
+                        {" / "}
+                        <span className="text-red-600">{profile.stats.losses}</span>
+                        <span className="text-base font-medium text-gray-500">
+                          {" "}· {profile.stats.winRate}% pobeda
+                        </span>
+                      </p>
+                    </div>
+
+                    {profile.stats.streak >= 2 && (
+                      <span className="bg-orange-100 text-orange-700 font-semibold px-3 py-1 rounded-full text-sm">
+                        🔥 {profile.stats.streak} pobede zaredom
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1.5 mt-3">
+                    <span className="text-sm text-gray-500 mr-1">Forma:</span>
+                    {profile.stats.form.map((o, i) => (
+                      <span
+                        key={i}
+                        title={{ W: "Pobeda", D: "Nerešeno", L: "Poraz" }[o]}
+                        className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold text-white ${
+                          { W: "bg-green-600", D: "bg-gray-400", L: "bg-red-500" }[o]
+                        }`}
+                      >
+                        {{ W: "P", D: "N", L: "I" }[o]}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
             </div>
 
             <Link

@@ -3,12 +3,16 @@ const { describeMatch, notifyUsers, matchAudience } = require("./notify");
 
 // Podsetnici pred termin. "until" je donja granica: podsetnik za dan ranije
 // ne šaljemo ako je do termina ostalo manje od sat, jer tada ide onaj za 1h.
+// Igrači dan ranije dobijaju i molbu da potvrde dolazak, a kreator
+// poruku da igrači potvrđuju (creatorMessage, ako postoji).
 const REMINDERS = [
   {
     kind: "24h",
     before: "24 hours",
     until: "1 hour",
-    message: (m) => `⏰ Podsetnik: sutra igraš! ${describeMatch(m)}.`,
+    message: (m) => `⏰ Podsetnik: sutra igraš! ${describeMatch(m)}. Potvrdi da dolaziš.`,
+    creatorMessage: (m) =>
+      `⏰ Sutra je tvoj termin: ${describeMatch(m)}. Igrači sada potvrđuju dolazak.`,
   },
   {
     kind: "1h",
@@ -49,11 +53,20 @@ const sendDueReminders = async () => {
           [match_id]
         );
 
-        const audience = await matchAudience(match_id);
+        const creatorId = match.rows[0].user_id;
+        const creatorMessage = reminder.creatorMessage || reminder.message;
+
+        // Kreator dobija svoju poruku; ako i igra, ne dobija dve
+        await notifyUsers(
+          client,
+          [creatorId],
+          creatorMessage(match.rows[0]),
+          match_id
+        );
 
         await notifyUsers(
           client,
-          audience,
+          await matchAudience(match_id, { exceptUserId: creatorId }),
           reminder.message(match.rows[0]),
           match_id
         );

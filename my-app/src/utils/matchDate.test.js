@@ -5,6 +5,7 @@ import {
   normalizeText,
   todayKey,
   maxDateKey,
+  inConfirmWindow,
 } from "./matchDate";
 
 // Termin od 10. 8. 2026. kako ga baza vraća: lokalna ponoć zapisana u UTC-u
@@ -37,6 +38,24 @@ describe("matchStart i isPastMatch", () => {
 
     expect(isPastMatch(day(hourAgo), time(hourAgo))).toBe(true);
     expect(isPastMatch(day(tomorrow), time(tomorrow))).toBe(false);
+  });
+});
+
+describe("inConfirmWindow (poslednja 24 h pred termin)", () => {
+  const at = (hoursFromNow) => {
+    const d = new Date(Date.now() + hoursFromNow * 3600 * 1000);
+    const day = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
+
+    return [day, `${d.getHours()}:${d.getMinutes()}:00`];
+  };
+
+  test.each([
+    [20, true],
+    [2, true],
+    [30, false],
+    [-1, false],
+  ])("termin za %s h -> %s", (hours, expected) => {
+    expect(inConfirmWindow(...at(hours))).toBe(expected);
   });
 });
 

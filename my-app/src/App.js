@@ -14,6 +14,7 @@ import PublicProfile from "./pages/PublicProfile";
 import MatchDetails from "./pages/MatchDetails";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import Leaderboard from "./pages/Leaderboard";
 function App() {
 
   return (
@@ -27,6 +28,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/matches" element={<Matches />} />
+        <Route path="/rang-lista" element={<Leaderboard />} />
         <Route path="/my-matches" element={<MyMatches />} />
         <Route path="/matches/:id" element={<MatchDetails />} />
         <Route path="/matches/:id/edit" element={<EditMatch />} />

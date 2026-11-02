@@ -1,6 +1,6 @@
 const pool = require("../database/db");
 const { promoteFromWaitlist } = require("./waitlistController");
-const { notifyUsers } = require("../utils/notify");
+const { describeMatch, notifyUsers } = require("../utils/notify");
 
 const joinMatch = async (req, res) => {
   const client = await pool.connect();
@@ -135,6 +135,71 @@ const joinMatch = async (req, res) => {
     client.release();
   }
 };
+// Kreator dobija obaveštenje kad neko odustane od termina koji tek dolazi
+const notifyCreatorAboutLeave = async (match_id, user_id) => {
+  const result = await pool.query(
+    `SELECT
+       matches.*,
+       users.name AS player_name,
+       (matches.match_date + matches.match_time) < NOW() AS is_past
+     FROM matches, users
+     WHERE matches.id = $1 AND users.id = $2`,
+    [match_id, user_id]
+  );
+
+  const match = result.rows[0];
+
+  if (!match || match.is_past || Number(match.user_id) === Number(user_id)) {
+    return;
+  }
+
+  await notifyUsers(
+    pool,
+    [match.user_id],
+    `🚫 ${match.player_name} ne dolazi na tvoj termin: ${describeMatch(match)}.`,
+    match_id
+  );
+};
+
+// Igrač potvrđuje da dolazi na termin
+const confirmAttendance = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `UPDATE match_players
+       SET confirmed_at = COALESCE(confirmed_at, NOW())
+       FROM matches
+       WHERE match_players.match_id = $1
+       AND match_players.user_id = $2
+       AND matches.id = match_players.match_id
+       AND (matches.match_date + matches.match_time) > NOW()
+       RETURNING match_players.confirmed_at`,
+      [id, req.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Potvrda je moguća samo za termin na koji si prijavljen i koji još nije počeo.",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Super, vidimo se na terenu!",
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Greška servera.",
+    });
+  }
+};
+
 const leaveMatch = async (req, res) => {
   try {
     const { id } = req.params;
@@ -147,13 +212,19 @@ const leaveMatch = async (req, res) => {
       [id, user_id]
     );
 
-    // Oslobođeno mesto dobija prvi sa liste čekanja.
-    // Greška ovde ne poništava napuštanje termina.
+    // Oslobođeno mesto dobija prvi sa liste čekanja, a kreator saznaje
+    // ko ne dolazi. Greške ovde ne poništavaju napuštanje termina.
     if (left.rowCount > 0) {
       try {
         await promoteFromWaitlist(id);
       } catch (error) {
         console.error("Greška pri popunjavanju sa liste čekanja:", error);
+      }
+
+      try {
+        await notifyCreatorAboutLeave(id, user_id);
+      } catch (error) {
+        console.error("Greška pri slanju notifikacija:", error);
       }
     }
 
@@ -212,7 +283,9 @@ const getPlayers = async (req, res) => {
         users.id,
         users.name,
         users.avatar,
-        match_players.team
+        match_players.team,
+        match_players.paid,
+        match_players.confirmed_at IS NOT NULL AS confirmed
       FROM match_players
       JOIN users
       ON users.id = match_players.user_id
@@ -270,9 +343,71 @@ const uploadAvatar = async (req, res) => {
 };
 
 
+// Kreator označava da li je igrač platio svoj deo terena
+const setPaid = async (req, res) => {
+  try {
+    const { id, userId } = req.params;
+    const { paid } = req.body;
+
+    if (typeof paid !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "Neispravan zahtev.",
+      });
+    }
+
+    const match = await pool.query(
+      "SELECT user_id FROM matches WHERE id = $1",
+      [id]
+    );
+
+    if (match.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Termin ne postoji.",
+      });
+    }
+
+    if (Number(match.rows[0].user_id) !== Number(req.user.id)) {
+      return res.status(403).json({
+        success: false,
+        message: "Samo kreator vodi evidenciju plaćanja.",
+      });
+    }
+
+    const updated = await pool.query(
+      `UPDATE match_players SET paid = $3
+       WHERE match_id = $1 AND user_id = $2`,
+      [id, userId, paid]
+    );
+
+    if (updated.rowCount === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Korisnik nije prijavljen na termin.",
+      });
+    }
+
+    res.json({
+      success: true,
+      paid,
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Greška servera.",
+    });
+  }
+};
+
 module.exports = {
   joinMatch,
   leaveMatch,
+  confirmAttendance,
+  setPaid,
     getMatchPlayers,
     getPlayers,
     uploadAvatar

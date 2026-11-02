@@ -1,15 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { MapPin, Calendar, Users, ArrowLeft } from "lucide-react";
+import { MapPin, Calendar, Users, ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import MatchChat from "../components/MatchChat";
 import MatchRatings from "../components/MatchRatings";
 import RegularSpot from "../components/RegularSpot";
 import ShareMatch from "../components/ShareMatch";
+import MatchCosts from "../components/MatchCosts";
+import MatchResult from "../components/MatchResult";
+import { hasPrice } from "../utils/price";
 import { LocationView } from "../components/LocationMap";
 import { hasCoords } from "../utils/geo";
 import { API_URL } from "../config";
 import { authHeader } from "../utils/auth";
-import { isPastMatch } from "../utils/matchDate";
+import { isPastMatch, matchStart, inConfirmWindow } from "../utils/matchDate";
+import AttendanceBox from "../components/AttendanceBox";
 
 function Avatar({ name, avatar, size = "w-10 h-10", text = "text-lg" }) {
   return avatar ? (
@@ -27,22 +31,38 @@ function Avatar({ name, avatar, size = "w-10 h-10", text = "text-lg" }) {
   );
 }
 
-function PlayerRow({ player, isMe }) {
+// Isti okvir kao kartica termina
+const CARD = "bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden";
+
+// showConfirm: u poslednja 24 h prikazuje da li je igrač potvrdio dolazak
+function PlayerRow({ player, isMe, showConfirm = false }) {
   return (
-    <li>
+    <li className="flex items-center justify-between gap-3">
       <Link
         to={`/users/${player.id}`}
-        className="flex items-center gap-3 py-3 hover:text-green-700"
+        className="flex items-center gap-3 py-3 hover:text-green-700 min-w-0"
       >
         <Avatar name={player.name} avatar={player.avatar} />
 
-        <span className="font-semibold">
+        <span className="font-semibold truncate">
           {player.name}
           {isMe && (
             <span className="text-gray-500 font-normal"> (ti)</span>
           )}
         </span>
       </Link>
+
+      {showConfirm && (
+        player.confirmed ? (
+          <span className="text-xs font-semibold bg-green-100 text-green-700 px-2 py-1 rounded-full whitespace-nowrap">
+            ✓ dolazi
+          </span>
+        ) : (
+          <span className="text-xs font-semibold bg-gray-100 text-gray-500 px-2 py-1 rounded-full whitespace-nowrap">
+            ? nije potvrdio
+          </span>
+        )
+      )}
     </li>
   );
 }
@@ -125,6 +145,9 @@ function MatchDetails() {
   const joined = players.some((p) => p.id === user?.id);
   const isFull = players.length >= Number(match.max_players);
   const isPast = isPastMatch(match.match_date, match.match_time);
+  const confirmWindow = inConfirmWindow(match.match_date, match.match_time);
+  const me = players.find((p) => p.id === user?.id);
+  const confirmedCount = players.filter((p) => p.confirmed).length;
   // Koga mogu da ocenim posle termina: kreator i igrači, bez mene
   const rateablePeople = [
     { id: match.user_id, name: match.creator_name },
@@ -137,7 +160,12 @@ function MatchDetails() {
   // Pozicija na listi čekanja (1, 2, ...), 0 ako korisnik nije na listi
   const waitlistPosition = waitlist.findIndex((p) => p.id === user?.id) + 1;
   const percentage = (players.length / match.max_players) * 100;
-  const formattedDate = new Date(match.match_date).toLocaleDateString("sr-RS");
+  const freeSpots = Math.max(0, match.max_players - players.length);
+  // "uto, 10. 11." (sr-Latn: bez toga Chrome piše dane ćirilicom)
+  const formattedDate = matchStart(match.match_date, match.match_time).toLocaleDateString(
+    "sr-Latn-RS",
+    { weekday: "long", day: "numeric", month: "numeric", year: "numeric" }
+  );
 
   // Glavno dugme: prijava/napuštanje, ili lista čekanja kad je termin pun
   const action = joined
@@ -254,54 +282,101 @@ function MatchDetails() {
 
           <div className="space-y-6">
 
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div className={CARD}>
+              {/* Zaglavlje u istom stilu kao kartica termina */}
               <div
-                className={`text-white p-6 ${
-                  isFull || isPast ? "bg-gray-500" : "bg-green-600"
+                className={`p-6 text-white ${
+                  isPast
+                    ? "bg-gray-400"
+                    : isFull
+                    ? "bg-gradient-to-br from-gray-500 to-gray-600"
+                    : "bg-gradient-to-br from-green-600 to-emerald-500"
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <h1 className="text-3xl font-bold">
-                    {match.sport === "Fudbal" ? "⚽ Fudbal" : "🏀 Košarka"}
-                    {match.repeat_weekly && (
-                      <span className="ml-3 text-base font-semibold bg-white/20 px-3 py-1 rounded-full align-middle">
-                        🔁 Svake nedelje
-                      </span>
-                    )}
-                  </h1>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-4">
+                    <span className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-3xl">
+                      {match.sport === "Košarka" ? "🏀" : "⚽"}
+                    </span>
 
-                  {isPast ? (
-                    <span className="bg-gray-700 px-3 py-1 rounded-full text-sm font-bold">
-                      ODIGRAN
-                    </span>
-                  ) : isFull && (
-                    <span className="bg-red-600 px-3 py-1 rounded-full text-sm font-bold">
-                      POPUNJENO
-                    </span>
+                    <div>
+                      <h1 className="text-3xl font-bold leading-tight">
+                        {match.sport}
+                      </h1>
+
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        {match.repeat_weekly && (
+                          <span className="text-xs font-semibold bg-white/20 px-2 py-0.5 rounded-full">
+                            🔁 Svake nedelje
+                          </span>
+                        )}
+
+                        {isPast ? (
+                          <span className="text-xs font-bold bg-black/20 px-2 py-0.5 rounded-full">
+                            ODIGRAN
+                          </span>
+                        ) : isFull ? (
+                          <span className="text-xs font-bold bg-red-500 px-2 py-0.5 rounded-full">
+                            POPUNJENO
+                          </span>
+                        ) : (
+                          <span className="text-xs font-bold bg-white text-green-700 px-2 py-0.5 rounded-full">
+                            {freeSpots} {freeSpots === 1 ? "slobodno mesto" : "slobodnih mesta"}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Kreator: izmena i brisanje kao male ikonice */}
+                  {isCreator && (
+                    <div className="flex gap-1.5">
+                      <Link
+                        to={`/matches/${id}/edit`}
+                        title="Izmeni termin"
+                        aria-label="Izmeni termin"
+                        className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/35 flex items-center justify-center transition"
+                      >
+                        <Pencil size={18} />
+                      </Link>
+
+                      <button
+                        onClick={deleteMatch}
+                        title="Obriši termin"
+                        aria-label="Obriši termin"
+                        className="w-10 h-10 rounded-full bg-white/20 hover:bg-red-500 flex items-center justify-center transition"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
                   )}
                 </div>
 
                 <Link
                   to={`/users/${match.user_id}`}
-                  className="flex items-center gap-3 mt-4 hover:opacity-80 transition"
+                  className="inline-flex items-center gap-2 mt-5 hover:opacity-80 transition"
                 >
                   <Avatar
                     name={match.creator_name}
                     avatar={match.creator_avatar}
-                    size="w-12 h-12"
-                    text="text-xl"
+                    size="w-9 h-9"
+                    text="text-sm"
                   />
 
-                  <div>
-                    <p className="text-sm text-green-100">Kreirao</p>
-                    <p className="font-bold">{match.creator_name}</p>
-                  </div>
+                  {isCreator ? (
+                    <span className="font-semibold">Tvoj termin</span>
+                  ) : (
+                    <>
+                      <span className="text-white/80">Organizuje</span>
+                      <span className="font-semibold">{match.creator_name}</span>
+                    </>
+                  )}
                 </Link>
               </div>
 
               <div className="p-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <MapPin className="text-green-600" size={20} />
+                <div className="flex items-center gap-3 text-gray-700">
+                  <MapPin className="text-green-600 shrink-0" size={18} />
                   <span>{match.location}</span>
                 </div>
 
@@ -312,38 +387,49 @@ function MatchDetails() {
                   />
                 )}
 
-                <div className="flex items-center gap-3">
-                  <Calendar className="text-green-600" size={20} />
+                <div className="flex items-center gap-3 text-gray-700">
+                  <Calendar className="text-green-600 shrink-0" size={18} />
                   <span>
-                    {formattedDate} • {match.match_time?.slice(0, 5)}
+                    <span className="capitalize">{formattedDate}</span>
+                    {" • "}
+                    <span className="font-semibold">{match.match_time?.slice(0, 5)}</span>
                   </span>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <Users className="text-green-600" size={20} />
-                  <span>
-                    {players.length} / {match.max_players} igrača
-                  </span>
+                <div>
+                  <div className="flex justify-between text-sm mb-1.5">
+                    <span className="flex items-center gap-1.5 text-gray-600">
+                      <Users size={15} />
+                      {players.length} / {match.max_players} igrača
+                    </span>
+
+                    {joined && !isPast && (
+                      <span className="text-green-700 font-semibold">✓ Prijavljen si</span>
+                    )}
+                  </div>
+
+                  <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className={`h-2 rounded-full ${
+                        isFull ? "bg-orange-400" : percentage >= 75 ? "bg-amber-400" : "bg-green-500"
+                      }`}
+                      style={{ width: `${Math.min(percentage, 100)}%` }}
+                    />
+                  </div>
                 </div>
 
-                <div className="w-full h-3 bg-gray-200 rounded-full">
-                  <div
-                    className="h-3 bg-green-600 rounded-full"
-                    style={{ width: `${Math.min(percentage, 100)}%` }}
-                  />
-                </div>
-
+                {/* Ista dugmad kao na kartici: napuštanje je obrubljeno, a na hover zeleno */}
                 <button
                   onClick={handleAction}
                   disabled={busy || isPast}
-                  className={`w-full py-3 rounded-xl font-semibold text-white transition ${
+                  className={`w-full py-3 rounded-xl font-semibold transition ${
                     isPast
-                      ? "bg-gray-400 cursor-not-allowed"
+                      ? "bg-gray-100 text-gray-500 cursor-not-allowed"
                       : joined || waitlistPosition
-                      ? "bg-red-600 hover:bg-red-700"
+                      ? "border-2 border-red-200 text-red-600 hover:bg-green-600 hover:border-green-600 hover:text-white"
                       : isFull
-                      ? "bg-orange-500 hover:bg-orange-600"
-                      : "bg-green-600 hover:bg-green-700"
+                      ? "bg-orange-500 hover:bg-orange-600 text-white shadow-sm"
+                      : "bg-green-600 hover:bg-green-700 text-white shadow-sm"
                   }`}
                 >
                   {isPast
@@ -357,6 +443,14 @@ function MatchDetails() {
                     : "Prijavi se"}
                 </button>
 
+                {joined && confirmWindow && (
+                  <AttendanceBox
+                    matchId={id}
+                    confirmed={Boolean(me?.confirmed)}
+                    onChange={loadMatch}
+                  />
+                )}
+
                 {match.repeat_weekly && joined && !isPast && (
                   <RegularSpot matchId={id} />
                 )}
@@ -368,32 +462,34 @@ function MatchDetails() {
                   </p>
                 )}
 
+                {hasPrice(match) && (
+                  <MatchCosts
+                    match={match}
+                    players={players}
+                    isCreator={isCreator}
+                    userId={user?.id}
+                    onChange={loadMatch}
+                  />
+                )}
+
                 {!isPast && (
                   <ShareMatch
                     match={match}
                     freeSpots={Math.max(0, match.max_players - players.length)}
                   />
                 )}
-
-                {isCreator && (
-                  <div className="grid grid-cols-2 gap-3">
-                    <Link
-                      to={`/matches/${id}/edit`}
-                      className="text-center py-3 rounded-xl bg-yellow-500 hover:bg-yellow-600 text-white font-semibold"
-                    >
-                      ✏️ Izmeni
-                    </Link>
-
-                    <button
-                      onClick={deleteMatch}
-                      className="py-3 rounded-xl bg-red-700 hover:bg-red-800 text-white font-semibold"
-                    >
-                      🗑 Obriši
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
+
+            {isPast && (
+              <MatchResult
+                match={match}
+                players={players}
+                isCreator={isCreator}
+                userId={user?.id}
+                onChange={loadMatch}
+              />
+            )}
 
             {isPast && (joined || isCreator) && (
               <MatchRatings
@@ -402,14 +498,21 @@ function MatchDetails() {
               />
             )}
 
-            <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div className={`${CARD} p-6`}>
               <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <h2 className="text-2xl font-bold">
                   👥 Učesnici
                 </h2>
 
+                {confirmWindow && players.length > 0 && (
+                  <span className="text-sm font-semibold text-gray-600">
+                    Potvrdilo {confirmedCount} / {players.length}
+                  </span>
+                )}
+
                 {/* Kreator deli igrače na timove */}
-                {isCreator && !isPast && players.length >= 2 && (
+                {/* Timovi mogu da se podele i posle termina, dok rezultat nije upisan */}
+                {isCreator && players.length >= 2 && match.score_a === null && (
                   <div className="flex gap-2">
                     <button
                       onClick={() => splitTeams("random")}
@@ -450,7 +553,7 @@ function MatchDetails() {
 
                         <ul className="divide-y divide-white">
                           {members.map((p) => (
-                            <PlayerRow key={p.id} player={p} isMe={p.id === user?.id} />
+                            <PlayerRow key={p.id} player={p} isMe={p.id === user?.id} showConfirm={confirmWindow} />
                           ))}
                         </ul>
                       </div>
@@ -465,7 +568,7 @@ function MatchDetails() {
 
                       <ul className="divide-y">
                         {players.filter((p) => !p.team).map((p) => (
-                          <PlayerRow key={p.id} player={p} isMe={p.id === user?.id} />
+                          <PlayerRow key={p.id} player={p} isMe={p.id === user?.id} showConfirm={confirmWindow} />
                         ))}
                       </ul>
                     </div>
@@ -474,7 +577,7 @@ function MatchDetails() {
               ) : (
                 <ul className="divide-y">
                   {players.map((p) => (
-                    <PlayerRow key={p.id} player={p} isMe={p.id === user?.id} />
+                    <PlayerRow key={p.id} player={p} isMe={p.id === user?.id} showConfirm={confirmWindow} />
                   ))}
                 </ul>
               )}
@@ -521,7 +624,7 @@ function MatchDetails() {
                 canWrite={joined || isCreator}
               />
             ) : (
-              <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
+              <div className={`${CARD} p-6 text-center`}>
                 <p className="mb-4">Prijavi se da bi video čet termina.</p>
 
                 <Link

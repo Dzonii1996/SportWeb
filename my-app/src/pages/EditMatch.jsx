@@ -6,6 +6,7 @@ import { localDateKey, todayKey, maxDateKey } from "../utils/matchDate";
 import { hasCoords } from "../utils/geo";
 import { LocationPicker } from "../components/LocationMap";
 import RepeatWeeklyField from "../components/RepeatWeeklyField";
+import FieldPriceInput from "../components/FieldPriceInput";
 
 function EditMatch() {
   const { id } = useParams();
@@ -15,6 +16,7 @@ function EditMatch() {
   const [matchDate, setMatchDate] = useState("");
   const [matchTime, setMatchTime] = useState("");
   const [maxPlayers, setMaxPlayers] = useState("");
+  const [fieldPrice, setFieldPrice] = useState("");
   const [position, setPosition] = useState(null);
   const [repeatWeekly, setRepeatWeekly] = useState(false);
   const [inSeries, setInSeries] = useState(false);
@@ -32,6 +34,7 @@ function EditMatch() {
           setMatchDate(localDateKey(match.match_date));
           setMatchTime(match.match_time.slice(0, 5));
           setMaxPlayers(match.max_players);
+          setFieldPrice(match.field_price ?? "");
           setPosition(
             hasCoords(match) ? [match.latitude, match.longitude] : null
           );
@@ -59,6 +62,7 @@ function EditMatch() {
           match_date: matchDate,
           match_time: matchTime,
           max_players: Number(maxPlayers),
+          field_price: fieldPrice,
           repeat_weekly: repeatWeekly,
           latitude: position?.[0] ?? null,
           longitude: position?.[1] ?? null,
@@ -139,6 +143,11 @@ function EditMatch() {
           required
           min="2"
           max="30"
+        />
+
+        <FieldPriceInput
+          value={fieldPrice}
+          onChange={(e) => setFieldPrice(e.target.value)}
         />
 
         <RepeatWeeklyField

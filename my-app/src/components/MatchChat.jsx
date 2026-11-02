@@ -102,7 +102,7 @@ function MatchChat({ matchId, canWrite }) {
   };
 
   return (
-      <div className="bg-white rounded-2xl shadow-lg flex flex-col h-[32rem]">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[32rem]">
 
         <div className="p-4 border-b">
           <h2 className="text-2xl font-bold">

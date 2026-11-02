@@ -6,6 +6,7 @@ import { API_URL } from "../config";
 import { todayKey, maxDateKey } from "../utils/matchDate";
 import { LocationPicker } from "../components/LocationMap";
 import RepeatWeeklyField from "../components/RepeatWeeklyField";
+import FieldPriceInput from "../components/FieldPriceInput";
 
 function CreateMatch() {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ function CreateMatch() {
     match_date: "",
     match_time: "",
     max_players: 10,
+    field_price: "",
   });
 
   // Tačno mesto na mapi [lat, lng], nije obavezno
@@ -122,6 +124,12 @@ function CreateMatch() {
             value={formData.max_players}
             onChange={handleChange}
             className="w-full border p-3 rounded-xl"
+          />
+
+          <FieldPriceInput
+            name="field_price"
+            value={formData.field_price}
+            onChange={handleChange}
           />
 
           <RepeatWeeklyField checked={repeatWeekly} onChange={setRepeatWeekly} />
