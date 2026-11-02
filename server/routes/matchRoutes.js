@@ -5,16 +5,18 @@ const {
   createMatch,
   getMatches,
     deleteMatch,
-    updateMatch
+    updateMatch,
+    
 
 } = require("../controllers/matchController");
+const { protect } = require("../middleware/authMiddleware");
 
 
-router.post("/", createMatch);
+router.post("/", protect, createMatch);
 
 router.get("/", getMatches);
-router.delete("/:id", deleteMatch);
-router.put("/:id", updateMatch);
+router.delete("/:id", protect, deleteMatch);
+router.put("/:id", protect, updateMatch);
 
 
 module.exports = router;

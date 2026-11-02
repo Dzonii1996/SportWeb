@@ -8,13 +8,13 @@ const createMatch = async (req, res) => {
     
   try {
     const {
-  user_id,
   sport,
   location,
   match_date,
   match_time,
   max_players,
 } = req.body;
+    const user_id = req.user.id;
 
     if (
       !sport ||
@@ -65,17 +65,17 @@ const getMatches = async (req, res) => {
 
    const result = await pool.query(`
 SELECT
-    matches.*,
-    users.name AS creator,
-    COUNT(match_players.user_id) AS players
+  matches.*,
+  users.name AS creator_name,
+  users.avatar AS creator_avatar,
+  COUNT(match_players.user_id) AS players
 FROM matches
-LEFT JOIN users
-ON users.id = matches.user_id
+JOIN users
+  ON users.id = matches.user_id
 LEFT JOIN match_players
-ON match_players.match_id = matches.id
-GROUP BY matches.id, users.name
-ORDER BY match_date, match_time
-`
+  ON match_players.match_id = matches.id
+GROUP BY matches.id, users.name, users.avatar
+ORDER BY match_date`
 );
 
     res.json({
@@ -95,7 +95,7 @@ ORDER BY match_date, match_time
 const deleteMatch = async (req, res) => {
   try {
     const { id } = req.params;
-    const { user_id } = req.body;
+    const user_id = req.user.id;
 
     // Provera da li termin postoji
     const match = await pool.query(
@@ -142,12 +142,12 @@ const updateMatch = async (req, res) => {
     const { id } = req.params;
 
     const {
-      user_id,
       location,
       match_date,
       match_time,
       max_players,
     } = req.body;
+    const user_id = req.user.id;
 
     const match = await pool.query(
       "SELECT * FROM matches WHERE id = $1",

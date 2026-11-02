@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { authHeader } from "../utils/auth";
 
 function CreateMatch() {
   const navigate = useNavigate();
@@ -31,7 +32,8 @@ function CreateMatch() {
         {
           user_id: user.id,
           ...formData,
-        }
+        },
+        { headers: authHeader() }
       );
 
       alert(response.data.message);

@@ -1,0 +1,197 @@
+import { useEffect, useRef, useState } from "react";
+import { Send } from "lucide-react";
+import { authHeader } from "../utils/auth";
+
+const POLL_INTERVAL = 3000;
+
+function MatchChat({ matchId, canWrite, onClose }) {
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  const [messages, setMessages] = useState([]);
+  const [text, setText] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const lastIdRef = useRef(0);
+  const bottomRef = useRef(null);
+
+  // Učitavamo samo poruke novije od poslednje koju imamo
+  const loadMessages = async () => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/matches/${matchId}/messages?after=${lastIdRef.current}`,
+        { headers: authHeader() }
+      );
+
+      const data = await res.json();
+
+      if (data.success && data.messages.length > 0) {
+        lastIdRef.current = Math.max(
+          lastIdRef.current,
+          data.messages[data.messages.length - 1].id
+        );
+
+        // Dva zahteva mogu da se preklope, pa preskačemo poruke koje već imamo
+        setMessages((prev) => {
+          const lastId = prev.length ? prev[prev.length - 1].id : 0;
+          return [...prev, ...data.messages.filter((m) => m.id > lastId)];
+        });
+      }
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    loadMessages();
+
+    const interval = setInterval(loadMessages, POLL_INTERVAL);
+
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matchId]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const sendMessage = async (e) => {
+    e.preventDefault();
+
+    if (!text.trim() || sending) return;
+
+    setSending(true);
+
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/matches/${matchId}/messages`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...authHeader(),
+          },
+          body: JSON.stringify({
+            user_id: user.id,
+            message: text,
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        setText("");
+        loadMessages();
+      } else {
+        alert(data.message);
+      }
+
+    } catch (error) {
+      console.error(error);
+      alert("Greška pri slanju poruke");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+      <div className="bg-white rounded-2xl w-full max-w-md flex flex-col h-[32rem]">
+
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="text-2xl font-bold">
+            💬 Čet termina
+          </h2>
+
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-800 text-2xl leading-none"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {messages.length === 0 && (
+            <p className="text-center text-gray-500">
+              Još nema poruka.
+            </p>
+          )}
+
+          {messages.map((msg) => {
+            const mine = msg.user_id === user?.id;
+
+            return (
+              <div
+                key={msg.id}
+                className={`flex ${mine ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-[75%] rounded-2xl px-4 py-2 ${
+                    mine
+                      ? "bg-green-600 text-white"
+                      : "bg-gray-100 text-gray-900"
+                  }`}
+                >
+                  {!mine && (
+                    <p className="text-xs font-bold text-green-700">
+                      {msg.name}
+                    </p>
+                  )}
+
+                  <p className="break-words whitespace-pre-wrap">
+                    {msg.message}
+                  </p>
+
+                  <p
+                    className={`text-xs mt-1 ${
+                      mine ? "text-green-100" : "text-gray-500"
+                    }`}
+                  >
+                    {new Date(msg.created_at).toLocaleTimeString("sr-RS", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+
+          <div ref={bottomRef} />
+        </div>
+
+        {canWrite ? (
+          <form
+            onSubmit={sendMessage}
+            className="flex gap-2 p-4 border-t"
+          >
+            <input
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              maxLength={1000}
+              placeholder="Napiši poruku..."
+              className="flex-1 border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-600"
+            />
+
+            <button
+              type="submit"
+              disabled={sending || !text.trim()}
+              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-xl px-4"
+            >
+              <Send size={20} />
+            </button>
+          </form>
+        ) : (
+          <p className="p-4 border-t text-center text-gray-500 text-sm">
+            Prijavi se na termin da bi pisao u četu.
+          </p>
+        )}
+
+      </div>
+    </div>
+  );
+}
+
+export default MatchChat;

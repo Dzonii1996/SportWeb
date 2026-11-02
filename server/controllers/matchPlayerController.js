@@ -3,11 +3,12 @@ const pool = require("../database/db");
 const joinMatch = async (req, res) => {
   try {
     const { id } = req.params;
-    const { user_id } = req.body;
+    const user_id = req.user.id;
 
     // Provera da li je korisnik već prijavljen
     const exists = await pool.query(
-      `SELECT * FROM match_players
+      `SELECT *
+       FROM match_players
        WHERE match_id = $1 AND user_id = $2`,
       [id, user_id]
     );
@@ -19,18 +20,18 @@ const joinMatch = async (req, res) => {
       });
     }
 
-    // Broj prijavljenih
-    const players = await pool.query(
-      `SELECT COUNT(*) FROM match_players
-       WHERE match_id = $1`,
-      [id]
-    );
-
-    // Maksimalan broj igrača
+    // Uzimamo podatke o terminu i kreatoru
     const match = await pool.query(
-      `SELECT max_players
+      `SELECT
+         matches.id,
+         matches.max_players,
+         matches.user_id AS creator_id,
+         matches.sport,
+         users.name AS creator_name
        FROM matches
-       WHERE id = $1`,
+       JOIN users
+         ON users.id = matches.user_id
+       WHERE matches.id = $1`,
       [id]
     );
 
@@ -41,9 +42,19 @@ const joinMatch = async (req, res) => {
       });
     }
 
+    const matchData = match.rows[0];
+
+    // Broj prijavljenih
+    const players = await pool.query(
+      `SELECT COUNT(*)
+       FROM match_players
+       WHERE match_id = $1`,
+      [id]
+    );
+
     if (
       Number(players.rows[0].count) >=
-      match.rows[0].max_players
+      Number(matchData.max_players)
     ) {
       return res.status(400).json({
         success: false,
@@ -51,11 +62,34 @@ const joinMatch = async (req, res) => {
       });
     }
 
+    // Prijava korisnika
     await pool.query(
       `INSERT INTO match_players(match_id, user_id)
-       VALUES($1,$2)`,
+       VALUES($1, $2)`,
       [id, user_id]
     );
+
+    // Ako korisnik nije sam kreator termina,
+    // šaljemo notifikaciju kreatoru
+    if (Number(matchData.creator_id) !== Number(user_id)) {
+      const player = await pool.query(
+        `SELECT name
+         FROM users
+         WHERE id = $1`,
+        [user_id]
+      );
+
+      const playerName = player.rows[0]?.name || "Korisnik";
+
+      await pool.query(
+        `INSERT INTO notifications(user_id, message)
+         VALUES($1, $2)`,
+        [
+          matchData.creator_id,
+          `${playerName} se prijavio na vaš termin (${matchData.sport}).`,
+        ]
+      );
+    }
 
     res.json({
       success: true,
@@ -74,7 +108,7 @@ const joinMatch = async (req, res) => {
 const leaveMatch = async (req, res) => {
   try {
     const { id } = req.params;
-    const { user_id } = req.body;
+    const user_id = req.user.id;
 
     await pool.query(
       `DELETE FROM match_players
@@ -161,12 +195,45 @@ const getPlayers = async (req, res) => {
     });
   }
 };
+const uploadAvatar = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Nije izabrana slika.",
+      });
+    }
+
+    const avatar = `/uploads/${req.file.filename}`;
+
+    await pool.query(
+      "UPDATE users SET avatar = $1 WHERE id = $2",
+      [avatar, id]
+    );
+
+    res.json({
+      success: true,
+      avatar,
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
 
 module.exports = {
   joinMatch,
   leaveMatch,
     getMatchPlayers,
-    getPlayers
+    getPlayers,
+    uploadAvatar
 
 };

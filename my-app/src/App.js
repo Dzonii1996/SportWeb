@@ -9,6 +9,8 @@ import CreateMatch from "./pages/CreateMatche";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MyMatches from "./pages/MyMatches";
 import EditMatch from "./pages/EditMatch";
+import Profile from "./pages/Profile";
+import PublicProfile from "./pages/PublicProfile";
 function App() {
 
   return (
@@ -22,6 +24,8 @@ function App() {
         <Route path="/matches" element={<Matches />} />
         <Route path="/my-matches" element={<MyMatches />} />
         <Route path="/matches/:id/edit" element={<EditMatch />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/users/:id" element={<PublicProfile />} />
 <Route 
   path="/create-match"
   element={

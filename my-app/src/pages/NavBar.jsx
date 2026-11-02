@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { logout } from "../utils/auth";
 
 function Navbar() {
 
@@ -28,11 +29,8 @@ useEffect(() => {
   };
 
 }, []);
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-
-    setUser(null);
+  const handleLogout = () => {
+    logout();
 
     navigate("/login");
   };
@@ -74,6 +72,12 @@ useEffect(() => {
                 Kreiraj termin
               </Link>
               <Link to="/my-matches">Moji termini</Link>
+              <Link
+  to="/profile"
+  className="hover:text-green-500"
+>
+  Profil
+</Link>
 
               <Link
                 to="/profile"
@@ -83,7 +87,7 @@ useEffect(() => {
               </Link>
 
               <button
-                onClick={logout}
+                onClick={handleLogout}
                 className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
               >
                 Logout

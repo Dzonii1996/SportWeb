@@ -1,11 +1,16 @@
 import { MapPin, Calendar, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import MatchChat from "./MatchChat";
+import { authHeader } from "../utils/auth";
 
 
 function MatchCard({
   id,
   creatorId,
+    creatorAvatar,
+  creatorName,
+
   sport,
   location,
   date,
@@ -17,8 +22,10 @@ function MatchCard({
   const [showPlayers, setShowPlayers] = useState(false);
 const [playersList, setPlayersList] = useState([]);
   const [joined, setJoined] = useState(false);
+  const [showChat, setShowChat] = useState(false);
 
   const percentage = (players / maxPlayers) * 100;
+  const isFull = Number(players) >= Number(maxPlayers);
   const formattedDate = new Date(date).toLocaleDateString("sr-RS");
 
   useEffect(() => {
@@ -65,6 +72,7 @@ const [playersList, setPlayersList] = useState([]);
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            ...authHeader(),
           },
           body: JSON.stringify({
             user_id: user.id,
@@ -98,6 +106,7 @@ const [playersList, setPlayersList] = useState([]);
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
+            ...authHeader(),
           },
           body: JSON.stringify({
             user_id: user.id,
@@ -136,6 +145,7 @@ const [playersList, setPlayersList] = useState([]);
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
+          ...authHeader(),
         },
         body: JSON.stringify({
           user_id: user.id,
@@ -172,18 +182,63 @@ setShowPlayers(true);
 };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition overflow-hidden">
+<div
+  className={`rounded-2xl shadow-lg hover:shadow-xl transition overflow-hidden ${
+    isFull ? "bg-gray-100 opacity-80" : "bg-white"
+  }`}
+>
+  <div
+    className={`text-white p-5 ${
+      isFull ? "bg-gray-500" : "bg-green-600"
+    }`}
+  >
+    <div className="flex items-center justify-between">
+      <h2 className="text-2xl font-bold">
+        {sport === "Fudbal" ? "⚽ Fudbal" : "🏀 Košarka"}
+      </h2>
 
-      <div className="bg-green-600 text-white p-5">
-        <h2 className="text-2xl font-bold">
-          {sport === "Fudbal" ? "⚽ Fudbal" : "🏀 Košarka"}
-        </h2>
+      {isFull && (
+        <span className="bg-red-600 px-3 py-1 rounded-full text-sm font-bold">
+          POPUNJENO
+        </span>
+      )}
+    </div>
 
-        <p className="text-green-100 mt-1">
-          Rekreativni termin
-        </p>
-      </div>
+    {/* Kreator termina */}
+    
+  {/* Kreator termina */}
 
+<Link
+  to={`/users/${creatorId}`}
+  className="flex items-center gap-3 mt-4 hover:opacity-80 transition"
+>
+  {creatorAvatar ? (
+    <img
+      src={`http://localhost:5000${creatorAvatar}`}
+      alt={creatorName}
+      className="w-12 h-12 rounded-full object-cover border-2 border-white"
+    />
+  ) : (
+    <div className="w-12 h-12 rounded-full bg-white text-green-600 flex items-center justify-center font-bold text-xl">
+      {creatorName?.charAt(0).toUpperCase()}
+    </div>
+  )}
+
+  <div>
+    <p className="text-sm text-green-100">
+      Kreirao
+    </p>
+
+    <p className="font-bold">
+      {creatorName || "Nepoznat korisnik"}
+    </p>
+  </div>
+</Link>
+
+    <p className="text-green-100 mt-3">
+      Rekreativni termin
+    </p>
+  </div>
       <div className="p-5 space-y-4">
 
         <div className="flex items-center gap-3">
@@ -239,6 +294,14 @@ setShowPlayers(true);
 >
   👥 Pogledaj učesnike
 </button>
+{user && (
+  <button
+    onClick={() => setShowChat(true)}
+    className="w-full mt-3 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold"
+  >
+    💬 Čet
+  </button>
+)}
         
 {JSON.parse(localStorage.getItem("user"))?.id === creatorId && (
   <button
@@ -258,6 +321,13 @@ setShowPlayers(true);
   </Link>
 )}
       </div>
+      {showChat && (
+        <MatchChat
+          matchId={id}
+          canWrite={joined || user?.id === creatorId}
+          onClose={() => setShowChat(false)}
+        />
+      )}
       {showPlayers && (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
     <div className="bg-white rounded-2xl p-6 w-96">

@@ -7,6 +7,8 @@ import axios from "axios";
 function Matches() {
   const [selectedSport, setSelectedSport] = useState("Svi");
   const [selectedDate, setSelectedDate] = useState("");
+    const [onlyAvailable, setOnlyAvailable] = useState(false);
+
 
  const [matches, setMatches] = useState([]);
 
@@ -28,15 +30,24 @@ const fetchMatches = async () => {
   }
 };
 
-  const filteredMatches = matches.filter((match) => {
-    const sportFilter =
-      selectedSport === "Svi" || match.sport === selectedSport;
+ const filteredMatches = matches.filter((match) => {
+  const sportFilter =
+    selectedSport === "Svi" || match.sport === selectedSport;
 
-    const dateFilter =
-  selectedDate === "" ||
-  match.match_date.slice(0, 10) === selectedDate;
-    return sportFilter && dateFilter;
-  });
+  const dateFilter =
+    selectedDate === "" ||
+    match.match_date.slice(0, 10) === selectedDate;
+
+  const availableFilter =
+    !onlyAvailable ||
+    Number(match.players) < Number(match.max_players);
+
+  return (
+    sportFilter &&
+    dateFilter &&
+    availableFilter
+  );
+});
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -98,6 +109,19 @@ const fetchMatches = async () => {
               onChange={(e) => setSelectedDate(e.target.value)}
               className="border p-3 rounded-xl"
             />
+            <div className="flex items-center gap-2 mt-4">
+  <input
+    type="checkbox"
+    id="available"
+    checked={onlyAvailable}
+    onChange={() => setOnlyAvailable(!onlyAvailable)}
+    className="w-4 h-4"
+  />
+
+  <label htmlFor="available" className="font-medium cursor-pointer">
+    👥 Prikaži samo termine sa slobodnim mestima
+  </label>
+</div>
 
           </div>
 
@@ -113,6 +137,8 @@ const fetchMatches = async () => {
                 key={match.id}
   id={match.id}
   creatorId={match.user_id}
+    creatorAvatar={match.creator_avatar}
+creatorName={match.creator_name}
   sport={match.sport}
   location={match.location}
   date={match.match_date}

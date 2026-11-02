@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { authHeader } from "../utils/auth";
 
 function EditMatch() {
   const { id } = useParams();
@@ -38,6 +39,7 @@ function EditMatch() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          ...authHeader(),
         },
         body: JSON.stringify({
           user_id: user.id,

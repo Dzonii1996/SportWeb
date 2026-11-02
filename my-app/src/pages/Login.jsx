@@ -60,6 +60,9 @@ function Login() {
           JSON.stringify(data.user)
         );
 
+        // "storage" se ne okida u istom tabu, pa javljamo NavBar-u ručno
+        window.dispatchEvent(new Event("storage"));
+
 
         alert("Uspešna prijava!");
 
