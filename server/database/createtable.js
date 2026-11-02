@@ -102,6 +102,23 @@ const createTables = async () => {
     ADD COLUMN IF NOT EXISTS team CHAR(1) CHECK (team IN ('A', 'B'))
   `);
 
+  // Kad je lozinka poslednji put promenjena: tokeni izdati pre toga ne važe
+  await pool.query(`
+    ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMP
+  `);
+
+  // Linkovi za novu lozinku; čuva se samo hash tokena, ne sam token
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS password_resets (
+      token_hash TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      expires_at TIMESTAMP NOT NULL,
+      used_at TIMESTAMP,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+
   // Notifikacija može da vodi na termin; posle brisanja termina ostaje bez linka
   await pool.query(`
     ALTER TABLE notifications

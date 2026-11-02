@@ -8,10 +8,14 @@ const {
   getMyMatches,
   getProfile,
   uploadAvatar,
+  updateProfile,
+  changePassword,
 } = require("../controllers/userController");
 
 router.get("/:user_id/matches", getMyMatches);
 router.get("/:id", optionalAuth, getProfile);
+router.put("/:id", protect, onlySelf, updateProfile);
+router.put("/:id/password", protect, onlySelf, changePassword);
 
 router.post(
   "/:id/avatar",

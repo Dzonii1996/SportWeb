@@ -1,5 +1,7 @@
 const pool = require("../database/db");
 const { getPlayerStats } = require("./ratingController");
+const bcrypt = require("bcrypt");
+const { validatePassword, signToken } = require("../utils/password");
 
 const getMyMatches = async (req, res) => {
   try {
@@ -142,9 +144,97 @@ const uploadAvatar = async (req, res) => {
   }
 };
 
+// Izmena imena (samo svoj nalog)
+const updateProfile = async (req, res) => {
+  try {
+    const name = typeof req.body.name === "string" ? req.body.name.trim() : "";
+
+    if (name.length < 2 || name.length > 100) {
+      return res.status(400).json({
+        success: false,
+        message: "Ime mora imati između 2 i 100 znakova.",
+      });
+    }
+
+    const result = await pool.query(
+      "UPDATE users SET name = $1 WHERE id = $2 RETURNING id, name, email",
+      [name, req.user.id]
+    );
+
+    res.json({
+      success: true,
+      message: "Profil je sačuvan.",
+      user: result.rows[0],
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Greška servera.",
+    });
+  }
+};
+
+// Promena lozinke uz trenutnu lozinku. Ostale sesije se odjavljuju,
+// a ovaj uređaj dobija novi token da ostane prijavljen.
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    const passwordError = validatePassword(newPassword);
+
+    if (passwordError) {
+      return res.status(400).json({
+        success: false,
+        message: passwordError,
+      });
+    }
+
+    const user = await pool.query(
+      "SELECT id, email, password FROM users WHERE id = $1",
+      [req.user.id]
+    );
+
+    const matches =
+      typeof currentPassword === "string" &&
+      (await bcrypt.compare(currentPassword, user.rows[0].password));
+
+    if (!matches) {
+      return res.status(400).json({
+        success: false,
+        message: "Trenutna lozinka nije tačna.",
+      });
+    }
+
+    await pool.query(
+      `UPDATE users
+       SET password = $1, password_changed_at = NOW()
+       WHERE id = $2`,
+      [await bcrypt.hash(newPassword, 10), req.user.id]
+    );
+
+    res.json({
+      success: true,
+      message: "Lozinka je promenjena. Ostali uređaji su odjavljeni.",
+      token: signToken(user.rows[0]),
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Greška servera.",
+    });
+  }
+};
+
 module.exports = {
   getMyMatches,
   getProfile,
-  uploadAvatar
-
+  uploadAvatar,
+  updateProfile,
+  changePassword,
 };

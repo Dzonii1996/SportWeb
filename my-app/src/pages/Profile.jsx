@@ -3,6 +3,7 @@ import { User, Mail, CalendarDays, Users } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { authHeader, logout } from "../utils/auth";
 import { API_URL } from "../config";
+import AccountSettings from "../components/AccountSettings";
 
 function Profile() {
   const navigate = useNavigate();
@@ -140,6 +141,13 @@ function Profile() {
           </div>
 
         </div>
+
+        <AccountSettings
+          user={profile.user}
+          onNameChange={(name) =>
+            setProfile({ ...profile, user: { ...profile.user, name } })
+          }
+        />
 
         <div className="mt-10 space-y-3">
 

@@ -9,12 +9,18 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "setupFiles": ["<rootDir>/tests/setup/env.js"],
+    "setupFiles": [
+      "<rootDir>/tests/setup/env.js"
+    ],
     "globalSetup": "<rootDir>/tests/setup/globalSetup.js",
-    "testMatch": ["<rootDir>/tests/**/*.test.js"]
+    "testMatch": [
+      "<rootDir>/tests/**/*.test.js"
+    ]
   },
   "nodemonConfig": {
-    "ignore": ["tests/*"]
+    "ignore": [
+      "tests/*"
+    ]
   },
   "keywords": [],
   "author": "",
@@ -27,6 +33,7 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
+    "nodemailer": "7.0.3",
     "pg": "^8.22.0"
   },
   "devDependencies": {

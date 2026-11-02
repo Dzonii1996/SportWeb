@@ -12,6 +12,8 @@ import EditMatch from "./pages/EditMatch";
 import Profile from "./pages/Profile";
 import PublicProfile from "./pages/PublicProfile";
 import MatchDetails from "./pages/MatchDetails";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 function App() {
 
   return (
@@ -22,6 +24,8 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/matches" element={<Matches />} />
         <Route path="/my-matches" element={<MyMatches />} />
         <Route path="/matches/:id" element={<MatchDetails />} />

@@ -200,6 +200,15 @@ function Login() {
 
             </div>
 
+            <div className="text-right mt-2">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-green-700 hover:underline"
+              >
+                Zaboravljena lozinka?
+              </Link>
+            </div>
+
 
           </div>
 

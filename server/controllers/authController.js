@@ -1,6 +1,17 @@
+const crypto = require("crypto");
 const pool = require("../database/db");
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+const { validatePassword, signToken } = require("../utils/password");
+const { sendMail } = require("../utils/mailer");
+
+const RESET_MINUTES = 60;
+
+// U bazi čuvamo samo hash tokena: ako baza procuri, linkovi ne rade
+const hashToken = (token) =>
+  crypto.createHash("sha256").update(token).digest("hex");
+
+const frontendUrl = () =>
+  (process.env.FRONTEND_URL || "http://localhost:3000").replace(/\/$/, "");
 
 const register = async (req, res) => {
 
@@ -17,6 +28,15 @@ const register = async (req, res) => {
         message: "Sva polja su obavezna."
       });
 
+    }
+
+    const passwordError = validatePassword(password);
+
+    if (passwordError) {
+      return res.status(400).json({
+        success: false,
+        message: passwordError
+      });
     }
 
 
@@ -133,16 +153,7 @@ const login = async (req, res) => {
     }
 
 
-    const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d"
-      }
-    );
+    const token = signToken(user);
 
 
     res.json({
@@ -172,7 +183,138 @@ const login = async (req, res) => {
 
 
 
+const FORGOT_MESSAGE =
+  "Ako nalog sa tim emailom postoji, poslali smo link za novu lozinku.";
+
+// Šalje link za novu lozinku. Odgovor je uvek isti, da se ne bi moglo
+// proveriti koji emailovi imaju nalog.
+const forgotPassword = async (req, res) => {
+  try {
+    const email = typeof req.body.email === "string" ? req.body.email.trim() : "";
+
+    const result = await pool.query(
+      "SELECT id, name, email FROM users WHERE LOWER(email) = LOWER($1)",
+      [email]
+    );
+    const user = result.rows[0];
+
+    if (user) {
+      // Najviše jedan mejl u 2 minuta, da neko ne zatrpa tuđe sanduče
+      const recent = await pool.query(
+        `SELECT 1 FROM password_resets
+         WHERE user_id = $1 AND created_at > NOW() - INTERVAL '2 minutes'`,
+        [user.id]
+      );
+
+      if (recent.rows.length === 0) {
+        const token = crypto.randomBytes(32).toString("hex");
+
+        await pool.query(
+          `INSERT INTO password_resets(token_hash, user_id, expires_at)
+           VALUES($1, $2, NOW() + make_interval(mins => $3))`,
+          [hashToken(token), user.id, RESET_MINUTES]
+        );
+
+        await sendMail({
+          to: user.email,
+          subject: "SportWeb – nova lozinka",
+          text:
+            `Zdravo ${user.name},\n\n` +
+            `neko je zatražio novu lozinku za tvoj SportWeb nalog. ` +
+            `Ako si to bio ti, otvori ovaj link u narednih ${RESET_MINUTES} minuta:\n\n` +
+            `${frontendUrl()}/reset-password?token=${token}\n\n` +
+            `Ako nisi ti tražio, slobodno ignoriši ovaj mejl. Lozinka ostaje ista.`,
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: FORGOT_MESSAGE,
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Greška servera.",
+    });
+  }
+};
+
+// Postavlja novu lozinku pomoću linka iz mejla; link radi samo jednom
+const resetPassword = async (req, res) => {
+  const client = await pool.connect();
+
+  try {
+    const { token, password } = req.body;
+
+    const passwordError = validatePassword(password);
+
+    if (passwordError) {
+      return res.status(400).json({
+        success: false,
+        message: passwordError,
+      });
+    }
+
+    await client.query("BEGIN");
+
+    const reset = await client.query(
+      `SELECT user_id FROM password_resets
+       WHERE token_hash = $1 AND used_at IS NULL AND expires_at > NOW()
+       FOR UPDATE`,
+      [hashToken(String(token || ""))]
+    );
+
+    if (reset.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({
+        success: false,
+        message: "Link je istekao ili je već iskorišćen.",
+      });
+    }
+
+    const { user_id } = reset.rows[0];
+
+    await client.query(
+      `UPDATE users
+       SET password = $1, password_changed_at = NOW()
+       WHERE id = $2`,
+      [await bcrypt.hash(password, 10), user_id]
+    );
+
+    // Ovaj i svi ostali linkovi tog korisnika više ne važe
+    await client.query(
+      `UPDATE password_resets SET used_at = NOW()
+       WHERE user_id = $1 AND used_at IS NULL`,
+      [user_id]
+    );
+
+    await client.query("COMMIT");
+
+    res.json({
+      success: true,
+      message: "Lozinka je promenjena. Prijavi se novom lozinkom.",
+    });
+
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Greška servera.",
+    });
+  } finally {
+    client.release();
+  }
+};
+
 module.exports = {
   register,
-  login
+  login,
+  forgotPassword,
+  resetPassword,
 };

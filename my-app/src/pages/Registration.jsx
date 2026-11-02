@@ -160,7 +160,9 @@ function Register() {
                 value={formData.password}
                 onChange={handleChange}
                 type="password"
-                placeholder="Unesite lozinku"
+                placeholder="Najmanje 6 znakova"
+                minLength={6}
+                required
                 className="w-full p-3 outline-none"
               />
 
