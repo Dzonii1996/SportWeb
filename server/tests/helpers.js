@@ -9,7 +9,8 @@ const api = request(app);
 const resetDb = () =>
   pool.query(`
     TRUNCATE users, matches, match_players, notifications,
-             match_messages, match_waitlist, match_ratings
+             match_messages, match_waitlist, match_ratings, match_reminders,
+             match_series, series_regulars
     RESTART IDENTITY CASCADE
   `);
 
@@ -45,8 +46,8 @@ const createMatch = async (creator, { maxPlayers = 10, startsInHours = 48, locat
   const result = await pool.query(
     `INSERT INTO matches(user_id, sport, location, match_date, match_time, max_players)
      VALUES($1, 'Fudbal', $2,
-            (NOW() + make_interval(hours => $3))::date,
-            (NOW() + make_interval(hours => $3))::time(0),
+            (NOW() + $3 * INTERVAL '1 hour')::date,
+            (NOW() + $3 * INTERVAL '1 hour')::time(0),
             $4)
      RETURNING *`,
     [creator.id, location, startsInHours, maxPlayers]

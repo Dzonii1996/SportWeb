@@ -5,6 +5,7 @@ import { API_URL } from "../config";
 import { localDateKey, todayKey, maxDateKey } from "../utils/matchDate";
 import { hasCoords } from "../utils/geo";
 import { LocationPicker } from "../components/LocationMap";
+import RepeatWeeklyField from "../components/RepeatWeeklyField";
 
 function EditMatch() {
   const { id } = useParams();
@@ -15,6 +16,8 @@ function EditMatch() {
   const [matchTime, setMatchTime] = useState("");
   const [maxPlayers, setMaxPlayers] = useState("");
   const [position, setPosition] = useState(null);
+  const [repeatWeekly, setRepeatWeekly] = useState(false);
+  const [inSeries, setInSeries] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -32,6 +35,8 @@ function EditMatch() {
           setPosition(
             hasCoords(match) ? [match.latitude, match.longitude] : null
           );
+          setRepeatWeekly(Boolean(match.repeat_weekly));
+          setInSeries(Boolean(match.repeat_weekly));
         }
 
         setLoaded(true);
@@ -54,6 +59,7 @@ function EditMatch() {
           match_date: matchDate,
           match_time: matchTime,
           max_players: Number(maxPlayers),
+          repeat_weekly: repeatWeekly,
           latitude: position?.[0] ?? null,
           longitude: position?.[1] ?? null,
         }),
@@ -133,6 +139,12 @@ function EditMatch() {
           required
           min="2"
           max="30"
+        />
+
+        <RepeatWeeklyField
+          checked={repeatWeekly}
+          onChange={setRepeatWeekly}
+          inSeries={inSeries}
         />
 
         <button

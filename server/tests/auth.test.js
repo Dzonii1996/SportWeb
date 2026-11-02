@@ -1,4 +1,12 @@
-const { api, pool, resetDb, createUser, auth } = require("./helpers");
+const {
+  api,
+  pool,
+  resetDb,
+  createUser,
+  auth,
+  createMatch,
+  addPlayers,
+} = require("./helpers");
 
 beforeEach(resetDb);
 afterAll(() => pool.end());
@@ -97,5 +105,47 @@ describe("zaštićene rute", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/samo slike/);
+  });
+});
+
+describe("privatnost emaila", () => {
+  test("javni profil ne prikazuje email drugima", async () => {
+    const [me, other] = [await createUser(), await createUser()];
+
+    const anonymous = await api.get(`/api/users/${me.id}`);
+    const asOther = await api.get(`/api/users/${me.id}`).set(auth(other));
+
+    expect(anonymous.body.user.email).toBeUndefined();
+    expect(asOther.body.user.email).toBeUndefined();
+  });
+
+  test("vlasnik vidi svoj email", async () => {
+    const me = await createUser();
+
+    const res = await api.get(`/api/users/${me.id}`).set(auth(me));
+
+    expect(res.body.user.email).toMatch(/@test\.rs$/);
+  });
+
+  test("neispravan token na javnom profilu ne smeta, samo nema emaila", async () => {
+    const me = await createUser();
+
+    const res = await api
+      .get(`/api/users/${me.id}`)
+      .set("Authorization", "Bearer abc.def.ghi");
+
+    expect(res.status).toBe(200);
+    expect(res.body.user.email).toBeUndefined();
+  });
+
+  test("lista učesnika termina ne sadrži email", async () => {
+    const [owner, player] = [await createUser(), await createUser()];
+    const match = await createMatch(owner);
+    await addPlayers(match, [player]);
+
+    const res = await api.get(`/api/matches/${match.id}/players`);
+
+    expect(res.body.players).toHaveLength(1);
+    expect(res.body.players[0].email).toBeUndefined();
   });
 });

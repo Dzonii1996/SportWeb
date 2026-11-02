@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const { uploadSingle } = require("../middleware/upload");
-const { protect, onlySelf } = require("../middleware/authMiddleware");
+const { protect, optionalAuth, onlySelf } = require("../middleware/authMiddleware");
 
 const {
   getMyMatches,
@@ -11,7 +11,7 @@ const {
 } = require("../controllers/userController");
 
 router.get("/:user_id/matches", getMyMatches);
-router.get("/:id", getProfile);
+router.get("/:id", optionalAuth, getProfile);
 
 router.post(
   "/:id/avatar",

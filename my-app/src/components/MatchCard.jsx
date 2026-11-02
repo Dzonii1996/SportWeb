@@ -20,6 +20,7 @@ function MatchCard({
   maxPlayers,
   isPast = false,
   distance = null,
+  repeatWeekly = false,
 }) {
   const [showPlayers, setShowPlayers] = useState(false);
 const [playersList, setPlayersList] = useState([]);
@@ -198,6 +199,14 @@ setShowPlayers(true);
     <div className="flex items-center justify-between">
       <h2 className="text-2xl font-bold">
         {sport === "Fudbal" ? "⚽ Fudbal" : "🏀 Košarka"}
+        {repeatWeekly && (
+          <span
+            className="ml-2 text-sm font-semibold bg-white/20 px-2 py-0.5 rounded-full align-middle"
+            title="Ponavlja se svake nedelje"
+          >
+            🔁 nedeljno
+          </span>
+        )}
       </h2>
 
       {isPast ? (
@@ -354,9 +363,6 @@ setShowPlayers(true);
         playersList.map((player) => (
           <div key={player.id} className="border-b py-2">
             <p className="font-semibold">{player.name}</p>
-            <p className="text-gray-500 text-sm">
-              {player.email}
-            </p>
           </div>
         ))
       ) : (

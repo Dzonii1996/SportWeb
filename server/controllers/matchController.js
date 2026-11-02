@@ -5,6 +5,11 @@ const {
   notifyUsers,
   matchAudience,
 } = require("../utils/notify");
+const { resetReminders } = require("../utils/reminders");
+const {
+  createSeriesForMatch,
+  updateSeriesFromEdit,
+} = require("../utils/series");
 
 const SPORTS = ["Fudbal", "Košarka"];
 const MIN_PLAYERS = 2;
@@ -140,7 +145,14 @@ const createMatch = async (req, res) => {
       });
     }
 
-   const result = await pool.query(
+    // Termin i (ako se ponavlja) serija se upisuju zajedno ili nijedno
+    const client = await pool.connect();
+    let match;
+
+    try {
+      await client.query("BEGIN");
+
+   const result = await client.query(
   `INSERT INTO matches
   (user_id, sport, location, match_date, match_time, max_players, latitude, longitude)
   VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
@@ -156,11 +168,24 @@ const createMatch = async (req, res) => {
     coords.longitude
   ]
 );
+      match = result.rows[0];
+
+      if (req.body.repeat_weekly === true) {
+        match.series_id = await createSeriesForMatch(client, match);
+      }
+
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
 
     res.status(201).json({
       success: true,
       message: "Termin uspešno kreiran.",
-      match: result.rows[0],
+      match: { ...match, repeat_weekly: Boolean(match.series_id) },
     });
 
   }catch (error) {
@@ -181,13 +206,16 @@ SELECT
   matches.*,
   users.name AS creator_name,
   users.avatar AS creator_avatar,
-  COUNT(match_players.user_id) AS players
+  COUNT(match_players.user_id) AS players,
+  COALESCE(match_series.active, false) AS repeat_weekly
 FROM matches
 JOIN users
   ON users.id = matches.user_id
 LEFT JOIN match_players
   ON match_players.match_id = matches.id
-GROUP BY matches.id, users.name, users.avatar
+LEFT JOIN match_series
+  ON match_series.id = matches.series_id
+GROUP BY matches.id, users.name, users.avatar, match_series.active
 ORDER BY match_date`
 );
 
@@ -214,14 +242,17 @@ const getMatch = async (req, res) => {
          matches.*,
          users.name AS creator_name,
          users.avatar AS creator_avatar,
-         COUNT(match_players.user_id) AS players
+         COUNT(match_players.user_id) AS players,
+         COALESCE(match_series.active, false) AS repeat_weekly
        FROM matches
        JOIN users
          ON users.id = matches.user_id
        LEFT JOIN match_players
          ON match_players.match_id = matches.id
+       LEFT JOIN match_series
+         ON match_series.id = matches.series_id
        WHERE matches.id = $1
-       GROUP BY matches.id, users.name, users.avatar`,
+       GROUP BY matches.id, users.name, users.avatar, match_series.active`,
       [id]
     );
 
@@ -365,6 +396,22 @@ const updateMatch = async (req, res) => {
       });
     }
 
+    // Serija: izmene važe i za sledeće termine; "repeat_weekly" je pokreće ili zaustavlja
+    await updateSeriesFromEdit(
+      id,
+      {
+        location: location.trim(),
+        match_date,
+        match_time,
+        max_players,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+      },
+      typeof req.body.repeat_weekly === "boolean"
+        ? req.body.repeat_weekly
+        : undefined
+    );
+
     const result = await pool.query(
       `UPDATE matches
        SET
@@ -394,6 +441,8 @@ const updateMatch = async (req, res) => {
 
     if (before !== after) {
       try {
+        await resetReminders(id);
+
         const audience = await matchAudience(id, {
           exceptUserId: user_id,
           includeWaitlist: true,

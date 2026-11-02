@@ -45,11 +45,55 @@ const createTables = async () => {
     )
   `);
 
+  // Koji podsetnici su već poslati za termin ('24h' ili '1h'), da idu samo jednom
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS match_reminders (
+      match_id INTEGER NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
+      kind TEXT NOT NULL CHECK (kind IN ('24h', '1h')),
+      sent_at TIMESTAMP DEFAULT NOW(),
+      PRIMARY KEY (match_id, kind)
+    )
+  `);
+
   // Tačna lokacija termina na mapi (nije obavezna)
   await pool.query(`
     ALTER TABLE matches
     ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION,
     ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION
+  `);
+
+  // Ponavljajući termini: šablon serije iz kog se pravi termin svake nedelje.
+  // last_date je datum poslednjeg napravljenog termina u seriji.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS match_series (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      sport VARCHAR(50) NOT NULL,
+      location VARCHAR(255) NOT NULL,
+      match_time TIME NOT NULL,
+      max_players INTEGER NOT NULL,
+      latitude DOUBLE PRECISION,
+      longitude DOUBLE PRECISION,
+      last_date DATE NOT NULL,
+      active BOOLEAN NOT NULL DEFAULT true,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+
+  await pool.query(`
+    ALTER TABLE matches
+    ADD COLUMN IF NOT EXISTS series_id INTEGER
+      REFERENCES match_series(id) ON DELETE SET NULL
+  `);
+
+  // Stalni igrači serije: automatski se prijavljuju na svaki novi termin
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS series_regulars (
+      series_id INTEGER NOT NULL REFERENCES match_series(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at TIMESTAMP DEFAULT NOW(),
+      PRIMARY KEY (series_id, user_id)
+    )
   `);
 
   // Notifikacija može da vodi na termin; posle brisanja termina ostaje bez linka

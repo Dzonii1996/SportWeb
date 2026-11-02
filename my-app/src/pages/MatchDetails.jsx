@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { MapPin, Calendar, Users, ArrowLeft } from "lucide-react";
 import MatchChat from "../components/MatchChat";
 import MatchRatings from "../components/MatchRatings";
+import RegularSpot from "../components/RegularSpot";
 import { LocationView } from "../components/LocationMap";
 import { hasCoords } from "../utils/geo";
 import { API_URL } from "../config";
@@ -207,6 +208,11 @@ function MatchDetails() {
                 <div className="flex items-center justify-between">
                   <h1 className="text-3xl font-bold">
                     {match.sport === "Fudbal" ? "⚽ Fudbal" : "🏀 Košarka"}
+                    {match.repeat_weekly && (
+                      <span className="ml-3 text-base font-semibold bg-white/20 px-3 py-1 rounded-full align-middle">
+                        🔁 Svake nedelje
+                      </span>
+                    )}
                   </h1>
 
                   {isPast ? (
@@ -295,6 +301,10 @@ function MatchDetails() {
                     ? "⏳ Upiši se na listu čekanja"
                     : "Prijavi se"}
                 </button>
+
+                {match.repeat_weekly && joined && !isPast && (
+                  <RegularSpot matchId={id} />
+                )}
 
                 {waitlistPosition > 0 && !isPast && (
                   <p className="text-center text-orange-700 font-medium">

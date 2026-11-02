@@ -30,6 +30,28 @@ const protect = (req, res, next) => {
   }
 };
 
+// Za javne rute: ako je poslat ispravan token postavlja req.user,
+// a bez tokena (ili sa neispravnim) pušta zahtev dalje kao anoniman
+const optionalAuth = (req, res, next) => {
+  const header = req.headers.authorization || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7) : null;
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      req.user = {
+        id: decoded.id,
+        email: decoded.email,
+      };
+    } catch (error) {
+      // Neispravan token na javnoj ruti: nastavljamo bez korisnika
+    }
+  }
+
+  next();
+};
+
 // Dozvoljava pristup samo vlasniku naloga iz :id parametra
 const onlySelf = (req, res, next) => {
   if (Number(req.params.id) !== Number(req.user.id)) {
@@ -44,5 +66,6 @@ const onlySelf = (req, res, next) => {
 
 module.exports = {
   protect,
+  optionalAuth,
   onlySelf,
 };

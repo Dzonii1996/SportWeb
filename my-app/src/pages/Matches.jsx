@@ -281,6 +281,7 @@ creatorName={match.creator_name}
   maxPlayers={match.max_players}
   isPast={isPastMatch(match.match_date, match.match_time)}
   distance={distanceOf(match)}
+  repeatWeekly={match.repeat_weekly}
               />
             ))
           ) : (

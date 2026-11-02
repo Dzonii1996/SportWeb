@@ -67,6 +67,11 @@ const getProfile = async (req, res) => {
       });
     }
 
+    // Email vidi samo vlasnik profila
+    if (Number(req.user?.id) !== Number(id)) {
+      delete user.rows[0].email;
+    }
+
     const created = await pool.query(
       `
       SELECT COUNT(*) AS total

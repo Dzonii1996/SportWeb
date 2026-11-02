@@ -1,2 +1,5 @@
 node_modules
 .env
+# Slike koje korisnici uploaduju ne idu u git; folder ostaje zbog .gitkeep
+uploads/*
+!uploads/.gitkeep

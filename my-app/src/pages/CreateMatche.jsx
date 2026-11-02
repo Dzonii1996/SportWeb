@@ -5,6 +5,7 @@ import { authHeader } from "../utils/auth";
 import { API_URL } from "../config";
 import { todayKey, maxDateKey } from "../utils/matchDate";
 import { LocationPicker } from "../components/LocationMap";
+import RepeatWeeklyField from "../components/RepeatWeeklyField";
 
 function CreateMatch() {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ function CreateMatch() {
 
   // Tačno mesto na mapi [lat, lng], nije obavezno
   const [position, setPosition] = useState(null);
+  const [repeatWeekly, setRepeatWeekly] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -38,6 +40,7 @@ function CreateMatch() {
         {
           user_id: user.id,
           ...formData,
+          repeat_weekly: repeatWeekly,
           latitude: position?.[0] ?? null,
           longitude: position?.[1] ?? null,
         },
@@ -120,6 +123,8 @@ function CreateMatch() {
             onChange={handleChange}
             className="w-full border p-3 rounded-xl"
           />
+
+          <RepeatWeeklyField checked={repeatWeekly} onChange={setRepeatWeekly} />
 
           <button
             type="submit"

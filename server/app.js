@@ -13,7 +13,10 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const waitlistRoutes = require("./routes/waitlistRoutes");
 const ratingRoutes = require("./routes/ratingRoutes");
+const seriesRoutes = require("./routes/seriesRoutes");
 const createTables = require("./database/createtable");
+const { sendDueReminders } = require("./utils/reminders");
+const { generateNextOccurrences } = require("./utils/series");
 app.use(cors());
 app.use(express.json());
 
@@ -28,6 +31,7 @@ app.use("/api/matches", matchPlayerRoutes);
 app.use("/api/matches", messageRoutes);
 app.use("/api/matches", waitlistRoutes);
 app.use("/api/matches", ratingRoutes);
+app.use("/api/matches", seriesRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use(express.json());
@@ -50,9 +54,24 @@ if (require.main === module) {
     } else {
       console.log("Baza povezana!");
       console.log("Vreme baze:", res.rows[0].now);
-      createTables().catch((error) =>
-        console.log("Greška pri kreiranju tabela:", error.message)
-      );
+      createTables()
+        .then(() => {
+          // Svakog minuta: novi termini iz serija, pa podsetnici pred termin
+          const runScheduled = async () => {
+            try {
+              await generateNextOccurrences();
+              await sendDueReminders();
+            } catch (error) {
+              console.log("Greška u zakazanim poslovima:", error.message);
+            }
+          };
+
+          runScheduled();
+          setInterval(runScheduled, 60 * 1000);
+        })
+        .catch((error) =>
+          console.log("Greška pri kreiranju tabela:", error.message)
+        );
     }
   });
 

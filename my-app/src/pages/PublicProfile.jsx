@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { User, Mail, CalendarDays, Users } from "lucide-react";
 import { API_URL } from "../config";
+import { authHeader } from "../utils/auth";
 
 function PublicProfile() {
   const { id } = useParams();
@@ -10,7 +11,7 @@ function PublicProfile() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/users/${id}`)
+    fetch(`${API_URL}/api/users/${id}`, { headers: authHeader() })
       .then((res) => res.json())
       .then((data) => {
         setProfile(data);
@@ -96,17 +97,20 @@ function PublicProfile() {
               </div>
             </div>
 
+            {/* Server šalje email samo kad vlasnik gleda svoj profil */}
+            {user.email && (
             <div className="flex items-center gap-4">
               <Mail className="text-green-600" />
               <div>
                 <p className="text-sm text-gray-500">
-                  Email
+                  Email (vidiš samo ti)
                 </p>
                 <p className="font-semibold">
                   {user.email}
                 </p>
               </div>
             </div>
+            )}
 
             <div className="border-t pt-6">
 

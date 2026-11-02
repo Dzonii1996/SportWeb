@@ -20,7 +20,7 @@ function Profile() {
     }
 
     // Zavisimo od userId, ne od "user" objekta koji je nov pri svakom renderu
-    fetch(`${API_URL}/api/users/${userId}`)
+    fetch(`${API_URL}/api/users/${userId}`, { headers: authHeader() })
       .then((res) => res.json())
       .then((data) => setProfile(data))
       .catch(console.error);
