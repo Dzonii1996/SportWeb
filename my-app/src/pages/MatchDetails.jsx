@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { MapPin, Calendar, Users, ArrowLeft } from "lucide-react";
 import MatchChat from "../components/MatchChat";
+import MatchRatings from "../components/MatchRatings";
 import { API_URL } from "../config";
 import { authHeader } from "../utils/auth";
 import { isPastMatch } from "../utils/matchDate";
@@ -64,6 +65,18 @@ function MatchDetails() {
     loadMatch();
   }, [loadMatch]);
 
+  // Otvaranjem stranice notifikacije za ovaj termin su viđene
+  const userId = user?.id;
+
+  useEffect(() => {
+    if (!userId) return;
+
+    fetch(`${API_URL}/api/notifications/match/${id}/read`, {
+      method: "PUT",
+      headers: authHeader(),
+    }).catch(console.error);
+  }, [id, userId]);
+
   if (notFound) {
     return (
       <div className="text-center mt-20">
@@ -88,6 +101,15 @@ function MatchDetails() {
   const joined = players.some((p) => p.id === user?.id);
   const isFull = players.length >= Number(match.max_players);
   const isPast = isPastMatch(match.match_date, match.match_time);
+  // Koga mogu da ocenim posle termina: kreator i igrači, bez mene
+  const rateablePeople = [
+    { id: match.user_id, name: match.creator_name },
+    ...players,
+  ].filter(
+    (p, index, all) =>
+      p.id !== user?.id && all.findIndex((x) => x.id === p.id) === index
+  );
+
   // Pozicija na listi čekanja (1, 2, ...), 0 ako korisnik nije na listi
   const waitlistPosition = waitlist.findIndex((p) => p.id === user?.id) + 1;
   const percentage = (players.length / match.max_players) * 100;
@@ -291,6 +313,13 @@ function MatchDetails() {
                 )}
               </div>
             </div>
+
+            {isPast && (joined || isCreator) && (
+              <MatchRatings
+                matchId={id}
+                people={rateablePeople}
+              />
+            )}
 
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h2 className="text-2xl font-bold mb-4">

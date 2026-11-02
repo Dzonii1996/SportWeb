@@ -1,4 +1,5 @@
 const pool = require("../database/db");
+const { describeMatch, matchAudience } = require("../utils/notify");
 
 // Da li je korisnik kreator ili prijavljeni igrač termina
 const isParticipant = async (match_id, user_id) => {
@@ -14,6 +15,45 @@ const isParticipant = async (match_id, user_id) => {
   );
 
   return result.rows.length > 0;
+};
+
+const CHAT_PREFIX = "💬 Nove poruke u četu termina";
+
+// Obaveštava ostale učesnike o novoj poruci. Ko već ima nepročitanu
+// notifikaciju za čet ovog termina ne dobija novu, da ne bude spama.
+const notifyChat = async (match_id, sender_id) => {
+  const match = await pool.query(
+    "SELECT * FROM matches WHERE id = $1",
+    [match_id]
+  );
+
+  if (match.rows.length === 0) return;
+
+  const audience = await matchAudience(match_id, {
+    exceptUserId: sender_id,
+  });
+
+  if (audience.length === 0) return;
+
+  await pool.query(
+    `INSERT INTO notifications(user_id, message, match_id)
+     SELECT u, $2, $3
+     FROM unnest($1::int[]) AS u
+     WHERE NOT EXISTS (
+       SELECT 1
+       FROM notifications n
+       WHERE n.user_id = u
+       AND n.match_id = $3
+       AND n.is_read = false
+       AND n.message LIKE $4
+     )`,
+    [
+      audience,
+      `${CHAT_PREFIX}: ${describeMatch(match.rows[0])}.`,
+      match_id,
+      `${CHAT_PREFIX}%`,
+    ]
+  );
 };
 
 const getMessages = async (req, res) => {
@@ -88,6 +128,12 @@ const sendMessage = async (req, res) => {
        RETURNING id`,
       [id, user_id, message]
     );
+
+    try {
+      await notifyChat(id, user_id);
+    } catch (error) {
+      console.error("Greška pri slanju notifikacija:", error);
+    }
 
     res.status(201).json({
       success: true,

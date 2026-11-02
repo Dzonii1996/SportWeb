@@ -1,4 +1,5 @@
 const pool = require("../database/db");
+const { getPlayerStats } = require("./ratingController");
 
 const getMyMatches = async (req, res) => {
   try {
@@ -90,6 +91,7 @@ const getProfile = async (req, res) => {
       stats: {
         created: Number(created.rows[0].total),
         joined: Number(joined.rows[0].total),
+        ...(await getPlayerStats(id)),
       },
     });
 

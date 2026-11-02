@@ -1,5 +1,6 @@
 const pool = require("../database/db");
 const { promoteFromWaitlist } = require("./waitlistController");
+const { notifyUsers } = require("../utils/notify");
 
 const joinMatch = async (req, res) => {
   const client = await pool.connect();
@@ -107,13 +108,11 @@ const joinMatch = async (req, res) => {
 
       const playerName = player.rows[0]?.name || "Korisnik";
 
-      await client.query(
-        `INSERT INTO notifications(user_id, message)
-         VALUES($1, $2)`,
-        [
-          matchData.creator_id,
-          `${playerName} se prijavio na vaš termin (${matchData.sport}).`,
-        ]
+      await notifyUsers(
+        client,
+        [matchData.creator_id],
+        `${playerName} se prijavio na vaš termin (${matchData.sport}).`,
+        id
       );
     }
 

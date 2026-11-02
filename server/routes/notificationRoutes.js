@@ -7,6 +7,7 @@ const {
   getUnreadCount,
   markAsRead,
   markAllAsRead,
+  markMatchAsRead,
 } = require("../controllers/notificationController");
 const { protect } = require("../middleware/authMiddleware");
 
@@ -18,6 +19,11 @@ router.get("/:user_id", getNotifications);
 router.get(
   "/:user_id/unread",
   getUnreadCount
+);
+
+router.put(
+  "/match/:match_id/read",
+  markMatchAsRead
 );
 
 router.put(

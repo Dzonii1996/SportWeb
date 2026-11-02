@@ -1,4 +1,5 @@
 const pool = require("../database/db");
+const { describeMatch, notifyUsers } = require("../utils/notify");
 
 // Popunjava slobodna mesta igračima sa liste čekanja (po redu upisa)
 // i šalje im notifikaciju. Termin se zaključava, kao i pri prijavi,
@@ -55,9 +56,6 @@ const promoteFromWaitlist = async (matchId) => {
       [matchId, freeSpots]
     );
 
-    const date = new Date(matchData.match_date).toLocaleDateString("sr-RS");
-    const time = matchData.match_time.slice(0, 5);
-
     for (const { user_id } of next.rows) {
       await client.query(
         `INSERT INTO match_players(match_id, user_id)
@@ -72,13 +70,11 @@ const promoteFromWaitlist = async (matchId) => {
         [matchId, user_id]
       );
 
-      await client.query(
-        `INSERT INTO notifications(user_id, message)
-         VALUES($1, $2)`,
-        [
-          user_id,
-          `Oslobodilo se mesto! Sa liste čekanja ste prijavljeni na termin: ${matchData.sport}, ${matchData.location}, ${date} u ${time}.`,
-        ]
+      await notifyUsers(
+        client,
+        [user_id],
+        `Oslobodilo se mesto! Sa liste čekanja ste prijavljeni na termin: ${describeMatch(matchData)}.`,
+        matchId
       );
     }
 

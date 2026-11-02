@@ -10,7 +10,8 @@ const getNotifications = async (req, res) => {
         id,
         message,
         is_read,
-        created_at
+        created_at,
+        match_id
       FROM notifications
       WHERE user_id = $1
       ORDER BY created_at DESC
@@ -118,9 +119,40 @@ const markAllAsRead = async (req, res) => {
   }
 };
 
+// Kad korisnik otvori stranicu termina, njegove notifikacije za taj termin su viđene
+const markMatchAsRead = async (req, res) => {
+  try {
+    const { match_id } = req.params;
+
+    await pool.query(
+      `
+      UPDATE notifications
+      SET is_read = true
+      WHERE user_id = $1
+      AND match_id = $2
+      AND is_read = false
+      `,
+      [req.user.id, match_id]
+    );
+
+    res.json({
+      success: true,
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Greška servera.",
+    });
+  }
+};
+
 module.exports = {
   getNotifications,
   getUnreadCount,
   markAsRead,
   markAllAsRead,
+  markMatchAsRead,
 };

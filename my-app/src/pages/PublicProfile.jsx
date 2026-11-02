@@ -148,6 +148,50 @@ function PublicProfile() {
 
               </div>
 
+              {/* Fer plej iz ocena saigrača */}
+              <div className="grid grid-cols-3 gap-4 mt-4">
+
+                <div className="bg-gray-50 rounded-xl p-4 text-center">
+                  <p className="text-2xl font-bold">
+                    {profile.stats.played}
+                  </p>
+                  <p className="text-gray-600 text-sm">
+                    Odigranih termina
+                  </p>
+                </div>
+
+                <div className="bg-yellow-50 rounded-xl p-4 text-center">
+                  <p className="text-2xl font-bold text-yellow-700">
+                    {profile.stats.fairPlay === null
+                      ? "—"
+                      : `${profile.stats.fairPlay}%`}
+                  </p>
+                  <p className="text-gray-600 text-sm">
+                    Fer plej
+                    {profile.stats.fair + profile.stats.unfair > 0 &&
+                      ` (${profile.stats.fair + profile.stats.unfair} ocena)`}
+                  </p>
+                </div>
+
+                <div
+                  className={`rounded-xl p-4 text-center ${
+                    profile.stats.noShows > 0 ? "bg-red-50" : "bg-gray-50"
+                  }`}
+                >
+                  <p
+                    className={`text-2xl font-bold ${
+                      profile.stats.noShows > 0 ? "text-red-600" : ""
+                    }`}
+                  >
+                    {profile.stats.noShows}
+                  </p>
+                  <p className="text-gray-600 text-sm">
+                    Nedolazaka
+                  </p>
+                </div>
+
+              </div>
+
             </div>
 
             <Link

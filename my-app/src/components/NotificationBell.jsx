@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Bell } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { API_URL } from "../config";
 import { authHeader } from "../utils/auth";
 
 const POLL_INTERVAL = 30000;
 
 function NotificationBell({ userId }) {
+  const navigate = useNavigate();
+
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const [notifications, setNotifications] = useState([]);
@@ -79,6 +82,16 @@ function NotificationBell({ userId }) {
     }
 
     setOpen(!open);
+  };
+
+  const openNotification = async (notification) => {
+    await markAsRead(notification);
+
+    // Notifikacija vezana za termin vodi na njegovu stranicu
+    if (notification.match_id) {
+      setOpen(false);
+      navigate(`/matches/${notification.match_id}`);
+    }
   };
 
   const markAsRead = async (notification) => {
@@ -170,7 +183,7 @@ function NotificationBell({ userId }) {
               notifications.map((n) => (
                 <button
                   key={n.id}
-                  onClick={() => markAsRead(n)}
+                  onClick={() => openNotification(n)}
                   className={`block w-full text-left px-4 py-3 border-b last:border-b-0 hover:bg-gray-50 ${
                     n.is_read ? "text-gray-500" : "bg-green-50 font-semibold"
                   }`}

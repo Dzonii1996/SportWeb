@@ -1,5 +1,10 @@
 const pool = require("../database/db");
 const { promoteFromWaitlist } = require("./waitlistController");
+const {
+  describeMatch,
+  notifyUsers,
+  matchAudience,
+} = require("../utils/notify");
 
 const SPORTS = ["Fudbal", "Košarka"];
 const MIN_PLAYERS = 2;
@@ -241,10 +246,26 @@ const deleteMatch = async (req, res) => {
       });
     }
 
+    // Ko treba da sazna za otkazivanje; posle brisanja prijave više ne postoje
+    const audience = await matchAudience(id, {
+      exceptUserId: user_id,
+      includeWaitlist: true,
+    });
+
     await pool.query(
       "DELETE FROM matches WHERE id = $1",
       [id]
     );
+
+    try {
+      await notifyUsers(
+        pool,
+        audience,
+        `❌ Termin je otkazan: ${describeMatch(match.rows[0])}.`
+      );
+    } catch (error) {
+      console.error("Greška pri slanju notifikacija:", error);
+    }
 
     res.json({
       success: true,
@@ -334,6 +355,29 @@ const updateMatch = async (req, res) => {
         id,
       ]
     );
+
+    // Igrače obaveštavamo samo ako se promenilo mesto ili vreme,
+    // a pre popunjavanja sa liste, da novi igrači ne dobiju ovu poruku
+    const before = describeMatch(match.rows[0]);
+    const after = describeMatch(result.rows[0]);
+
+    if (before !== after) {
+      try {
+        const audience = await matchAudience(id, {
+          exceptUserId: user_id,
+          includeWaitlist: true,
+        });
+
+        await notifyUsers(
+          pool,
+          audience,
+          `✏️ Termin je izmenjen: ${after} (ranije: ${before}).`,
+          id
+        );
+      } catch (error) {
+        console.error("Greška pri slanju notifikacija:", error);
+      }
+    }
 
     // Ako je kreator povećao broj mesta, popunjavamo ih sa liste čekanja
     try {
