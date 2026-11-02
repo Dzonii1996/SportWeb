@@ -39,17 +39,26 @@ app.get("/", (req, res) => {
   });
 });
 
-// Port
-const PORT = process.env.PORT || 5000;
-pool.query("SELECT NOW()", (err, res) => {
-  if (err) {
-    console.log("Greška pri povezivanju sa bazom:", err.message);
-  } else {
-    console.log("Baza povezana!");
-    console.log("Vreme baze:", res.rows[0].now);
-    createTables();
-  }
-});
-app.listen(PORT, () => {
-  console.log(`Server pokrenut na portu ${PORT}`);
-});
+// Server se pokreće samo kad se app.js pokrene direktno (npm start),
+// a ne kad ga testovi učitaju
+if (require.main === module) {
+  const PORT = process.env.PORT || 5000;
+
+  pool.query("SELECT NOW()", (err, res) => {
+    if (err) {
+      console.log("Greška pri povezivanju sa bazom:", err.message);
+    } else {
+      console.log("Baza povezana!");
+      console.log("Vreme baze:", res.rows[0].now);
+      createTables().catch((error) =>
+        console.log("Greška pri kreiranju tabela:", error.message)
+      );
+    }
+  });
+
+  app.listen(PORT, () => {
+    console.log(`Server pokrenut na portu ${PORT}`);
+  });
+}
+
+module.exports = app;

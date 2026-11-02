@@ -23,6 +23,15 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
+  "jest": {
+    "moduleNameMapper": {
+      "^react-router/dom$": "<rootDir>/node_modules/react-router/dist/development/dom-export.js"
+    },
+    "transformIgnorePatterns": [
+      "[/\\\\]node_modules[/\\\\](?!(react-leaflet|@react-leaflet)[/\\\\]).+\\.(js|jsx|mjs|cjs|ts|tsx)$",
+      "^.+\\.module\\.(css|sass|scss)$"
+    ]
+  },
   "eslintConfig": {
     "extends": [
       "react-app",

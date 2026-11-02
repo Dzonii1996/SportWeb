@@ -4,7 +4,17 @@
   "main": "index.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "test": "jest --runInBand"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupFiles": ["<rootDir>/tests/setup/env.js"],
+    "globalSetup": "<rootDir>/tests/setup/globalSetup.js",
+    "testMatch": ["<rootDir>/tests/**/*.test.js"]
+  },
+  "nodemonConfig": {
+    "ignore": ["tests/*"]
   },
   "keywords": [],
   "author": "",
@@ -20,6 +30,8 @@
     "pg": "^8.22.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "jest": "29.7.0",
+    "nodemon": "^3.1.14",
+    "supertest": "7.1.4"
   }
 }
