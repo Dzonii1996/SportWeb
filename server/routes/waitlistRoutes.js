@@ -6,10 +6,11 @@ const {
   joinWaitlist,
   leaveWaitlist,
 } = require("../controllers/waitlistController");
-const { protect } = require("../middleware/authMiddleware");
+const { protect, optionalAuth } = require("../middleware/authMiddleware");
+const { requireVisible } = require("../utils/privacy");
 
-router.get("/:id/waitlist", getWaitlist);
-router.post("/:id/waitlist", protect, joinWaitlist);
+router.get("/:id/waitlist", optionalAuth, requireVisible, getWaitlist);
+router.post("/:id/waitlist", protect, requireVisible, joinWaitlist);
 router.delete("/:id/waitlist", protect, leaveWaitlist);
 
 module.exports = router;

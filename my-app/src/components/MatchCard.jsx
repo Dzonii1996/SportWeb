@@ -35,6 +35,7 @@ function MatchCard({
   fieldPrice = null,
   scoreA = null,
   scoreB = null,
+  isPrivate = false,
 }) {
   const [showPlayers, setShowPlayers] = useState(false);
   const [playersList, setPlayersList] = useState([]);
@@ -262,6 +263,12 @@ function MatchCard({
               <h2 className="text-xl font-bold leading-tight">{sport}</h2>
 
               <div className="flex flex-wrap gap-1.5 mt-1">
+                {isPrivate && (
+                  <span className="text-xs font-semibold bg-black/20 px-2 py-0.5 rounded-full">
+                    🔒 privatno
+                  </span>
+                )}
+
                 {repeatWeekly && (
                   <span className="text-xs font-semibold bg-white/20 px-2 py-0.5 rounded-full">
                     🔁 nedeljno

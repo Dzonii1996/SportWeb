@@ -7,6 +7,7 @@ import { hasCoords } from "../utils/geo";
 import { LocationPicker } from "../components/LocationMap";
 import RepeatWeeklyField from "../components/RepeatWeeklyField";
 import FieldPriceInput from "../components/FieldPriceInput";
+import PrivateMatchField from "../components/PrivateMatchField";
 
 function EditMatch() {
   const { id } = useParams();
@@ -20,10 +21,12 @@ function EditMatch() {
   const [position, setPosition] = useState(null);
   const [repeatWeekly, setRepeatWeekly] = useState(false);
   const [inSeries, setInSeries] = useState(false);
+  const [isPrivate, setIsPrivate] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/matches/${id}`)
+    // Token: kreator vidi i privatni termin bez ključa iz linka
+    fetch(`${API_URL}/api/matches/${id}`, { headers: authHeader() })
       .then((res) => res.json())
       .then((data) => {
         const match = data.match;
@@ -40,6 +43,7 @@ function EditMatch() {
           );
           setRepeatWeekly(Boolean(match.repeat_weekly));
           setInSeries(Boolean(match.repeat_weekly));
+          setIsPrivate(Boolean(match.is_private));
         }
 
         setLoaded(true);
@@ -64,6 +68,7 @@ function EditMatch() {
           max_players: Number(maxPlayers),
           field_price: fieldPrice,
           repeat_weekly: repeatWeekly,
+          is_private: isPrivate,
           latitude: position?.[0] ?? null,
           longitude: position?.[1] ?? null,
         }),
@@ -155,6 +160,8 @@ function EditMatch() {
           onChange={setRepeatWeekly}
           inSeries={inSeries}
         />
+
+        <PrivateMatchField checked={isPrivate} onChange={setIsPrivate} />
 
         <button
           className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl"

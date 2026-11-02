@@ -1,12 +1,13 @@
 const pool = require("../database/db");
 const { describeMatch, notifyUsers } = require("./notify");
+const { newShareToken } = require("./privacy");
 
 // Pravi seriju iz termina i vezuje termin za nju. "db" je pool ili client.
 const createSeriesForMatch = async (db, match) => {
   const series = await db.query(
     `INSERT INTO match_series
-       (user_id, sport, location, match_time, max_players, latitude, longitude, last_date, field_price)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       (user_id, sport, location, match_time, max_players, latitude, longitude, last_date, field_price, is_private)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      RETURNING id`,
     [
       match.user_id,
@@ -18,6 +19,7 @@ const createSeriesForMatch = async (db, match) => {
       match.longitude,
       match.match_date,
       match.field_price ?? null,
+      Boolean(match.is_private),
     ]
   );
 
@@ -42,7 +44,12 @@ const updateSeriesFromEdit = async (matchId, fields, repeatWeekly) => {
 
   if (!match.series_id) {
     if (repeatWeekly === true) {
-      await createSeriesForMatch(pool, { ...match, ...fields });
+      // Polja koja nisu poslata (undefined) ne smeju da pregaze vrednosti iz baze
+      const sent = Object.fromEntries(
+        Object.entries(fields).filter(([, value]) => value !== undefined)
+      );
+
+      await createSeriesForMatch(pool, { ...match, ...sent });
     }
     return;
   }
@@ -57,7 +64,8 @@ const updateSeriesFromEdit = async (matchId, fields, repeatWeekly) => {
          longitude = $6,
          last_date = CASE WHEN last_date = $7::date THEN $8::date ELSE last_date END,
          active = COALESCE($9, active),
-         field_price = $10
+         field_price = $10,
+         is_private = COALESCE($11, is_private)
      WHERE id = $1`,
     [
       match.series_id,
@@ -70,6 +78,7 @@ const updateSeriesFromEdit = async (matchId, fields, repeatWeekly) => {
       fields.match_date,
       repeatWeekly === undefined ? null : repeatWeekly,
       fields.field_price ?? null,
+      fields.is_private ?? null,
     ]
   );
 };
@@ -118,8 +127,8 @@ const generateNextOccurrences = async () => {
       const inserted = await client.query(
         `INSERT INTO matches
            (user_id, sport, location, match_date, match_time, max_players,
-            latitude, longitude, series_id, field_price)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            latitude, longitude, series_id, field_price, is_private, share_token)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
          RETURNING *`,
         [
           series.user_id,
@@ -132,6 +141,8 @@ const generateNextOccurrences = async () => {
           series.longitude,
           series.id,
           series.field_price,
+          series.is_private,
+          series.is_private ? newShareToken() : null,
         ]
       );
       const match = inserted.rows[0];

@@ -49,6 +49,7 @@ function MyMatches() {
               fieldPrice={match.field_price}
               scoreA={match.score_a}
               scoreB={match.score_b}
+              isPrivate={match.is_private}
             />
           ))
         ) : (
@@ -80,6 +81,7 @@ function MyMatches() {
               fieldPrice={match.field_price}
               scoreA={match.score_a}
               scoreB={match.score_b}
+              isPrivate={match.is_private}
             />
           ))
         ) : (

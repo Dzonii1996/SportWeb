@@ -7,6 +7,7 @@ import { todayKey, maxDateKey } from "../utils/matchDate";
 import { LocationPicker } from "../components/LocationMap";
 import RepeatWeeklyField from "../components/RepeatWeeklyField";
 import FieldPriceInput from "../components/FieldPriceInput";
+import PrivateMatchField from "../components/PrivateMatchField";
 
 function CreateMatch() {
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ function CreateMatch() {
   // Tačno mesto na mapi [lat, lng], nije obavezno
   const [position, setPosition] = useState(null);
   const [repeatWeekly, setRepeatWeekly] = useState(false);
+  const [isPrivate, setIsPrivate] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -43,6 +45,7 @@ function CreateMatch() {
           user_id: user.id,
           ...formData,
           repeat_weekly: repeatWeekly,
+          is_private: isPrivate,
           latitude: position?.[0] ?? null,
           longitude: position?.[1] ?? null,
         },
@@ -51,7 +54,8 @@ function CreateMatch() {
 
       alert(response.data.message);
 
-      navigate("/matches");
+      // Na stranicu termina, odakle se odmah deli link (privatni nije na listi)
+      navigate(`/matches/${response.data.match.id}`);
 
     } catch (error) {
       alert(
@@ -133,6 +137,8 @@ function CreateMatch() {
           />
 
           <RepeatWeeklyField checked={repeatWeekly} onChange={setRepeatWeekly} />
+
+          <PrivateMatchField checked={isPrivate} onChange={setIsPrivate} />
 
           <button
             type="submit"

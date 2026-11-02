@@ -10,12 +10,13 @@ const {
 } = require("../controllers/matchPlayerController");
 const { splitTeams } = require("../controllers/teamController");
 const { setResult } = require("../controllers/resultController");
-const { protect } = require("../middleware/authMiddleware");
+const { protect, optionalAuth } = require("../middleware/authMiddleware");
+const { requireVisible } = require("../utils/privacy");
 
-router.post("/:id/join", protect, joinMatch);
+router.post("/:id/join", protect, requireVisible, joinMatch);
 router.delete("/:id/leave", protect, leaveMatch);
 router.post("/:id/confirm", protect, confirmAttendance);
-router.get("/:id/players", getPlayers);
+router.get("/:id/players", optionalAuth, requireVisible, getPlayers);
 router.post("/:id/teams", protect, splitTeams);
 router.put("/:id/result", protect, setResult);
 router.put("/:id/players/:userId/paid", protect, setPaid);

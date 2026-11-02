@@ -58,7 +58,14 @@ const shareMatch = async (req, res) => {
         )
       : { rows: [] };
 
-    const match = result.rows[0];
+    const found = result.rows[0];
+    const key = typeof req.query.key === "string" ? req.query.key : null;
+
+    // Privatni termin bez ispravnog ključa izgleda kao da ne postoji
+    const match =
+      found && (!found.is_private || (found.share_token && key === found.share_token))
+        ? found
+        : null;
 
     if (!match) {
       return res.status(404).type("html").send(
@@ -79,7 +86,9 @@ const shareMatch = async (req, res) => {
           free === 0 ? "popunjeno" : `slobodno još ${free}`
         }`,
         description: `${describeMatch(match)} · organizuje ${match.creator_name}. Prijavi se na SportWeb-u.`,
-        url: `${frontendUrl()}/matches/${match.id}`,
+        url: `${frontendUrl()}/matches/${match.id}${
+          match.is_private ? `?key=${match.share_token}` : ""
+        }`,
       })
     );
 

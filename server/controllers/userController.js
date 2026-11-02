@@ -44,10 +44,13 @@ const getMyMatches = async (req, res) => {
       ORDER BY match_date
     `, [user_id]);
 
+    // Ruta je javna (po ID-ju korisnika), pa ključ privatnih termina ne šaljemo
+    const withoutToken = (rows) => rows.map(({ share_token, ...m }) => m);
+
     res.json({
       success: true,
-      created: created.rows,
-      joined: joined.rows,
+      created: withoutToken(created.rows),
+      joined: withoutToken(joined.rows),
     });
 
   } catch (error) {

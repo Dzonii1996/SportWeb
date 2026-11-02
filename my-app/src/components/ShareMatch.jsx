@@ -8,7 +8,10 @@ import { matchStart } from "../utils/matchDate";
 function ShareMatch({ match, freeSpots }) {
   const [copied, setCopied] = useState(false);
 
-  const shareUrl = `${API_URL}/share/matches/${match.id}`;
+  // Privatni termin: link nosi ključ, bez njega se termin ne otvara
+  const shareUrl = `${API_URL}/share/matches/${match.id}${
+    match.is_private && match.share_token ? `?key=${match.share_token}` : ""
+  }`;
 
   const when = matchStart(match.match_date, match.match_time).toLocaleDateString(
     // sr-Latn: bez toga Chrome piše dane ćirilicom ("четвртак")

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { MapPin, Calendar, Users, ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import MatchChat from "../components/MatchChat";
 import MatchRatings from "../components/MatchRatings";
@@ -7,6 +7,7 @@ import RegularSpot from "../components/RegularSpot";
 import ShareMatch from "../components/ShareMatch";
 import MatchCosts from "../components/MatchCosts";
 import MatchResult from "../components/MatchResult";
+import InvitePlayers, { InviteBanner } from "../components/InvitePlayers";
 import { hasPrice } from "../utils/price";
 import { LocationView } from "../components/LocationMap";
 import { hasCoords } from "../utils/geo";
@@ -69,6 +70,11 @@ function PlayerRow({ player, isMe, showConfirm = false }) {
 
 function MatchDetails() {
   const { id } = useParams();
+
+  // Ključ iz linka privatnog termina (/matches/14?key=...)
+  const [searchParams] = useSearchParams();
+  const accessKey = searchParams.get("key");
+  const keyQuery = accessKey ? `?key=${encodeURIComponent(accessKey)}` : "";
   const navigate = useNavigate();
 
   const user = JSON.parse(localStorage.getItem("user"));
@@ -82,9 +88,10 @@ function MatchDetails() {
   const loadMatch = useCallback(async () => {
     try {
       const [matchRes, playersRes, waitlistRes] = await Promise.all([
-        fetch(`${API_URL}/api/matches/${id}`),
-        fetch(`${API_URL}/api/matches/${id}/players`),
-        fetch(`${API_URL}/api/matches/${id}/waitlist`),
+        // Token: učesnici i pozvani vide privatni termin i bez ključa
+        fetch(`${API_URL}/api/matches/${id}${keyQuery}`, { headers: authHeader() }),
+        fetch(`${API_URL}/api/matches/${id}/players${keyQuery}`, { headers: authHeader() }),
+        fetch(`${API_URL}/api/matches/${id}/waitlist${keyQuery}`, { headers: authHeader() }),
       ]);
 
       if (matchRes.status === 404) {
@@ -103,7 +110,7 @@ function MatchDetails() {
     } catch (error) {
       console.error(error);
     }
-  }, [id]);
+  }, [id, keyQuery]);
 
   useEffect(() => {
     loadMatch();
@@ -186,7 +193,7 @@ function MatchDetails() {
 
     try {
       const res = await fetch(
-        `${API_URL}/api/matches/${id}/${action.path}`,
+        `${API_URL}/api/matches/${id}/${action.path}${keyQuery}`,
         {
           method: action.method,
           headers: authHeader(),
@@ -305,6 +312,12 @@ function MatchDetails() {
                       </h1>
 
                       <div className="flex flex-wrap gap-1.5 mt-1">
+                        {match.is_private && (
+                          <span className="text-xs font-semibold bg-black/20 px-2 py-0.5 rounded-full">
+                            🔒 Privatno
+                          </span>
+                        )}
+
                         {match.repeat_weekly && (
                           <span className="text-xs font-semibold bg-white/20 px-2 py-0.5 rounded-full">
                             🔁 Svake nedelje
@@ -418,6 +431,11 @@ function MatchDetails() {
                   </div>
                 </div>
 
+                {/* Pozvan, a još nije prijavljen ni na listi čekanja */}
+                {user && !isCreator && !joined && !waitlistPosition && !isPast && (
+                  <InviteBanner matchId={id} />
+                )}
+
                 {/* Ista dugmad kao na kartici: napuštanje je obrubljeno, a na hover zeleno */}
                 <button
                   onClick={handleAction}
@@ -471,6 +489,15 @@ function MatchDetails() {
                     onChange={loadMatch}
                   />
                 )}
+
+                {isCreator && match.is_private && !isPast && (
+                  <p className="text-sm text-gray-600 bg-gray-50 border rounded-xl p-3">
+                    🔒 Privatni termin nije na listi termina. Ekipi pošalji
+                    link ispod ili pozivnicu.
+                  </p>
+                )}
+
+                {isCreator && !isPast && <InvitePlayers matchId={id} />}
 
                 {!isPast && (
                   <ShareMatch
@@ -621,6 +648,7 @@ function MatchDetails() {
             {user ? (
               <MatchChat
                 matchId={id}
+                linkKey={accessKey}
                 canWrite={joined || isCreator}
               />
             ) : (

@@ -5,7 +5,7 @@ import { API_URL } from "../config";
 
 const POLL_INTERVAL = 3000;
 
-function MatchChat({ matchId, canWrite }) {
+function MatchChat({ matchId, canWrite, linkKey = null }) {
   const user = JSON.parse(localStorage.getItem("user"));
 
   const [messages, setMessages] = useState([]);
@@ -19,7 +19,9 @@ function MatchChat({ matchId, canWrite }) {
   const loadMessages = async () => {
     try {
       const res = await fetch(
-        `${API_URL}/api/matches/${matchId}/messages?after=${lastIdRef.current}`,
+        `${API_URL}/api/matches/${matchId}/messages?after=${lastIdRef.current}${
+          linkKey ? `&key=${encodeURIComponent(linkKey)}` : ""
+        }`,
         { headers: authHeader() }
       );
 

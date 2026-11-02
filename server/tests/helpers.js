@@ -10,7 +10,7 @@ const resetDb = () =>
   pool.query(`
     TRUNCATE users, matches, match_players, notifications,
              match_messages, match_waitlist, match_ratings, match_reminders,
-             match_series, series_regulars, password_resets
+             match_series, series_regulars, password_resets, match_invites
     RESTART IDENTITY CASCADE
   `);
 

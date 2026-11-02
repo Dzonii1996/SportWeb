@@ -6,6 +6,7 @@ const {
   matchAudience,
 } = require("../utils/notify");
 const { resetReminders } = require("../utils/reminders");
+const { newShareToken } = require("../utils/privacy");
 const {
   createSeriesForMatch,
   updateSeriesFromEdit,
@@ -164,6 +165,8 @@ const createMatch = async (req, res) => {
       });
     }
 
+    const isPrivate = req.body.is_private === true;
+
     // Termin i (ako se ponavlja) serija se upisuju zajedno ili nijedno
     const client = await pool.connect();
     let match;
@@ -173,8 +176,8 @@ const createMatch = async (req, res) => {
 
    const result = await client.query(
   `INSERT INTO matches
-  (user_id, sport, location, match_date, match_time, max_players, latitude, longitude, field_price)
-  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+  (user_id, sport, location, match_date, match_time, max_players, latitude, longitude, field_price, is_private, share_token)
+  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
   RETURNING *`,
   [
     user_id,
@@ -185,7 +188,9 @@ const createMatch = async (req, res) => {
     max_players,
     coords.latitude,
     coords.longitude,
-    price.price
+    price.price,
+    isPrivate,
+    isPrivate ? newShareToken() : null
   ]
 );
       match = result.rows[0];
@@ -235,13 +240,15 @@ LEFT JOIN match_players
   ON match_players.match_id = matches.id
 LEFT JOIN match_series
   ON match_series.id = matches.series_id
+WHERE NOT matches.is_private
 GROUP BY matches.id, users.name, users.avatar, match_series.active
 ORDER BY match_date`
 );
 
+    // Lista je javna: privatni termini nisu u njoj, a ključ se ne šalje
     res.json({
       success: true,
-      matches: result.rows,
+      matches: result.rows.map(({ share_token, ...m }) => m),
     });
 
   } catch (error) {
@@ -283,9 +290,12 @@ const getMatch = async (req, res) => {
       });
     }
 
+    // Ključ za link šaljemo samo uz privatni termin (ko ga vidi, sme da ga deli)
+    const { share_token, ...match } = result.rows[0];
+
     res.json({
       success: true,
-      match: result.rows[0],
+      match: match.is_private ? { ...match, share_token } : match,
     });
 
   } catch (error) {
@@ -429,11 +439,22 @@ const updateMatch = async (req, res) => {
         latitude: coords.latitude,
         longitude: coords.longitude,
         field_price: price.price,
+        is_private: typeof req.body.is_private === "boolean" ? req.body.is_private : undefined,
       },
       typeof req.body.repeat_weekly === "boolean"
         ? req.body.repeat_weekly
         : undefined
     );
+
+    // Privatnost: kad javni termin postane privatan, pravi se novi ključ,
+    // pa linkovi podeljeni dok je bio javan više ne otvaraju termin
+    const old = match.rows[0];
+    const isPrivate =
+      typeof req.body.is_private === "boolean" ? req.body.is_private : old.is_private;
+    const shareToken =
+      isPrivate && !(old.is_private && old.share_token)
+        ? newShareToken()
+        : old.share_token;
 
     const result = await pool.query(
       `UPDATE matches
@@ -444,7 +465,9 @@ const updateMatch = async (req, res) => {
          max_players = $4,
          latitude = $5,
          longitude = $6,
-         field_price = $8
+         field_price = $8,
+         is_private = $9,
+         share_token = $10
        WHERE id = $7
        RETURNING *`,
       [
@@ -456,6 +479,8 @@ const updateMatch = async (req, res) => {
         coords.longitude,
         id,
         price.price,
+        isPrivate,
+        shareToken,
       ]
     );
 

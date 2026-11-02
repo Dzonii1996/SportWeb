@@ -148,6 +148,29 @@ const createTables = async () => {
     ADD COLUMN IF NOT EXISTS score_b INTEGER CHECK (score_b BETWEEN 0 AND 999)
   `);
 
+  // Pozivnice: kreator poziva igrače sa kojima je već igrao
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS match_invites (
+      match_id INTEGER NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at TIMESTAMP DEFAULT NOW(),
+      PRIMARY KEY (match_id, user_id)
+    )
+  `);
+
+  // Privatni termini: nisu na listi, a vidi ih samo ko ima link sa ključem
+  // (share_token) ili je već učesnik, na listi čekanja ili pozvan
+  await pool.query(`
+    ALTER TABLE matches
+    ADD COLUMN IF NOT EXISTS is_private BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS share_token TEXT
+  `);
+
+  await pool.query(`
+    ALTER TABLE match_series
+    ADD COLUMN IF NOT EXISTS is_private BOOLEAN NOT NULL DEFAULT false
+  `);
+
   // Notifikacija može da vodi na termin; posle brisanja termina ostaje bez linka
   await pool.query(`
     ALTER TABLE notifications

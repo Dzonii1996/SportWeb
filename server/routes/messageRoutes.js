@@ -6,8 +6,9 @@ const {
   sendMessage,
 } = require("../controllers/messageController");
 const { protect } = require("../middleware/authMiddleware");
+const { requireVisible } = require("../utils/privacy");
 
-router.get("/:id/messages", protect, getMessages);
+router.get("/:id/messages", protect, requireVisible, getMessages);
 router.post("/:id/messages", protect, sendMessage);
 
 module.exports = router;

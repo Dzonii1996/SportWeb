@@ -10,13 +10,14 @@ const {
     
 
 } = require("../controllers/matchController");
-const { protect } = require("../middleware/authMiddleware");
+const { protect, optionalAuth } = require("../middleware/authMiddleware");
+const { requireVisible } = require("../utils/privacy");
 
 
 router.post("/", protect, createMatch);
 
 router.get("/", getMatches);
-router.get("/:id", getMatch);
+router.get("/:id", optionalAuth, requireVisible, getMatch);
 router.delete("/:id", protect, deleteMatch);
 router.put("/:id", protect, updateMatch);
 
