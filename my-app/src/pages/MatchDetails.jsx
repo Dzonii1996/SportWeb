@@ -4,6 +4,7 @@ import { MapPin, Calendar, Users, ArrowLeft } from "lucide-react";
 import MatchChat from "../components/MatchChat";
 import MatchRatings from "../components/MatchRatings";
 import RegularSpot from "../components/RegularSpot";
+import ShareMatch from "../components/ShareMatch";
 import { LocationView } from "../components/LocationMap";
 import { hasCoords } from "../utils/geo";
 import { API_URL } from "../config";
@@ -23,6 +24,26 @@ function Avatar({ name, avatar, size = "w-10 h-10", text = "text-lg" }) {
     >
       {name?.charAt(0).toUpperCase()}
     </div>
+  );
+}
+
+function PlayerRow({ player, isMe }) {
+  return (
+    <li>
+      <Link
+        to={`/users/${player.id}`}
+        className="flex items-center gap-3 py-3 hover:text-green-700"
+      >
+        <Avatar name={player.name} avatar={player.avatar} />
+
+        <span className="font-semibold">
+          {player.name}
+          {isMe && (
+            <span className="text-gray-500 font-normal"> (ti)</span>
+          )}
+        </span>
+      </Link>
+    </li>
   );
 }
 
@@ -147,6 +168,40 @@ function MatchDetails() {
       const data = await res.json();
 
       if (!data.success || action.notify) {
+        alert(data.message);
+      }
+
+      await loadMatch();
+
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const hasTeams = players.some((p) => p.team);
+
+  const splitTeams = async (mode) => {
+    if (hasTeams && !window.confirm("Podeliti timove ponovo?")) {
+      return;
+    }
+
+    setBusy(true);
+
+    try {
+      const res = await fetch(`${API_URL}/api/matches/${id}/teams`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader(),
+        },
+        body: JSON.stringify({ mode }),
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
         alert(data.message);
       }
 
@@ -313,6 +368,13 @@ function MatchDetails() {
                   </p>
                 )}
 
+                {!isPast && (
+                  <ShareMatch
+                    match={match}
+                    freeSpots={Math.max(0, match.max_players - players.length)}
+                  />
+                )}
+
                 {isCreator && (
                   <div className="grid grid-cols-2 gap-3">
                     <Link
@@ -341,32 +403,80 @@ function MatchDetails() {
             )}
 
             <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-2xl font-bold mb-4">
-                👥 Učesnici
-              </h2>
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <h2 className="text-2xl font-bold">
+                  👥 Učesnici
+                </h2>
 
-              {players.length > 0 ? (
+                {/* Kreator deli igrače na timove */}
+                {isCreator && !isPast && players.length >= 2 && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => splitTeams("random")}
+                      disabled={busy}
+                      className="text-sm px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 font-medium"
+                      title="Nasumična podela"
+                    >
+                      🎲 Nasumično
+                    </button>
+
+                    <button
+                      onClick={() => splitTeams("balanced")}
+                      disabled={busy}
+                      className="text-sm px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 font-medium"
+                      title="Najbolje ocenjeni igrači se ravnomerno raspoređuju"
+                    >
+                      ⚖️ Ujednačeno
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {players.length === 0 ? (
+                <p className="text-gray-500">Nema prijavljenih igrača.</p>
+              ) : hasTeams ? (
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {[
+                    { team: "A", label: "Tim A", color: "border-green-500 bg-green-50" },
+                    { team: "B", label: "Tim B", color: "border-blue-500 bg-blue-50" },
+                  ].map(({ team, label, color }) => {
+                    const members = players.filter((p) => p.team === team);
+
+                    return (
+                      <div key={team} className={`border-t-4 rounded-xl p-3 ${color}`}>
+                        <h3 className="font-bold">
+                          {label} ({members.length})
+                        </h3>
+
+                        <ul className="divide-y divide-white">
+                          {members.map((p) => (
+                            <PlayerRow key={p.id} player={p} isMe={p.id === user?.id} />
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })}
+
+                  {players.some((p) => !p.team) && (
+                    <div className="sm:col-span-2">
+                      <h3 className="font-bold text-gray-600">
+                        Prijavili su se posle podele
+                      </h3>
+
+                      <ul className="divide-y">
+                        {players.filter((p) => !p.team).map((p) => (
+                          <PlayerRow key={p.id} player={p} isMe={p.id === user?.id} />
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ) : (
                 <ul className="divide-y">
-                  {players.map((player) => (
-                    <li key={player.id}>
-                      <Link
-                        to={`/users/${player.id}`}
-                        className="flex items-center gap-3 py-3 hover:text-green-700"
-                      >
-                        <Avatar name={player.name} avatar={player.avatar} />
-
-                        <span className="font-semibold">
-                          {player.name}
-                          {player.id === user?.id && (
-                            <span className="text-gray-500 font-normal"> (ti)</span>
-                          )}
-                        </span>
-                      </Link>
-                    </li>
+                  {players.map((p) => (
+                    <PlayerRow key={p.id} player={p} isMe={p.id === user?.id} />
                   ))}
                 </ul>
-              ) : (
-                <p className="text-gray-500">Nema prijavljenih igrača.</p>
               )}
 
               {waitlist.length > 0 && (

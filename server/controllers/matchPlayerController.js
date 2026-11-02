@@ -211,7 +211,8 @@ const getPlayers = async (req, res) => {
       SELECT
         users.id,
         users.name,
-        users.avatar
+        users.avatar,
+        match_players.team
       FROM match_players
       JOIN users
       ON users.id = match_players.user_id

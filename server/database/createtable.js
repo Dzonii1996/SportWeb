@@ -96,6 +96,12 @@ const createTables = async () => {
     )
   `);
 
+  // Podela igrača na timove ('A' ili 'B'); null dok kreator ne podeli
+  await pool.query(`
+    ALTER TABLE match_players
+    ADD COLUMN IF NOT EXISTS team CHAR(1) CHECK (team IN ('A', 'B'))
+  `);
+
   // Notifikacija može da vodi na termin; posle brisanja termina ostaje bez linka
   await pool.query(`
     ALTER TABLE notifications

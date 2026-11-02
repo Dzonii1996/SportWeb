@@ -6,10 +6,12 @@ const {
   leaveMatch,
   getPlayers,
 } = require("../controllers/matchPlayerController");
+const { splitTeams } = require("../controllers/teamController");
 const { protect } = require("../middleware/authMiddleware");
 
 router.post("/:id/join", protect, joinMatch);
 router.delete("/:id/leave", protect, leaveMatch);
 router.get("/:id/players", getPlayers);
+router.post("/:id/teams", protect, splitTeams);
 
 module.exports = router;

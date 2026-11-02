@@ -36,7 +36,8 @@ const STEPS = [
 ];
 
 const formatDate = (match) =>
-  matchStart(match.match_date, match.match_time).toLocaleDateString("sr-RS", {
+  // sr-Latn: bez toga Chrome piše dane i mesece ćirilicom ("чет", "дец")
+  matchStart(match.match_date, match.match_time).toLocaleDateString("sr-Latn-RS", {
     weekday: "short",
     day: "numeric",
     month: "short",
