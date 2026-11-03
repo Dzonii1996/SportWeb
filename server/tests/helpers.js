@@ -10,7 +10,8 @@ const resetDb = () =>
   pool.query(`
     TRUNCATE users, matches, match_players, notifications,
              match_messages, match_waitlist, match_ratings, match_reminders,
-             match_series, series_regulars, password_resets, match_invites
+             match_series, series_regulars, password_resets, match_invites,
+             venues, venue_images, venue_reviews, venue_claims, venue_reservations
     RESTART IDENTITY CASCADE
   `);
 
@@ -56,6 +57,31 @@ const createMatch = async (creator, { maxPlayers = 10, startsInHours = 48, locat
   return result.rows[0];
 };
 
+const makeAdmin = (user) =>
+  pool.query("UPDATE users SET is_admin = true WHERE id = $1", [user.id]);
+
+// Teren direktno u bazi (podrazumevano odobren)
+const createVenue = async ({
+  name = "Sportski centar",
+  sports = ["Fudbal"],
+  indoor = false,
+  status = "approved",
+  latitude = 42.89,
+  longitude = 20.86,
+  pricePerHour = null,
+  suggestedBy = null,
+} = {}) => {
+  const result = await pool.query(
+    `INSERT INTO venues
+       (name, address, latitude, longitude, sports, indoor, status, price_per_hour, suggested_by)
+     VALUES ($1, 'Ulica 1', $2, $3, $4, $5, $6, $7, $8)
+     RETURNING *`,
+    [name, latitude, longitude, sports, indoor, status, pricePerHour, suggestedBy?.id ?? null]
+  );
+
+  return result.rows[0];
+};
+
 const addPlayers = (match, users) =>
   Promise.all(
     users.map((u) =>
@@ -91,6 +117,8 @@ module.exports = {
   dateIn,
   createMatch,
   addPlayers,
+  makeAdmin,
+  createVenue,
   notificationsOf,
   playerIds,
 };

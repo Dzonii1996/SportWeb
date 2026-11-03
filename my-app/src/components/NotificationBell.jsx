@@ -87,10 +87,17 @@ function NotificationBell({ userId }) {
   const openNotification = async (notification) => {
     await markAsRead(notification);
 
-    // Notifikacija vezana za termin vodi na njegovu stranicu
+    // Notifikacija vezana za termin (ili teren) vodi na njegovu stranicu,
+    // a o rezervaciji na stranicu rezervacija
     if (notification.match_id) {
       setOpen(false);
       navigate(`/matches/${notification.match_id}`);
+    } else if (notification.reservation_id) {
+      setOpen(false);
+      navigate("/rezervacije");
+    } else if (notification.venue_id) {
+      setOpen(false);
+      navigate(`/tereni/${notification.venue_id}`);
     }
   };
 

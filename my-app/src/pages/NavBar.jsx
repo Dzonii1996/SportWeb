@@ -1,12 +1,13 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { Menu, X, Plus, ChevronDown, User, CalendarCheck, LogOut } from "lucide-react";
+import { Menu, X, Plus, ChevronDown, User, CalendarCheck, CalendarClock, LogOut } from "lucide-react";
 import { logout } from "../utils/auth";
 import NotificationBell from "../components/NotificationBell";
 
 const LINKS = [
   { to: "/", label: "Početna", end: true },
   { to: "/matches", label: "Termini" },
+  { to: "/tereni", label: "Tereni" },
   { to: "/rang-lista", label: "Rang lista" },
 ];
 
@@ -16,7 +17,7 @@ const USER_LINKS = [
 
 // Aktivni link dobija zelenu pozadinu
 const linkClass = ({ isActive }) =>
-  `px-4 py-2 rounded-full font-medium transition ${
+  `px-3 xl:px-4 py-2 rounded-full font-medium whitespace-nowrap transition ${
     isActive
       ? "bg-green-50 text-green-700"
       : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
@@ -104,8 +105,8 @@ useEffect(() => {
           </span>
         </Link>
 
-        {/* Linkovi (desktop) */}
-        <div className="hidden md:flex items-center gap-1">
+        {/* Linkovi (desktop, od lg) */}
+        <div className="hidden lg:flex items-center gap-1">
           {LINKS.map((l) => (
             <NavLink key={l.to} to={l.to} end={l.end} className={linkClass}>
               {l.label}
@@ -126,7 +127,7 @@ useEffect(() => {
             <>
               <Link
                 to="/create-match"
-                className="hidden sm:inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full font-semibold shadow-sm transition"
+                className="hidden sm:inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full font-semibold shadow-sm whitespace-nowrap transition"
               >
                 <Plus size={18} />
                 Kreiraj termin
@@ -134,8 +135,8 @@ useEffect(() => {
 
               <NotificationBell key={user.id} userId={user.id} />
 
-              {/* Korisnički meni (desktop) */}
-              <div className="relative hidden md:block" ref={menuRef}>
+              {/* Korisnički meni (desktop, od lg) */}
+              <div className="relative hidden lg:block" ref={menuRef}>
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
                   className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full hover:bg-gray-100 transition"
@@ -143,7 +144,7 @@ useEffect(() => {
                   <span className="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold">
                     {initial}
                   </span>
-                  <span className="font-medium text-gray-800 max-w-[8rem] truncate">
+                  <span className="hidden xl:inline font-medium text-gray-800 max-w-[8rem] truncate">
                     {user.name}
                   </span>
                   <ChevronDown size={16} className="text-gray-500" />
@@ -167,6 +168,14 @@ useEffect(() => {
                       Moji termini
                     </Link>
 
+                    <Link
+                      to="/rezervacije"
+                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50"
+                    >
+                      <CalendarClock size={18} className="text-gray-500" />
+                      Rezervacije
+                    </Link>
+
                     <div className="my-1 border-t" />
 
                     <button
@@ -181,7 +190,7 @@ useEffect(() => {
               </div>
             </>
           ) : (
-            <div className="hidden md:flex items-center gap-2">
+            <div className="hidden lg:flex items-center gap-2">
               <Link
                 to="/login"
                 className="px-4 py-2 rounded-full font-medium text-gray-700 hover:bg-gray-100"
@@ -201,7 +210,7 @@ useEffect(() => {
           {/* Dugme za mobilni meni */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-2 rounded-full hover:bg-gray-100"
+            className="lg:hidden p-2 rounded-full hover:bg-gray-100"
             aria-label="Meni"
           >
             {mobileOpen ? <X size={24} /> : <Menu size={24} />}
@@ -213,7 +222,7 @@ useEffect(() => {
 
       {/* Mobilni meni */}
       {mobileOpen && (
-        <div className="md:hidden border-t bg-white px-4 py-3 space-y-1">
+        <div className="lg:hidden border-t bg-white px-4 py-3 space-y-1">
 
           {user && (
             <div className="flex items-center gap-3 px-4 py-3 mb-1">
@@ -234,6 +243,10 @@ useEffect(() => {
             <>
               <NavLink to="/my-matches" className={mobileLinkClass}>
                 Moji termini
+              </NavLink>
+
+              <NavLink to="/rezervacije" className={mobileLinkClass}>
+                Rezervacije
               </NavLink>
 
               <NavLink to="/profile" className={mobileLinkClass}>

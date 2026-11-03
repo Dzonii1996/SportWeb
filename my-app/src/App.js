@@ -15,6 +15,11 @@ import MatchDetails from "./pages/MatchDetails";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Leaderboard from "./pages/Leaderboard";
+import Venues from "./pages/Venues";
+import VenueDetails from "./pages/VenueDetails";
+import VenueForm from "./pages/VenueForm";
+import VenueAdmin from "./pages/VenueAdmin";
+import Reservations from "./pages/Reservations";
 function App() {
 
   return (
@@ -29,6 +34,24 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/matches" element={<Matches />} />
         <Route path="/rang-lista" element={<Leaderboard />} />
+        <Route path="/tereni" element={<Venues />} />
+        <Route
+          path="/tereni/predlozi"
+          element={<ProtectedRoute><VenueForm /></ProtectedRoute>}
+        />
+        <Route
+          path="/tereni/admin"
+          element={<ProtectedRoute><VenueAdmin /></ProtectedRoute>}
+        />
+        <Route
+          path="/rezervacije"
+          element={<ProtectedRoute><Reservations /></ProtectedRoute>}
+        />
+        <Route path="/tereni/:id" element={<VenueDetails />} />
+        <Route
+          path="/tereni/:id/izmeni"
+          element={<ProtectedRoute><VenueForm /></ProtectedRoute>}
+        />
         <Route path="/my-matches" element={<MyMatches />} />
         <Route path="/matches/:id" element={<MatchDetails />} />
         <Route path="/matches/:id/edit" element={<EditMatch />} />

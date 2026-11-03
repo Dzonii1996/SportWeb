@@ -9,16 +9,17 @@ const describeMatch = (match) => {
 };
 
 // Šalje istu notifikaciju svim korisnicima iz liste.
-// "db" je pool ili client iz transakcije.
-const notifyUsers = async (db, userIds, message, matchId = null) => {
-  const ids = [...new Set(userIds.map(Number))];
+// "db" je pool ili client iz transakcije. links.venueId vodi na stranicu terena,
+// a links.reservationId na stranicu rezervacija.
+const notifyUsers = async (db, userIds, message, matchId = null, links = {}) => {
+  const ids = [...new Set(userIds.filter(Boolean).map(Number))];
 
   if (ids.length === 0) return;
 
   await db.query(
-    `INSERT INTO notifications(user_id, message, match_id)
-     SELECT unnest($1::int[]), $2, $3`,
-    [ids, message, matchId]
+    `INSERT INTO notifications(user_id, message, match_id, venue_id, reservation_id)
+     SELECT unnest($1::int[]), $2, $3, $4, $5`,
+    [ids, message, matchId, links.venueId ?? null, links.reservationId ?? null]
   );
 };
 

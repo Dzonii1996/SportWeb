@@ -15,6 +15,7 @@ import { API_URL } from "../config";
 import { authHeader } from "../utils/auth";
 import { isPastMatch, matchStart, inConfirmWindow } from "../utils/matchDate";
 import AttendanceBox from "../components/AttendanceBox";
+import { hourLabel } from "../utils/reservations";
 
 function Avatar({ name, avatar, size = "w-10 h-10", text = "text-lg" }) {
   return avatar ? (
@@ -65,6 +66,24 @@ function PlayerRow({ player, isMe, showConfirm = false }) {
         )
       )}
     </li>
+  );
+}
+
+// Stanje rezervacije terena za termin, vidljivo svim igračima
+const RESERVATION_TEXT = {
+  pending: ["bg-amber-50 border-amber-200 text-amber-900", "⏳ Rezervacija terena čeka potvrdu vlasnika"],
+  confirmed: ["bg-green-50 border-green-200 text-green-800", "✅ Teren je rezervisan"],
+  rejected: ["bg-red-50 border-red-200 text-red-800", "❌ Vlasnik nije prihvatio rezervaciju terena"],
+  cancelled: ["bg-gray-50 border-gray-200 text-gray-700", "🚫 Rezervacija terena je otkazana"],
+};
+
+function ReservationBadge({ status, start, end }) {
+  const [className, text] = RESERVATION_TEXT[status];
+
+  return (
+    <div className={`border rounded-xl px-3 py-2 text-sm font-medium ${className}`}>
+      {text} ({hourLabel(start)}–{hourLabel(end)})
+    </div>
   );
 }
 
@@ -250,7 +269,11 @@ function MatchDetails() {
   };
 
   const deleteMatch = async () => {
-    if (!window.confirm("Da li ste sigurni da želite da obrišete termin?")) {
+    const question = ["pending", "confirmed"].includes(match.reservation_status)
+      ? "Obrisati termin? Rezervacija terena za ovaj termin će biti otkazana i vlasnik obavešten."
+      : "Da li ste sigurni da želite da obrišete termin?";
+
+    if (!window.confirm(question)) {
       return;
     }
 
@@ -391,7 +414,24 @@ function MatchDetails() {
                 <div className="flex items-center gap-3 text-gray-700">
                   <MapPin className="text-green-600 shrink-0" size={18} />
                   <span>{match.location}</span>
+
+                  {match.venue_id && (
+                    <Link
+                      to={`/tereni/${match.venue_id}`}
+                      className="ml-auto text-sm text-green-700 hover:underline font-medium whitespace-nowrap"
+                    >
+                      🏟️ O terenu
+                    </Link>
+                  )}
                 </div>
+
+                {match.reservation_status && (
+                  <ReservationBadge
+                    status={match.reservation_status}
+                    start={match.reservation_start_hour}
+                    end={match.reservation_end_hour}
+                  />
+                )}
 
                 {hasCoords(match) && (
                   <LocationView

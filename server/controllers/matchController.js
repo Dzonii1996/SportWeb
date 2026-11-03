@@ -11,8 +11,14 @@ const {
   createSeriesForMatch,
   updateSeriesFromEdit,
 } = require("../utils/series");
+const {
+  ACTIVE: ACTIVE_RESERVATION,
+  bookSlot,
+  describeSlot,
+  reservationStart,
+} = require("./reservationController");
+const { SPORTS, parsePrice, parseCoords } = require("../utils/fields");
 
-const SPORTS = ["Fudbal", "Košarka"];
 const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 30;
 const MAX_DAYS_AHEAD = 365;
@@ -83,61 +89,138 @@ const validateMatch = ({ sport, location, match_date, match_time, max_players })
   return null;
 };
 
-// Cena terena u dinarima nije obavezna. Vraća { error } ili { price } (null kad nije poslata).
-const MAX_PRICE = 1000000;
-
-const parsePrice = ({ field_price }) => {
-  if (field_price === undefined || field_price === null || field_price === "") {
-    return { price: null };
+// Teren iz kataloga za termin. Prazan venue_id znači ručno unetu lokaciju.
+// Teren mora biti odobren i za taj sport; currentVenueId (pri izmeni)
+// dozvoljava da termin zadrži svoj teren i ako je u međuvremenu skinut sa liste.
+// Vraća { error } ili { venue } (null kad teren nije izabran).
+const resolveVenue = async (venueId, sport, currentVenueId = null) => {
+  if (venueId === undefined || venueId === null || venueId === "") {
+    return { venue: null };
   }
 
-  const price = Number(field_price);
+  const id = Number(venueId);
 
-  if (!Number.isInteger(price) || price < 0 || price > MAX_PRICE) {
-    return { error: "Cena terena mora biti ceo broj dinara (do 1.000.000)." };
+  if (!Number.isInteger(id)) {
+    return { error: "Neispravan teren." };
   }
 
-  return { price };
+  const result = await pool.query("SELECT * FROM venues WHERE id = $1", [id]);
+  const venue = result.rows[0];
+
+  if (!venue || (venue.status !== "approved" && id !== Number(currentVenueId))) {
+    return { error: "Izabrani teren ne postoji." };
+  }
+
+  if (sport && !venue.sports.includes(sport)) {
+    return { error: `Teren "${venue.name}" nije za ${sport === "Košarka" ? "košarku" : "fudbal"}.` };
+  }
+
+  return { venue };
 };
 
-// Koordinate nisu obavezne, ali ako postoje moraju biti obe i ispravne.
-// Vraća { error } ili { latitude, longitude } (oba null kad nisu poslate).
-const parseCoords = ({ latitude, longitude }) => {
-  const empty = (v) => v === undefined || v === null || v === "";
+// Podaci termina sa lokacijom i koordinatama izabranog terena
+const withVenue = (body, venue) =>
+  venue
+    ? {
+        ...body,
+        location: venue.name,
+        latitude: venue.latitude,
+        longitude: venue.longitude,
+      }
+    : body;
 
-  if (empty(latitude) && empty(longitude)) {
-    return { latitude: null, longitude: null };
-  }
+// "YYYY-MM-DD" (lokalno) za datum iz baze
+const dateKeyOf = (date) => {
+  const d = new Date(date);
 
-  const lat = Number(latitude);
-  const lng = Number(longitude);
-
-  if (
-    empty(latitude) ||
-    empty(longitude) ||
-    !Number.isFinite(lat) ||
-    !Number.isFinite(lng) ||
-    Math.abs(lat) > 90 ||
-    Math.abs(lng) > 180
-  ) {
-    return { error: "Neispravna lokacija na mapi." };
-  }
-
-  return { latitude: lat, longitude: lng };
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 
+// Postojeća rezervacija za koju se pravi termin: mora biti moja, aktivna
+// i još bez termina. Vraća { error } ili { reservation } (null kad nije poslata).
+const resolveReservation = async (reservationId, userId) => {
+  if (reservationId === undefined || reservationId === null || reservationId === "") {
+    return { reservation: null };
+  }
+
+  const result = await pool.query(
+    `SELECT r.*, (SELECT id FROM matches WHERE reservation_id = r.id) AS match_id
+     FROM venue_reservations r
+     WHERE r.id = $1 AND r.user_id = $2`,
+    [Number(reservationId) || 0, userId]
+  );
+  const reservation = result.rows[0];
+
+  if (!reservation || !ACTIVE_RESERVATION.includes(reservation.status)) {
+    return { error: "Rezervacija ne postoji ili je otkazana." };
+  }
+
+  if (reservation.match_id) {
+    return { error: "Za ovu rezervaciju je već napravljen termin." };
+  }
+
+  return { reservation };
+};
 
 const createMatch = async (req, res) => {
 
     
   try {
+    // Termin iz postojeće rezervacije: teren, datum i vreme su sa rezervacije
+    const linked = await resolveReservation(req.body.reservation_id, req.user.id);
+
+    if (linked.error) {
+      return res.status(400).json({
+        success: false,
+        message: linked.error,
+      });
+    }
+
+    const fromReservation = linked.reservation
+      ? {
+          ...req.body,
+          venue_id: linked.reservation.venue_id,
+          match_date: dateKeyOf(linked.reservation.reservation_date),
+          match_time: `${String(linked.reservation.start_hour).padStart(2, "0")}:00`,
+        }
+      : req.body;
+
+    // Teren iz kataloga: njegov naziv i koordinate su lokacija termina
+    const venue = await resolveVenue(fromReservation.venue_id, req.body.sport);
+
+    if (venue.error) {
+      return res.status(400).json({
+        success: false,
+        message: venue.error,
+      });
+    }
+
+    const body = withVenue(fromReservation, venue.venue);
+
+    // Nova rezervacija terena uz termin (samo za teren iz kataloga, na pun sat)
+    const reserve = !linked.reservation && req.body.reserve === true;
+
+    if (reserve && !venue.venue) {
+      return res.status(400).json({
+        success: false,
+        message: "Izaberi teren sa spiska da bi ga rezervisao.",
+      });
+    }
+
+    if (reserve && !/^\d{2}:00(:00)?$/.test(body.match_time || "")) {
+      return res.status(400).json({
+        success: false,
+        message: "Za rezervaciju terena termin mora počinjati na pun sat (npr. 19:00).",
+      });
+    }
+
     const {
   sport,
   location,
   match_date,
   match_time,
   max_players,
-} = req.body;
+} = body;
     const user_id = req.user.id;
 
     if (
@@ -153,10 +236,10 @@ const createMatch = async (req, res) => {
       });
     }
 
-    const validationError = validateMatch(req.body);
-    const coords = parseCoords(req.body);
+    const validationError = validateMatch(body);
+    const coords = parseCoords(body);
 
-    const price = parsePrice(req.body);
+    const price = parsePrice(body);
 
     if (validationError || coords.error || price.error) {
       return res.status(400).json({
@@ -167,17 +250,40 @@ const createMatch = async (req, res) => {
 
     const isPrivate = req.body.is_private === true;
 
-    // Termin i (ako se ponavlja) serija se upisuju zajedno ili nijedno
+    // Termin, rezervacija i (ako se ponavlja) serija se upisuju zajedno ili nijedno
     const client = await pool.connect();
     let match;
+    let reservation = linked.reservation;
+    let bookingError = null;
 
     try {
       await client.query("BEGIN");
 
+      if (reserve) {
+        const booked = await bookSlot(client, {
+          venueId: venue.venue.id,
+          userId: user_id,
+          date: match_date,
+          start: Number(match_time.slice(0, 2)),
+          hours: Number(req.body.reservation_hours),
+          note: "Za termin na SportWeb-u",
+        });
+
+        if (booked.reservation) {
+          reservation = booked.reservation;
+        } else {
+          bookingError = booked;
+        }
+      }
+
+      if (bookingError) {
+        await client.query("ROLLBACK");
+      } else {
+
    const result = await client.query(
   `INSERT INTO matches
-  (user_id, sport, location, match_date, match_time, max_players, latitude, longitude, field_price, is_private, share_token)
-  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+  (user_id, sport, location, match_date, match_time, max_players, latitude, longitude, field_price, is_private, share_token, venue_id, reservation_id)
+  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
   RETURNING *`,
   [
     user_id,
@@ -190,7 +296,9 @@ const createMatch = async (req, res) => {
     coords.longitude,
     price.price,
     isPrivate,
-    isPrivate ? newShareToken() : null
+    isPrivate ? newShareToken() : null,
+    venue.venue?.id ?? null,
+    reservation?.id ?? null
   ]
 );
       match = result.rows[0];
@@ -200,6 +308,7 @@ const createMatch = async (req, res) => {
       }
 
       await client.query("COMMIT");
+      }
     } catch (error) {
       await client.query("ROLLBACK").catch(() => {});
       throw error;
@@ -207,10 +316,27 @@ const createMatch = async (req, res) => {
       client.release();
     }
 
+    // Teren nije mogao da se rezerviše: ni termin nije napravljen
+    if (bookingError) {
+      return res.status(bookingError.status === 404 ? 400 : bookingError.status).json({
+        success: false,
+        message: bookingError.message,
+      });
+    }
+
     res.status(201).json({
       success: true,
-      message: "Termin uspešno kreiran.",
-      match: { ...match, repeat_weekly: Boolean(match.series_id) },
+      message:
+        reserve && reservation.status === "pending"
+          ? "Termin je kreiran. Zahtev za rezervaciju terena je poslat vlasniku."
+          : "Termin uspešno kreiran.",
+      match: {
+        ...match,
+        repeat_weekly: Boolean(match.series_id),
+        reservation_status: reservation?.status ?? null,
+        reservation_start_hour: reservation?.start_hour ?? null,
+        reservation_end_hour: reservation?.end_hour ?? null,
+      },
     });
 
   }catch (error) {
@@ -270,7 +396,11 @@ const getMatch = async (req, res) => {
          users.name AS creator_name,
          users.avatar AS creator_avatar,
          COUNT(match_players.user_id) AS players,
-         COALESCE(match_series.active, false) AS repeat_weekly
+         COALESCE(match_series.active, false) AS repeat_weekly,
+         (SELECT name FROM venues WHERE venues.id = matches.venue_id) AS venue_name,
+         r.status AS reservation_status,
+         r.start_hour AS reservation_start_hour,
+         r.end_hour AS reservation_end_hour
        FROM matches
        JOIN users
          ON users.id = matches.user_id
@@ -278,8 +408,11 @@ const getMatch = async (req, res) => {
          ON match_players.match_id = matches.id
        LEFT JOIN match_series
          ON match_series.id = matches.series_id
+       LEFT JOIN venue_reservations r
+         ON r.id = matches.reservation_id
        WHERE matches.id = $1
-       GROUP BY matches.id, users.name, users.avatar, match_series.active`,
+       GROUP BY matches.id, users.name, users.avatar, match_series.active,
+                r.status, r.start_hour, r.end_hour`,
       [id]
     );
 
@@ -339,10 +472,47 @@ const deleteMatch = async (req, res) => {
       includeWaitlist: true,
     });
 
+    // Rezervacija terena za termin se otkazuje zajedno sa terminom,
+    // osim ako je traženo da ostane (?keep_reservation=true)
+    const reservationId = match.rows[0].reservation_id;
+    let cancelledReservation = null;
+
+    if (reservationId && req.query.keep_reservation !== "true") {
+      const reservation = await pool.query(
+        `SELECT r.*, v.name AS venue_name, v.owner_id
+         FROM venue_reservations r JOIN venues v ON v.id = r.venue_id
+         WHERE r.id = $1`,
+        [reservationId]
+      );
+      const r = reservation.rows[0];
+
+      if (r && ACTIVE_RESERVATION.includes(r.status) && reservationStart(r) > new Date()) {
+        await pool.query(
+          "UPDATE venue_reservations SET status = 'cancelled', updated_at = NOW() WHERE id = $1",
+          [r.id]
+        );
+        cancelledReservation = r;
+      }
+    }
+
     await pool.query(
       "DELETE FROM matches WHERE id = $1",
       [id]
     );
+
+    if (cancelledReservation && Number(cancelledReservation.owner_id) !== Number(user_id)) {
+      try {
+        await notifyUsers(
+          pool,
+          [cancelledReservation.owner_id],
+          `🚫 Rezervacija je otkazana (termin je otkazan): ${cancelledReservation.venue_name}, ${describeSlot(cancelledReservation)}.`,
+          null,
+          { reservationId: cancelledReservation.id }
+        );
+      } catch (error) {
+        console.error("Greška pri slanju notifikacija:", error);
+      }
+    }
 
     try {
       await notifyUsers(
@@ -356,7 +526,9 @@ const deleteMatch = async (req, res) => {
 
     res.json({
       success: true,
-      message: "Termin uspešno obrisan.",
+      message: cancelledReservation
+        ? "Termin je obrisan, a rezervacija terena otkazana."
+        : "Termin uspešno obrisan.",
     });
 
   } catch (error) {
@@ -371,13 +543,6 @@ const deleteMatch = async (req, res) => {
 const updateMatch = async (req, res) => {
   try {
     const { id } = req.params;
-
-    const {
-      location,
-      match_date,
-      match_time,
-      max_players,
-    } = req.body;
     const user_id = req.user.id;
 
     const match = await pool.query(
@@ -399,21 +564,66 @@ const updateMatch = async (req, res) => {
       });
     }
 
+    const venue = await resolveVenue(
+      req.body.venue_id,
+      match.rows[0].sport,
+      match.rows[0].venue_id
+    );
+
+    if (venue.error) {
+      return res.status(400).json({
+        success: false,
+        message: venue.error,
+      });
+    }
+
+    const body = withVenue(req.body, venue.venue);
+    const venueId = venue.venue?.id ?? null;
+
+    const {
+      location,
+      match_date,
+      match_time,
+      max_players,
+    } = body;
+
     const validationError = validateMatch({
       location,
       match_date,
       match_time,
       max_players,
     });
-    const coords = parseCoords(req.body);
+    const coords = parseCoords(body);
 
-    const price = parsePrice(req.body);
+    const price = parsePrice(body);
 
     if (validationError || coords.error || price.error) {
       return res.status(400).json({
         success: false,
         message: validationError || coords.error || price.error,
       });
+    }
+
+    // Termin sa aktivnom rezervacijom: teren, datum i vreme prate rezervaciju
+    const old = match.rows[0];
+
+    if (old.reservation_id) {
+      const reservation = await pool.query(
+        "SELECT status, start_hour, end_hour FROM venue_reservations WHERE id = $1",
+        [old.reservation_id]
+      );
+      const r = reservation.rows[0];
+      const changed =
+        dateKeyOf(old.match_date) !== match_date ||
+        String(old.match_time).slice(0, 5) !== String(match_time).slice(0, 5) ||
+        Number(old.venue_id) !== Number(venueId);
+
+      if (r && ACTIVE_RESERVATION.includes(r.status) && changed) {
+        return res.status(400).json({
+          success: false,
+          message: `Termin je vezan za rezervaciju terena (${r.start_hour}–${r.end_hour}h). Da promeniš teren, datum ili vreme, prvo otkaži rezervaciju na stranici Rezervacije.`,
+        });
+      }
     }
 
     const playersCount = await pool.query(
@@ -440,6 +650,7 @@ const updateMatch = async (req, res) => {
         longitude: coords.longitude,
         field_price: price.price,
         is_private: typeof req.body.is_private === "boolean" ? req.body.is_private : undefined,
+        venue_id: venueId,
       },
       typeof req.body.repeat_weekly === "boolean"
         ? req.body.repeat_weekly
@@ -448,7 +659,6 @@ const updateMatch = async (req, res) => {
 
     // Privatnost: kad javni termin postane privatan, pravi se novi ključ,
     // pa linkovi podeljeni dok je bio javan više ne otvaraju termin
-    const old = match.rows[0];
     const isPrivate =
       typeof req.body.is_private === "boolean" ? req.body.is_private : old.is_private;
     const shareToken =
@@ -467,7 +677,8 @@ const updateMatch = async (req, res) => {
          longitude = $6,
          field_price = $8,
          is_private = $9,
-         share_token = $10
+         share_token = $10,
+         venue_id = $11
        WHERE id = $7
        RETURNING *`,
       [
@@ -481,6 +692,7 @@ const updateMatch = async (req, res) => {
         price.price,
         isPrivate,
         shareToken,
+        venueId,
       ]
     );
 

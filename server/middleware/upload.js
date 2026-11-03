@@ -1,3 +1,4 @@
+const fs = require("fs");
 const multer = require("multer");
 
 // Dozvoljeni tipovi slika i ekstenzija pod kojom se čuvaju.
@@ -38,24 +39,54 @@ const upload = multer({
   },
 });
 
-// Kao upload.single, ali greške vraća kao JSON umesto opšte greške servera
+// Greške multer-a vraćamo kao JSON umesto opšte greške servera
+const sendUploadError = (res, err, maxFiles = 1) => {
+  const messages = {
+    LIMIT_FILE_SIZE: `Slika može imati najviše ${MAX_SIZE_MB} MB.`,
+    LIMIT_FILE_COUNT: `Odjednom možeš poslati najviše ${maxFiles} slika.`,
+    LIMIT_UNEXPECTED_FILE: `Odjednom možeš poslati najviše ${maxFiles} slika.`,
+  };
+
+  res.status(400).json({
+    success: false,
+    message: messages[err.code] || err.message,
+  });
+};
+
+// Kao upload.single, ali greške vraća kao JSON
 const uploadSingle = (field) => (req, res, next) => {
   upload.single(field)(req, res, (err) => {
     if (!err) return next();
 
-    const message =
-      err.code === "LIMIT_FILE_SIZE"
-        ? `Slika može imati najviše ${MAX_SIZE_MB} MB.`
-        : err.message;
-
-    res.status(400).json({
-      success: false,
-      message,
-    });
+    sendUploadError(res, err);
   });
+};
+
+// Više slika odjednom (npr. slike terena); fajlovi su u req.files
+const uploadMany = (field, maxFiles) => {
+  const many = multer({
+    storage,
+    fileFilter,
+    limits: {
+      fileSize: MAX_SIZE_MB * 1024 * 1024,
+      files: maxFiles,
+    },
+  });
+
+  return (req, res, next) => {
+    many.array(field, maxFiles)(req, res, (err) => {
+      if (!err) return next();
+
+      // Slike sačuvane pre greške ne ostavljamo na disku
+      (req.files || []).forEach((f) => fs.unlink(f.path, () => {}));
+
+      sendUploadError(res, err, maxFiles);
+    });
+  };
 };
 
 module.exports = {
   upload,
   uploadSingle,
+  uploadMany,
 };

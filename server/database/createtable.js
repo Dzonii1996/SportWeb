@@ -177,6 +177,149 @@ const createTables = async () => {
     ADD COLUMN IF NOT EXISTS match_id INTEGER
       REFERENCES matches(id) ON DELETE SET NULL
   `);
+
+  // Admin: dodaje i menja terene i odobrava predloge korisnika.
+  // Admin je i svako čiji je email u ADMIN_EMAILS (vidi utils/admin.js).
+  await pool.query(`
+    ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT false
+  `);
+
+  // Katalog terena i sala. Predlog korisnika čeka odobrenje admina ('pending'),
+  // a na listi i mapi su samo odobreni ('approved').
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS venues (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(100) NOT NULL,
+      address VARCHAR(200) NOT NULL,
+      latitude DOUBLE PRECISION NOT NULL,
+      longitude DOUBLE PRECISION NOT NULL,
+      sports TEXT[] NOT NULL,
+      surface VARCHAR(50),
+      indoor BOOLEAN NOT NULL DEFAULT false,
+      price_per_hour INTEGER CHECK (price_per_hour >= 0),
+      working_hours VARCHAR(200),
+      phone VARCHAR(30),
+      description TEXT,
+      status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('approved', 'pending', 'rejected')),
+      rejection_reason TEXT,
+      suggested_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+
+  // Slike terena; path je oblika /uploads/<fajl>
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS venue_images (
+      id SERIAL PRIMARY KEY,
+      venue_id INTEGER NOT NULL REFERENCES venues(id) ON DELETE CASCADE,
+      path TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+
+  // Termin na terenu iz kataloga; null kad je lokacija uneta ručno
+  await pool.query(`
+    ALTER TABLE matches
+    ADD COLUMN IF NOT EXISTS venue_id INTEGER
+      REFERENCES venues(id) ON DELETE SET NULL
+  `);
+
+  await pool.query(`
+    ALTER TABLE match_series
+    ADD COLUMN IF NOT EXISTS venue_id INTEGER
+      REFERENCES venues(id) ON DELETE SET NULL
+  `);
+
+  // Ocene terena: svaki korisnik jednom ocenjuje teren (1-5) uz komentar po želji;
+  // ponovna ocena menja postojeću
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS venue_reviews (
+      id SERIAL PRIMARY KEY,
+      venue_id INTEGER NOT NULL REFERENCES venues(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      rating SMALLINT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+      comment TEXT,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      UNIQUE (venue_id, user_id)
+    )
+  `);
+
+  // Vlasnik terena (jedan po terenu): menja podatke terena i potvrđuje rezervacije.
+  // Rezervacije su po celim satima, od reservation_open_hour do reservation_close_hour.
+  await pool.query(`
+    ALTER TABLE venues
+    ADD COLUMN IF NOT EXISTS owner_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    ADD COLUMN IF NOT EXISTS accepts_reservations BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS reservation_open_hour SMALLINT NOT NULL DEFAULT 8
+      CHECK (reservation_open_hour BETWEEN 0 AND 23),
+    ADD COLUMN IF NOT EXISTS reservation_close_hour SMALLINT NOT NULL DEFAULT 23
+      CHECK (reservation_close_hour BETWEEN 1 AND 24)
+  `);
+
+  // Zahtev korisnika da postane vlasnik terena; odobrava ga admin
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS venue_claims (
+      id SERIAL PRIMARY KEY,
+      venue_id INTEGER NOT NULL REFERENCES venues(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      message TEXT,
+      status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending', 'approved', 'rejected')),
+      created_at TIMESTAMP DEFAULT NOW(),
+      decided_at TIMESTAMP
+    )
+  `);
+
+  // Rezervacije terena: od start_hour do end_hour (24 = ponoć) tog dana.
+  // Zahtev ('pending') i potvrđena ('confirmed') zauzimaju vreme;
+  // odbijena i otkazana ga oslobađaju.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS venue_reservations (
+      id SERIAL PRIMARY KEY,
+      venue_id INTEGER NOT NULL REFERENCES venues(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      reservation_date DATE NOT NULL,
+      start_hour SMALLINT NOT NULL CHECK (start_hour BETWEEN 0 AND 23),
+      end_hour SMALLINT NOT NULL CHECK (end_hour BETWEEN 1 AND 24),
+      status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending', 'confirmed', 'rejected', 'cancelled')),
+      note TEXT,
+      owner_note TEXT,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      CHECK (end_hour > start_hour)
+    )
+  `);
+
+  // Termin napravljen uz rezervaciju terena; jedna rezervacija pripada najviše jednom terminu
+  await pool.query(`
+    ALTER TABLE matches
+    ADD COLUMN IF NOT EXISTS reservation_id INTEGER
+      REFERENCES venue_reservations(id) ON DELETE SET NULL
+  `);
+
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS matches_reservation_unique
+    ON matches(reservation_id) WHERE reservation_id IS NOT NULL
+  `);
+
+  // Notifikacija o predlogu terena vodi na stranicu terena
+  await pool.query(`
+    ALTER TABLE notifications
+    ADD COLUMN IF NOT EXISTS venue_id INTEGER
+      REFERENCES venues(id) ON DELETE SET NULL
+  `);
+
+  // Notifikacija o rezervaciji vodi na stranicu rezervacija
+  await pool.query(`
+    ALTER TABLE notifications
+    ADD COLUMN IF NOT EXISTS reservation_id INTEGER
+      REFERENCES venue_reservations(id) ON DELETE SET NULL
+  `);
 };
 
 module.exports = createTables;

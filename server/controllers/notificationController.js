@@ -11,7 +11,9 @@ const getNotifications = async (req, res) => {
         message,
         is_read,
         created_at,
-        match_id
+        match_id,
+        venue_id,
+        reservation_id
       FROM notifications
       WHERE user_id = $1
       ORDER BY created_at DESC

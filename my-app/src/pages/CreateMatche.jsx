@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { authHeader } from "../utils/auth";
 import { API_URL } from "../config";
@@ -8,17 +8,28 @@ import { LocationPicker } from "../components/LocationMap";
 import RepeatWeeklyField from "../components/RepeatWeeklyField";
 import FieldPriceInput from "../components/FieldPriceInput";
 import PrivateMatchField from "../components/PrivateMatchField";
+import VenuePicker from "../components/VenuePicker";
+import ReserveVenueField from "../components/ReserveVenueField";
+import { useVenues } from "../utils/venues";
+import { hourLabel, formatReservationDate } from "../utils/reservations";
 
 function CreateMatch() {
   const navigate = useNavigate();
 
   const user = JSON.parse(localStorage.getItem("user"));
 
+  // "Napravi termin ovde" sa stranice terena: /create-match?venue=5,
+  // a iz rezervacije i &date=2026-11-20&time=18:00&hours=2&reservation=7
+  const [searchParams] = useSearchParams();
+  const venueParam = searchParams.get("venue");
+  const reservationId = searchParams.get("reservation");
+  const reservedHours = Number(searchParams.get("hours")) || 1;
+
   const [formData, setFormData] = useState({
     sport: "Fudbal",
     location: "",
-    match_date: "",
-    match_time: "",
+    match_date: /^\d{4}-\d{2}-\d{2}$/.test(searchParams.get("date") || "") ? searchParams.get("date") : "",
+    match_time: /^\d{2}:\d{2}$/.test(searchParams.get("time") || "") ? searchParams.get("time") : "",
     max_players: 10,
     field_price: "",
   });
@@ -27,12 +38,70 @@ function CreateMatch() {
   const [position, setPosition] = useState(null);
   const [repeatWeekly, setRepeatWeekly] = useState(false);
   const [isPrivate, setIsPrivate] = useState(false);
+  // Teren iz kataloga ("" = ručni unos lokacije)
+  const [venueId, setVenueId] = useState("");
+  // Rezervacija terena uz termin (samo za teren koji prima rezervacije)
+  const [reserve, setReserve] = useState(true);
+  const [reservationHours, setReservationHours] = useState(1);
+
+  const venues = useVenues();
+  const selectedVenue = venues?.find((v) => String(v.id) === venueId);
+  const bookable = Boolean(selectedVenue?.accepts_reservations && selectedVenue?.owner_id);
+
+  // Izbor terena popunjava lokaciju, tačku na mapi i cenu (po satu).
+  // Sport se menja samo ako teren nije za trenutno izabrani.
+  const selectVenue = useCallback((venue) => {
+    if (!venue) {
+      setVenueId("");
+      return;
+    }
+
+    setVenueId(String(venue.id));
+    setPosition([venue.latitude, venue.longitude]);
+    setFormData((data) => ({
+      ...data,
+      sport: venue.sports.includes(data.sport) ? data.sport : venue.sports[0],
+      location: venue.name,
+      // Iz rezervacije: cena za sve rezervisane sate
+      field_price:
+        venue.price_per_hour !== null
+          ? venue.price_per_hour * (reservationId ? reservedHours : 1)
+          : data.field_price,
+    }));
+    setReservationHours(1);
+  }, [reservationId, reservedHours]);
+
+  // Trajanje rezervacije menja i ukupnu cenu terena
+  const changeReservationHours = (hours) => {
+    setReservationHours(hours);
+
+    if (selectedVenue?.price_per_hour !== null && selectedVenue?.price_per_hour !== undefined) {
+      setFormData((data) => ({ ...data, field_price: selectedVenue.price_per_hour * hours }));
+    }
+  };
+
+  useEffect(() => {
+    const venue = venues?.find((v) => String(v.id) === venueParam);
+
+    if (venue) selectVenue(venue);
+  }, [venues, venueParam, selectVenue]);
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
+  };
+
+  // Promena sporta: teren koji nije za taj sport se poništava
+  const handleSportChange = (e) => {
+    const venue = venues?.find((v) => String(v.id) === venueId);
+
+    if (venue && !venue.sports.includes(e.target.value)) {
+      setVenueId("");
+    }
+
+    handleChange(e);
   };
 
   const handleSubmit = async (e) => {
@@ -46,6 +115,10 @@ function CreateMatch() {
           ...formData,
           repeat_weekly: repeatWeekly,
           is_private: isPrivate,
+          venue_id: venueId || null,
+          reservation_id: reservationId || null,
+          reserve: !reservationId && bookable && reserve,
+          reservation_hours: reservationHours,
           latitude: position?.[0] ?? null,
           longitude: position?.[1] ?? null,
         },
@@ -78,46 +151,85 @@ function CreateMatch() {
           <select
             name="sport"
             value={formData.sport}
-            onChange={handleChange}
+            onChange={handleSportChange}
             className="w-full border p-3 rounded-xl"
           >
             <option value="Fudbal">⚽ Fudbal</option>
             <option value="Košarka">🏀 Košarka</option>
           </select>
 
-          <input
-            type="text"
-            name="location"
-            placeholder="Lokacija"
-            value={formData.location}
-            onChange={handleChange}
-            required
-            minLength={2}
-            maxLength={100}
-            className="w-full border p-3 rounded-xl"
-          />
+          {/* Iz rezervacije: teren, datum i vreme su zaključani */}
+          {reservationId ? (
+            <div className="border border-green-200 bg-green-50 rounded-xl p-4 text-gray-700">
+              <p className="font-semibold">📅 Termin za tvoju rezervaciju</p>
+              <p className="text-sm">
+                🏟️ {selectedVenue?.name || formData.location} ·{" "}
+                {formData.match_date && formatReservationDate(`${formData.match_date}T00:00`)}{" "}
+                {formData.match_time && `· ${formData.match_time}–${hourLabel(Number(formData.match_time.slice(0, 2)) + reservedHours)}`}
+              </p>
+            </div>
+          ) : (
+            <VenuePicker
+              venues={venues}
+              sport={formData.sport}
+              value={venueId}
+              onChange={selectVenue}
+            />
+          )}
 
-          <LocationPicker value={position} onChange={setPosition} />
+          {/* Ručni unos kad teren nije sa liste */}
+          {!venueId && (
+            <>
+              <input
+                type="text"
+                name="location"
+                placeholder="Lokacija"
+                value={formData.location}
+                onChange={handleChange}
+                required
+                minLength={2}
+                maxLength={100}
+                className="w-full border p-3 rounded-xl"
+              />
 
-          <input
-            type="date"
-            name="match_date"
-            value={formData.match_date}
-            onChange={handleChange}
-            required
-            min={todayKey()}
-            max={maxDateKey()}
-            className="w-full border p-3 rounded-xl"
-          />
+              <LocationPicker value={position} onChange={setPosition} />
+            </>
+          )}
 
-          <input
-            type="time"
-            name="match_time"
-            value={formData.match_time}
-            onChange={handleChange}
-            required
-            className="w-full border p-3 rounded-xl"
-          />
+          {!reservationId && (
+            <>
+              <input
+                type="date"
+                name="match_date"
+                value={formData.match_date}
+                onChange={handleChange}
+                required
+                min={todayKey()}
+                max={maxDateKey()}
+                className="w-full border p-3 rounded-xl"
+              />
+
+              <input
+                type="time"
+                name="match_time"
+                value={formData.match_time}
+                onChange={handleChange}
+                required
+                step={bookable && reserve ? 3600 : undefined}
+                className="w-full border p-3 rounded-xl"
+              />
+
+              {bookable && (
+                <ReserveVenueField
+                  checked={reserve}
+                  onChange={setReserve}
+                  hours={reservationHours}
+                  onHoursChange={changeReservationHours}
+                  time={formData.match_time}
+                />
+              )}
+            </>
+          )}
 
           <input
             type="number"

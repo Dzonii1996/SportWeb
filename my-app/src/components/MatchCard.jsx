@@ -146,7 +146,7 @@ function MatchCard({
 
   const deleteMatch = async () => {
     const confirmDelete = window.confirm(
-      "Da li ste sigurni da želite da obrišete termin?"
+      "Da li ste sigurni da želite da obrišete termin? Ako je uz termin rezervisan teren, i rezervacija se otkazuje."
     );
 
     if (!confirmDelete) return;

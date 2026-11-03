@@ -16,6 +16,8 @@ const ratingRoutes = require("./routes/ratingRoutes");
 const seriesRoutes = require("./routes/seriesRoutes");
 const shareRoutes = require("./routes/shareRoutes");
 const inviteRoutes = require("./routes/inviteRoutes");
+const venueRoutes = require("./routes/venueRoutes");
+const reservationRoutes = require("./routes/reservationRoutes");
 const createTables = require("./database/createtable");
 const { sendDueReminders } = require("./utils/reminders");
 const { generateNextOccurrences } = require("./utils/series");
@@ -38,6 +40,8 @@ app.use("/api/matches", inviteRoutes);
 app.use("/share", shareRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/venues", venueRoutes);
+app.use("/api/reservations", reservationRoutes);
 app.use(express.json());
 
 app.get("/", (req, res) => {
