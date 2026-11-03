@@ -11,6 +11,31 @@ import {
 } from "lucide-react";
 import { API_URL } from "../config";
 import { isPastMatch, matchStart } from "../utils/matchDate";
+import { FootballPitch, BasketballCourt } from "../components/CourtBackgrounds";
+
+// Slajdovi u hero delu: pozadina, tekst i dugme za svaki sport
+const HERO_SLIDES = [
+  {
+    sport: "Fudbal",
+    emoji: "⚽",
+    play: "fudbal",
+    tagline: "Mali fudbal, futsal i veliki teren u tvom gradu",
+    cta: "Pronađi fudbalski termin",
+    accent: "text-green-300",
+    Background: FootballPitch,
+  },
+  {
+    sport: "Košarka",
+    emoji: "🏀",
+    play: "basket",
+    tagline: "Basket 3 na 3 ili puna ekipa u tvom gradu",
+    cta: "Pronađi košarkaški termin",
+    accent: "text-amber-300",
+    Background: BasketballCourt,
+  },
+];
+
+const SLIDE_MS = 6000;
 
 const SPORTS = [
   { value: "Fudbal", emoji: "⚽", text: "Mali fudbal, futsal ili veliki teren" },
@@ -113,6 +138,32 @@ function Home() {
   const [matches, setMatches] = useState(null);
   const loggedIn = Boolean(localStorage.getItem("user"));
 
+  // Slajder: sam se smenjuje dok korisnik ne izabere sport.
+  // Ko u sistemu ima isključene animacije, nema automatskog smenjivanja.
+  const [active, setActive] = useState(0);
+  const [cycle, setCycle] = useState(0);
+  const [autoplay, setAutoplay] = useState(
+    () => !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+  );
+
+  useEffect(() => {
+    if (!autoplay) return;
+
+    const timer = setTimeout(() => {
+      setActive((i) => (i + 1) % HERO_SLIDES.length);
+      setCycle((c) => c + 1);
+    }, SLIDE_MS);
+
+    return () => clearTimeout(timer);
+  }, [autoplay, active, cycle]);
+
+  const selectSlide = (i) => {
+    setActive(i);
+    setAutoplay(false);
+  };
+
+  const slide = HERO_SLIDES[active];
+
   useEffect(() => {
     fetch(`${API_URL}/api/matches`)
       .then((res) => res.json())
@@ -138,27 +189,61 @@ function Home() {
     upcoming.map((m) => m.location.trim().toLowerCase())
   ).size;
 
-  const next = upcoming[0];
+  const nextForSport = upcoming.find((m) => m.sport === slide.sport);
 
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-green-700 via-green-600 to-emerald-500 text-white">
+      {/* Hero: pozadina se smenjuje između terena, ili prati izabrani sport */}
+      <section className="relative overflow-hidden text-white bg-green-800">
 
-        {/* Linije terena u pozadini */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none" aria-hidden="true">
-          <div className="absolute left-1/2 top-0 bottom-0 border-l-2 border-white" />
-          <div className="absolute left-1/2 top-1/2 w-64 h-64 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white" />
-          <div className="absolute -left-10 top-1/2 w-40 h-72 -translate-y-1/2 border-2 border-white" />
-          <div className="absolute -right-10 top-1/2 w-40 h-72 -translate-y-1/2 border-2 border-white" />
-        </div>
+        {HERO_SLIDES.map(({ sport, Background }, i) => (
+          <div
+            key={sport}
+            className={`absolute inset-0 transition-opacity duration-1000 ${
+              i === active ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            <Background />
+          </div>
+        ))}
+
+        {/* Zatamnjenje, da tekst bude čitljiv preko linija terena */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-black/10" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 md:py-24 grid lg:grid-cols-2 gap-12 items-center">
 
           <div>
+            {/* Izbor sporta: menja pozadinu i zaustavlja smenjivanje */}
+            <div className="flex gap-2 mb-6" role="tablist" aria-label="Sport">
+              {HERO_SLIDES.map((s, i) => (
+                <button
+                  key={s.sport}
+                  role="tab"
+                  aria-selected={i === active}
+                  onClick={() => selectSlide(i)}
+                  className={`relative overflow-hidden px-4 py-1.5 rounded-full text-sm font-semibold border transition ${
+                    i === active
+                      ? "bg-white text-gray-900 border-white"
+                      : "bg-white/10 border-white/30 hover:bg-white/20"
+                  }`}
+                >
+                  {s.emoji} {s.sport}
+
+                  {/* Traka do sledećeg slajda, dok se smenjuju sami */}
+                  {autoplay && i === active && (
+                    <span
+                      key={`${active}-${cycle}`}
+                      className="absolute left-0 bottom-0 h-0.5 bg-green-600"
+                      style={{ animation: `hero-progress ${SLIDE_MS}ms linear forwards` }}
+                    />
+                  )}
+                </button>
+              ))}
+            </div>
+
             <span className="inline-block bg-white/15 border border-white/20 px-4 py-1.5 rounded-full text-sm font-medium mb-6">
-              Rekreativni fudbal i košarka u tvom gradu
+              {slide.tagline}
             </span>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight">
@@ -166,49 +251,58 @@ function Home() {
               <br />
               Zakaži termin.
               <br />
-              <span className="text-green-200">Igraj.</span>
+              <span className={slide.accent}>Igraj {slide.play}.</span>
             </h1>
 
-            <p className="text-lg text-green-50 max-w-xl mt-6">
+            <p className="text-lg text-white/85 max-w-xl mt-6">
               Više nema dopisivanja po grupama da bi se skupilo deset ljudi.
               Napravi termin, podeli link i neka se ekipa sama prijavi.
             </p>
 
             <div className="flex flex-wrap gap-3 mt-8">
               <Link
-                to="/matches"
-                className="inline-flex items-center gap-2 bg-white text-green-700 px-6 py-3.5 rounded-xl font-bold shadow-lg hover:bg-green-50 transition"
+                to={`/matches?sport=${encodeURIComponent(slide.sport)}`}
+                className="inline-flex items-center gap-2 bg-white text-gray-900 px-6 py-3.5 rounded-xl font-bold shadow-lg hover:bg-gray-100 transition"
               >
-                Pronađi termin
+                {slide.cta}
                 <ArrowRight size={18} />
               </Link>
 
               <Link
                 to={loggedIn ? "/create-match" : "/register"}
-                className="inline-flex items-center gap-2 border-2 border-white/70 px-6 py-3.5 rounded-xl font-bold hover:bg-white hover:text-green-700 transition"
+                className="inline-flex items-center gap-2 border-2 border-white/70 px-6 py-3.5 rounded-xl font-bold hover:bg-white hover:text-gray-900 transition"
               >
                 {loggedIn ? "Kreiraj termin" : "Napravi nalog"}
               </Link>
             </div>
           </div>
 
-          {/* Sledeći termin */}
+          {/* Sledeći termin za izabrani sport */}
           <div className="hidden lg:block">
-            {next ? (
-              <div className="bg-white/10 border border-white/20 backdrop-blur rounded-3xl p-6 shadow-2xl">
-                <p className="text-green-100 text-sm font-semibold uppercase tracking-wider mb-4">
-                  Sledeći termin
-                </p>
+            <div className="bg-black/30 border border-white/20 backdrop-blur rounded-3xl p-6 shadow-2xl">
+              <p className="text-white/80 text-sm font-semibold uppercase tracking-wider mb-4">
+                Sledeći termin · {slide.emoji} {slide.sport}
+              </p>
 
+              {nextForSport ? (
                 <div className="text-gray-900 [&>a]:block">
-                  <UpcomingCard match={next} />
+                  <UpcomingCard match={nextForSport} />
                 </div>
-              </div>
-            ) : (
-              <div className="text-center text-8xl select-none" aria-hidden="true">
-                ⚽ 🏀
-              </div>
-            )}
+              ) : (
+                <div className="bg-white/10 rounded-2xl p-6 text-center">
+                  <p className="text-5xl mb-3" aria-hidden="true">{slide.emoji}</p>
+                  <p className="font-semibold">
+                    Trenutno nema zakazanih termina.
+                  </p>
+                  <Link
+                    to={loggedIn ? "/create-match" : "/register"}
+                    className="inline-block mt-4 bg-white text-gray-900 px-5 py-2.5 rounded-xl font-semibold hover:bg-gray-100"
+                  >
+                    Napravi prvi
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
 
         </div>
