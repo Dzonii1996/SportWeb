@@ -506,6 +506,7 @@ module.exports = {
   MAX_HOURS,
   ACTIVE,
   bookSlot,
+  parseDate,
   describeSlot,
   reservationStart,
   updateSettings,

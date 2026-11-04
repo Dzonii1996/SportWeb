@@ -8,6 +8,7 @@ const LINKS = [
   { to: "/", label: "Početna", end: true },
   { to: "/matches", label: "Termini" },
   { to: "/tereni", label: "Tereni" },
+  { to: "/turniri", label: "Turniri" },
   { to: "/rang-lista", label: "Rang lista" },
 ];
 
@@ -113,8 +114,13 @@ useEffect(() => {
             </NavLink>
           ))}
 
+          {/* Na užem ekranu su u korisničkom meniju */}
           {user && USER_LINKS.map((l) => (
-            <NavLink key={l.to} to={l.to} className={linkClass}>
+            <NavLink
+              key={l.to}
+              to={l.to}
+              className={(state) => `${linkClass(state)} hidden xl:block`}
+            >
               {l.label}
             </NavLink>
           ))}

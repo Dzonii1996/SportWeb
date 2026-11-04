@@ -20,6 +20,10 @@ import VenueDetails from "./pages/VenueDetails";
 import VenueForm from "./pages/VenueForm";
 import VenueAdmin from "./pages/VenueAdmin";
 import Reservations from "./pages/Reservations";
+import Tournaments from "./pages/Tournaments";
+import TournamentDetails from "./pages/TournamentDetails";
+import TournamentForm from "./pages/TournamentForm";
+import TournamentInvite from "./pages/TournamentInvite";
 function App() {
 
   return (
@@ -42,6 +46,17 @@ function App() {
         <Route
           path="/tereni/admin"
           element={<ProtectedRoute><VenueAdmin /></ProtectedRoute>}
+        />
+        <Route path="/turniri" element={<Tournaments />} />
+        <Route
+          path="/turniri/novi"
+          element={<ProtectedRoute><TournamentForm /></ProtectedRoute>}
+        />
+        <Route path="/turniri/pozivnica/:token" element={<TournamentInvite />} />
+        <Route path="/turniri/:id" element={<TournamentDetails />} />
+        <Route
+          path="/turniri/:id/izmeni"
+          element={<ProtectedRoute><TournamentForm /></ProtectedRoute>}
         />
         <Route
           path="/rezervacije"

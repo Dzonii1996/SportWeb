@@ -307,6 +307,95 @@ const createTables = async () => {
     ON matches(reservation_id) WHERE reservation_id IS NOT NULL
   `);
 
+  // Turniri: prave ih admin i vlasnici terena. Format je liga (svako sa svakim)
+  // ili kup (nokaut). max_roster je najveći broj igrača u ekipi.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS tournaments (
+      id SERIAL PRIMARY KEY,
+      organizer_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      name VARCHAR(100) NOT NULL,
+      sport VARCHAR(50) NOT NULL,
+      format TEXT NOT NULL CHECK (format IN ('league', 'knockout')),
+      venue_id INTEGER REFERENCES venues(id) ON DELETE SET NULL,
+      location VARCHAR(100) NOT NULL,
+      start_date DATE NOT NULL,
+      max_teams INTEGER NOT NULL CHECK (max_teams BETWEEN 2 AND 32),
+      max_roster INTEGER NOT NULL CHECK (max_roster BETWEEN 1 AND 30),
+      entry_fee INTEGER CHECK (entry_fee >= 0),
+      rules TEXT,
+      status TEXT NOT NULL DEFAULT 'registration'
+        CHECK (status IN ('registration', 'in_progress', 'finished', 'cancelled')),
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+
+  // Ekipe na turniru; kapiten poziva igrače linkom sa invite_token
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS tournament_teams (
+      id SERIAL PRIMARY KEY,
+      tournament_id INTEGER NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+      name VARCHAR(50) NOT NULL,
+      captain_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending', 'approved', 'rejected')),
+      paid BOOLEAN NOT NULL DEFAULT false,
+      invite_token TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS tournament_teams_name_unique
+    ON tournament_teams(tournament_id, LOWER(name)) WHERE status <> 'rejected'
+  `);
+
+  await pool.query(`
+    ALTER TABLE tournaments
+    ADD COLUMN IF NOT EXISTS winner_team_id INTEGER
+      REFERENCES tournament_teams(id) ON DELETE SET NULL
+  `);
+
+  // Igrač može biti u samo jednoj ekipi na turniru
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS tournament_team_players (
+      team_id INTEGER NOT NULL REFERENCES tournament_teams(id) ON DELETE CASCADE,
+      tournament_id INTEGER NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at TIMESTAMP DEFAULT NOW(),
+      PRIMARY KEY (team_id, user_id),
+      UNIQUE (tournament_id, user_id)
+    )
+  `);
+
+  // Utakmice. U kupu: pobednik (round, position) ide u (round + 1, ceil(position / 2));
+  // utakmica sa samo jednom ekipom je slobodan prolaz. Penali samo u kupu u fudbalu.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS tournament_games (
+      id SERIAL PRIMARY KEY,
+      tournament_id INTEGER NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+      round INTEGER NOT NULL,
+      position INTEGER NOT NULL,
+      team_a_id INTEGER REFERENCES tournament_teams(id) ON DELETE SET NULL,
+      team_b_id INTEGER REFERENCES tournament_teams(id) ON DELETE SET NULL,
+      score_a INTEGER CHECK (score_a BETWEEN 0 AND 999),
+      score_b INTEGER CHECK (score_b BETWEEN 0 AND 999),
+      penalties_a INTEGER CHECK (penalties_a BETWEEN 0 AND 99),
+      penalties_b INTEGER CHECK (penalties_b BETWEEN 0 AND 99),
+      winner_team_id INTEGER REFERENCES tournament_teams(id) ON DELETE SET NULL,
+      game_date DATE,
+      game_time TIME,
+      reservation_id INTEGER REFERENCES venue_reservations(id) ON DELETE SET NULL,
+      UNIQUE (tournament_id, round, position)
+    )
+  `);
+
+  // Notifikacija o turniru vodi na stranicu turnira
+  await pool.query(`
+    ALTER TABLE notifications
+    ADD COLUMN IF NOT EXISTS tournament_id INTEGER
+      REFERENCES tournaments(id) ON DELETE SET NULL
+  `);
+
   // Notifikacija o predlogu terena vodi na stranicu terena
   await pool.query(`
     ALTER TABLE notifications

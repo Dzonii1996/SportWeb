@@ -10,16 +10,16 @@ const describeMatch = (match) => {
 
 // Šalje istu notifikaciju svim korisnicima iz liste.
 // "db" je pool ili client iz transakcije. links.venueId vodi na stranicu terena,
-// a links.reservationId na stranicu rezervacija.
+// links.reservationId na stranicu rezervacija, a links.tournamentId na turnir.
 const notifyUsers = async (db, userIds, message, matchId = null, links = {}) => {
   const ids = [...new Set(userIds.filter(Boolean).map(Number))];
 
   if (ids.length === 0) return;
 
   await db.query(
-    `INSERT INTO notifications(user_id, message, match_id, venue_id, reservation_id)
-     SELECT unnest($1::int[]), $2, $3, $4, $5`,
-    [ids, message, matchId, links.venueId ?? null, links.reservationId ?? null]
+    `INSERT INTO notifications(user_id, message, match_id, venue_id, reservation_id, tournament_id)
+     SELECT unnest($1::int[]), $2, $3, $4, $5, $6`,
+    [ids, message, matchId, links.venueId ?? null, links.reservationId ?? null, links.tournamentId ?? null]
   );
 };
 

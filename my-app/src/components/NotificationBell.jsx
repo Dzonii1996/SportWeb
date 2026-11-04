@@ -92,6 +92,9 @@ function NotificationBell({ userId }) {
     if (notification.match_id) {
       setOpen(false);
       navigate(`/matches/${notification.match_id}`);
+    } else if (notification.tournament_id) {
+      setOpen(false);
+      navigate(`/turniri/${notification.tournament_id}`);
     } else if (notification.reservation_id) {
       setOpen(false);
       navigate("/rezervacije");
