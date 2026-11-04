@@ -11,18 +11,20 @@ import {
   approveVenue,
   rejectVenue,
 } from "../utils/venues";
+import { useTranslation } from "react-i18next";
+import i18n, { locale, sportLabel, surfaceLabel } from "../i18n";
 
 const TABS = [
-  { value: "pending", label: "Na čekanju" },
-  { value: "rejected", label: "Odbijeni" },
-  { value: "claims", label: "Vlasništvo" },
+  { value: "pending", get label() { return i18n.t("venueAdmin.pending"); } },
+  { value: "rejected", get label() { return i18n.t("venueAdmin.rejected"); } },
+  { value: "claims", get label() { return i18n.t("venueAdmin.ownership"); } },
 ];
 
 // Admin odobrava ili odbija zahtev za vlasništvo; vraća true kad je uspelo
 const decideClaim = async (claim, action) => {
   if (
     action === "approve" &&
-    !window.confirm(`${claim.user_name} (${claim.user_email}) postaje vlasnik terena "${claim.venue_name}"?`)
+    !window.confirm(i18n.t("venueAdmin.becomesTheOwnerOfThe", { user_name: claim.user_name, user_email: claim.user_email, venue_name: claim.venue_name }))
   ) {
     return false;
   }
@@ -40,6 +42,8 @@ const decideClaim = async (claim, action) => {
 
 // Admin: pregled predloga terena i zahteva za vlasništvo
 function VenueAdmin() {
+  const { t } = useTranslation();
+
   const { isAdmin, loaded } = useAdminStatus();
   const [status, setStatus] = useState("pending");
   const [venues, setVenues] = useState([]);
@@ -65,13 +69,13 @@ function VenueAdmin() {
   }, [isAdmin, load]);
 
   if (!loaded) {
-    return <div className="text-center mt-20 text-xl">Učitavanje...</div>;
+    return <div className="text-center mt-20 text-xl">{t("common.loading")}</div>;
   }
 
   if (!isAdmin) {
     return (
       <div className="max-w-xl mx-auto p-6 text-center mt-10">
-        <p className="text-xl">Ova stranica je samo za admina.</p>
+        <p className="text-xl">{t("venueAdmin.thisPageIsForThe")}</p>
       </div>
     );
   }
@@ -81,10 +85,10 @@ function VenueAdmin() {
       <div className="max-w-5xl mx-auto p-6">
         <Link to="/tereni" className="inline-flex items-center gap-1.5 text-gray-600 hover:text-gray-900 mb-4">
           <ArrowLeft size={18} />
-          Svi tereni
+          {t("common.allVenues")}
         </Link>
 
-        <h1 className="text-3xl font-bold mb-6">Predlozi i vlasnici terena</h1>
+        <h1 className="text-3xl font-bold mb-6">{t("venueAdmin.venueSuggestionsAndOwners")}</h1>
 
         <div className="flex gap-2 mb-6">
           {TABS.map((tab) => (
@@ -103,7 +107,7 @@ function VenueAdmin() {
         {status === "claims" ? (
           claims.length === 0 ? (
             <p className="text-gray-600 bg-white rounded-2xl border p-6 text-center">
-              Nema zahteva za vlasništvo.
+              {t("venueAdmin.noOwnershipRequests")}
             </p>
           ) : (
             <div className="space-y-4">
@@ -125,7 +129,7 @@ function VenueAdmin() {
                       <p className="mt-1 text-gray-700 whitespace-pre-line break-words">„{claim.message}“</p>
                     )}
                     <p className="text-sm text-gray-500 mt-1">
-                      {new Date(claim.created_at).toLocaleDateString("sr-Latn-RS")}
+                      {new Date(claim.created_at).toLocaleDateString(locale())}
                     </p>
                   </div>
 
@@ -134,13 +138,13 @@ function VenueAdmin() {
                       onClick={async () => (await decideClaim(claim, "approve")) && load()}
                       className="px-4 py-2 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold"
                     >
-                      Odobri
+                      {t("common.approve")}
                     </button>
                     <button
                       onClick={async () => (await decideClaim(claim, "reject")) && load()}
                       className="px-4 py-2 rounded-xl border border-red-300 text-red-700 font-semibold hover:bg-red-50"
                     >
-                      Odbij
+                      {t("common.reject")}
                     </button>
                   </div>
                 </div>
@@ -149,7 +153,7 @@ function VenueAdmin() {
           )
         ) : venues.length === 0 ? (
           <p className="text-gray-600 bg-white rounded-2xl border p-6 text-center">
-            {status === "pending" ? "Nema predloga na čekanju. 🎉" : "Nema odbijenih predloga."}
+            {status === "pending" ? t("venueAdmin.noPendingSuggestions") : t("venueAdmin.noRejectedSuggestions")}
           </p>
         ) : (
           <div className="space-y-4">
@@ -174,15 +178,15 @@ function VenueAdmin() {
                   <h2 className="text-xl font-bold">{venue.name}</h2>
                   <p className="text-gray-600">{venue.address}</p>
                   <p className="text-sm text-gray-500 mt-1">
-                    {venue.sports.join(", ")} · {indoorLabel(venue.indoor)}
-                    {venue.surface && ` · ${venue.surface}`}
+                    {venue.sports.map(sportLabel).join(", ")} · {indoorLabel(venue.indoor)}
+                    {venue.surface && ` · ${surfaceLabel(venue.surface)}`}
                   </p>
                   <p className="text-sm text-gray-500">
-                    Predložio/la: {venue.suggested_by_name || "nepoznat korisnik"},{" "}
-                    {new Date(venue.created_at).toLocaleDateString("sr-Latn-RS")}
+                    {t("venueAdmin.suggestedBy")} {venue.suggested_by_name || t("venueAdmin.unknownUser")},{" "}
+                    {new Date(venue.created_at).toLocaleDateString(locale())}
                   </p>
                   {venue.rejection_reason && (
-                    <p className="text-sm text-red-700 mt-1">Razlog: {venue.rejection_reason}</p>
+                    <p className="text-sm text-red-700 mt-1">{t("common.reason", { rejection_reason: venue.rejection_reason })}</p>
                   )}
                 </div>
 
@@ -191,20 +195,20 @@ function VenueAdmin() {
                     to={`/tereni/${venue.id}`}
                     className="text-center px-4 py-2 rounded-xl border border-gray-200 font-medium hover:bg-gray-50"
                   >
-                    Pogledaj
+                    {t("venueAdmin.view")}
                   </Link>
                   <button
                     onClick={async () => (await approveVenue(venue.id)) && load()}
                     className="px-4 py-2 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold"
                   >
-                    Odobri
+                    {t("common.approve")}
                   </button>
                   {status === "pending" && (
                     <button
                       onClick={async () => (await rejectVenue(venue.id)) && load()}
                       className="px-4 py-2 rounded-xl border border-red-300 text-red-700 font-semibold hover:bg-red-50"
                     >
-                      Odbij
+                      {t("common.reject")}
                     </button>
                   )}
                 </div>

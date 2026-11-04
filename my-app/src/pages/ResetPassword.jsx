@@ -2,9 +2,12 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Lock } from "lucide-react";
 import { API_URL } from "../config";
+import { useTranslation } from "react-i18next";
 
 // Stranica iz linka u mejlu: /reset-password?token=...
 function ResetPassword() {
+  const { t } = useTranslation();
+
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token") || "";
 
@@ -12,6 +15,7 @@ function ResetPassword() {
   const [confirm, setConfirm] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  const [expired, setExpired] = useState(false);
   const [done, setDone] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -19,7 +23,7 @@ function ResetPassword() {
     setError("");
 
     if (password !== confirm) {
-      setError("Lozinke se ne poklapaju.");
+      setError(t("resetPassword.passwordsDoNotMatch"));
       return;
     }
 
@@ -38,11 +42,12 @@ function ResetPassword() {
         setDone(true);
       } else {
         setError(data.message);
+        setExpired(Boolean(data.expired));
       }
 
     } catch (err) {
       console.error(err);
-      setError("Greška pri povezivanju sa serverom.");
+      setError(t("common.couldNotConnectToThe"));
     } finally {
       setSending(false);
     }
@@ -68,37 +73,37 @@ function ResetPassword() {
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
 
         <h1 className="text-3xl font-bold text-gray-800 text-center mb-8">
-          Nova lozinka
+          {t("resetPassword.newPassword")}
         </h1>
 
         {!token ? (
           <p className="text-center text-red-600">
-            Link nije ispravan. Otvori ga ponovo iz mejla.
+            {t("resetPassword.theLinkIsntValidOpen")}
           </p>
         ) : done ? (
           <div className="text-center">
             <p className="bg-green-50 border border-green-200 text-green-800 rounded-xl p-4">
-              Lozinka je promenjena. ✅
+              {t("resetPassword.yourPasswordHasBeenChanged")}
             </p>
 
             <Link
               to="/login"
               className="inline-block mt-6 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold"
             >
-              Prijavi se
+              {t("common.signIn")}
             </Link>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            {field(password, setPassword, "Nova lozinka (najmanje 6 znakova)")}
-            {field(confirm, setConfirm, "Ponovi novu lozinku")}
+            {field(password, setPassword, t("common.newPasswordAtLeast6"))}
+            {field(confirm, setConfirm, t("common.repeatNewPassword"))}
 
             {error && (
               <p className="text-red-600 text-sm">
                 {error}{" "}
-                {error.includes("istekao") && (
+                {expired && (
                   <Link to="/forgot-password" className="underline">
-                    Zatraži novi link
+                    {t("resetPassword.requestANewLink")}
                   </Link>
                 )}
               </p>
@@ -109,7 +114,7 @@ function ResetPassword() {
               disabled={sending}
               className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white py-3 rounded-xl font-semibold transition"
             >
-              {sending ? "Čuvam..." : "Sačuvaj lozinku"}
+              {sending ? t("common.saving") : t("resetPassword.savePassword")}
             </button>
           </form>
         )}

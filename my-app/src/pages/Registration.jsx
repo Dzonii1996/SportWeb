@@ -2,8 +2,11 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { User, Mail, Lock, UserPlus } from "lucide-react";
 import { API_URL } from "../config";
+import { useTranslation } from "react-i18next";
 
 function Register() {
+  const { t } = useTranslation();
+
 
   const [formData, setFormData] = useState({
     name: "",
@@ -26,7 +29,7 @@ function Register() {
 
 
     if (formData.password !== formData.confirmPassword) {
-      alert("Lozinke se ne poklapaju");
+      alert(t("registration.passwordsDoNotMatch"));
       return;
     }
 
@@ -59,7 +62,7 @@ function Register() {
     } catch (error) {
 
       console.log(error);
-      alert("Greška pri povezivanju sa serverom");
+      alert(t("common.couldNotConnectToThe2"));
 
     }
 
@@ -75,11 +78,11 @@ function Register() {
         <div className="text-center mb-8">
 
           <h1 className="text-3xl font-bold text-gray-800">
-            Kreiraj nalog 🚀
+           {t("registration.createAnAccount")}
           </h1>
 
           <p className="text-gray-500 mt-2">
-            Registruj se i pronađi svoj sledeći sportski termin.
+           {t("registration.signUpAndFindYour")}
           </p>
 
         </div>
@@ -96,7 +99,7 @@ function Register() {
           <div>
 
             <label className="block text-gray-700 mb-2">
-              Ime i prezime
+             {t("registration.fullName")}
             </label>
 
             <div className="flex items-center border rounded-xl px-3">
@@ -108,7 +111,7 @@ function Register() {
                 value={formData.name}
                 onChange={handleChange}
                 type="text"
-                placeholder="Unesite ime i prezime"
+                placeholder={t("registration.enterYourFullName")}
                 className="w-full p-3 outline-none"
               />
 
@@ -122,7 +125,7 @@ function Register() {
           <div>
 
             <label className="block text-gray-700 mb-2">
-              Email
+             {t("common.email")}
             </label>
 
             <div className="flex items-center border rounded-xl px-3">
@@ -134,7 +137,7 @@ function Register() {
                 value={formData.email}
                 onChange={handleChange}
                 type="email"
-                placeholder="Unesite email"
+                placeholder={t("common.enterYourEmail")}
                 className="w-full p-3 outline-none"
               />
 
@@ -148,7 +151,7 @@ function Register() {
           <div>
 
             <label className="block text-gray-700 mb-2">
-              Lozinka
+             {t("common.password")}
             </label>
 
             <div className="flex items-center border rounded-xl px-3">
@@ -160,7 +163,7 @@ function Register() {
                 value={formData.password}
                 onChange={handleChange}
                 type="password"
-                placeholder="Najmanje 6 znakova"
+                placeholder={t("registration.atLeast6Characters")}
                 minLength={6}
                 required
                 className="w-full p-3 outline-none"
@@ -176,7 +179,7 @@ function Register() {
           <div>
 
             <label className="block text-gray-700 mb-2">
-              Potvrdi lozinku
+             {t("registration.confirmPassword")}
             </label>
 
             <div className="flex items-center border rounded-xl px-3">
@@ -188,7 +191,7 @@ function Register() {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 type="password"
-                placeholder="Ponovo unesite lozinku"
+                placeholder={t("registration.enterYourPasswordAgain")}
                 className="w-full p-3 outline-none"
               />
 
@@ -203,8 +206,7 @@ function Register() {
           >
 
             <UserPlus size={20}/>
-            Registruj se
-
+           {t("registration.signUp")}
           </button>
 
 
@@ -214,14 +216,14 @@ function Register() {
         <div className="text-center mt-6">
 
           <p className="text-gray-600">
-            Već imate nalog?
+           {t("registration.alreadyHaveAnAccount")}
           </p>
 
           <Link
             to="/login"
             className="text-green-600 font-semibold hover:underline"
           >
-            Prijavite se
+           {t("registration.signIn")}
           </Link>
 
         </div>

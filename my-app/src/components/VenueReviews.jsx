@@ -4,16 +4,16 @@ import { Trash2 } from "lucide-react";
 import { API_URL } from "../config";
 import { authHeader } from "../utils/auth";
 import { Stars, StarInput } from "./Stars";
+import { useTranslation } from "react-i18next";
+import { locale } from "../i18n";
 
 const MAX_COMMENT = 1000;
-
-// "1 ocena", "3 ocene", "5 ocena", "22 ocene"
-const ratingsLabel = (n) =>
-  [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? "ocene" : "ocena";
 
 // Ocene terena: prosek i raspodela, moja ocena (forma) i lista ocena.
 // onChange se zove posle izmene, da stranica osveži prosek u zaglavlju.
 function VenueReviews({ venueId, onChange }) {
+  const { t } = useTranslation();
+
   const loggedIn = Boolean(localStorage.getItem("token"));
   const me = JSON.parse(localStorage.getItem("user") || "null");
 
@@ -45,7 +45,7 @@ function VenueReviews({ venueId, onChange }) {
     e.preventDefault();
 
     if (!rating) {
-      alert("Izaberi ocenu (broj zvezdica).");
+      alert(t("venueReviews.pickARatingNumberOf"));
       return;
     }
 
@@ -74,7 +74,7 @@ function VenueReviews({ venueId, onChange }) {
   const remove = async (review) => {
     const own = Number(review.user_id) === Number(me?.id);
 
-    if (!window.confirm(own ? "Obrisati tvoju ocenu?" : `Obrisati ocenu korisnika ${review.user_name}?`)) {
+    if (!window.confirm(own ? t("venueReviews.deleteYourRating") : t("venueReviews.deleteTheRatingBy", { user_name: review.user_name }))) {
       return;
     }
 
@@ -102,18 +102,18 @@ function VenueReviews({ venueId, onChange }) {
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
-      <h2 className="text-2xl font-bold">Ocene terena</h2>
+      <h2 className="text-2xl font-bold">{t("venueReviews.venueRatings")}</h2>
 
       {/* Prosek i raspodela po zvezdicama */}
       {total > 0 ? (
         <div className="flex flex-col sm:flex-row gap-6 sm:items-center">
           <div className="text-center sm:w-40 shrink-0">
             <p className="text-5xl font-extrabold">
-              {avg.toLocaleString("sr-Latn-RS", { maximumFractionDigits: 1, minimumFractionDigits: 1 })}
+              {avg.toLocaleString(locale(), { maximumFractionDigits: 1, minimumFractionDigits: 1 })}
             </p>
             <Stars value={avg} size={20} />
             <p className="text-sm text-gray-500 mt-1">
-              {total} {ratingsLabel(total)}
+              {total} {t("venueReviews.ratings", { count: total })}
             </p>
           </div>
 
@@ -134,37 +134,37 @@ function VenueReviews({ venueId, onChange }) {
           </div>
         </div>
       ) : (
-        <p className="text-gray-600">Teren još nema ocena. Budi prvi!</p>
+        <p className="text-gray-600">{t("venueReviews.thisVenueHasNoRatings")}</p>
       )}
 
       {/* Moja ocena */}
       {!loggedIn && (
         <p className="text-gray-600">
           <Link to="/login" className="text-green-700 font-semibold hover:underline">
-            Prijavi se
+            {t("common.signIn")}
           </Link>{" "}
-          da oceniš teren.
+          {t("venueReviews.toRateTheVenue")}
         </p>
       )}
 
       {loggedIn && myReview && !editing && (
         <div className="flex flex-wrap items-center justify-between gap-3 bg-green-50 border border-green-200 rounded-xl p-4">
           <div className="flex items-center gap-2">
-            <span className="font-medium">Tvoja ocena:</span>
+            <span className="font-medium">{t("venueReviews.yourRating")}</span>
             <Stars value={myReview.rating} />
           </div>
           <button
             onClick={() => setEditing(true)}
             className="text-green-700 font-semibold hover:underline"
           >
-            Izmeni
+            {t("common.edit")}
           </button>
         </div>
       )}
 
       {showForm && (
         <form onSubmit={save} className="space-y-3 border rounded-xl p-4">
-          <p className="font-medium">{myReview ? "Izmeni ocenu" : "Oceni teren"}</p>
+          <p className="font-medium">{myReview ? t("venueReviews.editRating") : t("venueReviews.rateTheVenue")}</p>
 
           <StarInput value={rating} onChange={setRating} />
 
@@ -173,7 +173,7 @@ function VenueReviews({ venueId, onChange }) {
             onChange={(e) => setComment(e.target.value)}
             rows={3}
             maxLength={MAX_COMMENT}
-            placeholder="Komentar (nije obavezno): podloga, svlačionice, osvetljenje, parking..."
+            placeholder={t("venueReviews.commentOptionalSurfaceChangingRooms")}
             className="w-full border p-3 rounded-xl"
           />
 
@@ -183,7 +183,7 @@ function VenueReviews({ venueId, onChange }) {
               disabled={saving}
               className="bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white px-5 py-2 rounded-xl font-semibold"
             >
-              {saving ? "Čuvam..." : "Sačuvaj ocenu"}
+              {saving ? t("common.saving") : t("venueReviews.saveRating")}
             </button>
 
             {editing && (
@@ -196,7 +196,7 @@ function VenueReviews({ venueId, onChange }) {
                 }}
                 className="px-5 py-2 rounded-xl border border-gray-200 hover:bg-gray-50"
               >
-                Otkaži
+                {t("common.cancel")}
               </button>
             )}
           </div>
@@ -233,19 +233,19 @@ function VenueReviews({ venueId, onChange }) {
 
                     {review.played_here && (
                       <span className="text-xs font-semibold bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
-                        ✓ igrao/la ovde
+                        {t("venueReviews.playedHere")}
                       </span>
                     )}
 
                     <span className="text-sm text-gray-500">
-                      {new Date(review.updated_at).toLocaleDateString("sr-Latn-RS")}
+                      {new Date(review.updated_at).toLocaleDateString(locale())}
                     </span>
 
                     {(own || canModerate) && (
                       <button
                         onClick={() => remove(review)}
-                        title="Obriši ocenu"
-                        aria-label="Obriši ocenu"
+                        title={t("venueReviews.deleteRating")}
+                        aria-label={t("venueReviews.deleteRating")}
                         className="ml-auto p-1.5 rounded-full text-gray-400 hover:text-red-600 hover:bg-red-50"
                       >
                         <Trash2 size={16} />

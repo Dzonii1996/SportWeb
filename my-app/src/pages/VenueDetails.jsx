@@ -28,19 +28,23 @@ import {
   approveVenue,
   rejectVenue,
 } from "../utils/venues";
+import { useTranslation } from "react-i18next";
+import i18n, { sportLabel, surfaceLabel } from "../i18n";
 
 const STATUS_BANNERS = {
   pending: {
     className: "bg-amber-50 border-amber-300 text-amber-900",
-    text: "⏳ Predlog čeka odobrenje admina. Dok ne bude odobren, teren vidiš samo ti (i admin).",
+    get text() { return i18n.t("venueDetails.thisSuggestionIsAwaitingAdmin"); },
   },
   rejected: {
     className: "bg-red-50 border-red-300 text-red-900",
-    text: "❌ Predlog nije odobren.",
+    get text() { return i18n.t("venueDetails.theSuggestionWasNotApproved"); },
   },
 };
 
 function VenueDetails() {
+  const { t } = useTranslation();
+
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -68,7 +72,7 @@ function VenueDetails() {
   // Korisnik traži vlasništvo; poruka pomaže adminu da ga proveri
   const claimVenue = async () => {
     const message = window.prompt(
-      "Kako admin može da proveri da si vlasnik? (npr. telefon terena, sajt, ime firme)",
+      t("venueDetails.howCanTheAdminVerify"),
       ""
     );
 
@@ -86,7 +90,7 @@ function VenueDetails() {
   };
 
   const removeOwner = async () => {
-    if (!window.confirm("Ukloniti vlasnika? Rezervacije se isključuju, a zahtevi na čekanju odbijaju.")) {
+    if (!window.confirm(t("venueDetails.removeTheOwnerBookingsAre"))) {
       return;
     }
 
@@ -101,7 +105,7 @@ function VenueDetails() {
   };
 
   const deleteVenue = async () => {
-    if (!window.confirm("Obrisati teren? Termini na njemu ostaju, ali više neće biti vezani za teren.")) {
+    if (!window.confirm(t("venueDetails.deleteTheVenueGamesThere"))) {
       return;
     }
 
@@ -119,16 +123,16 @@ function VenueDetails() {
   if (notFound) {
     return (
       <div className="max-w-xl mx-auto p-6 text-center mt-10">
-        <p className="text-xl mb-4">Teren ne postoji.</p>
+        <p className="text-xl mb-4">{t("venueDetails.thisVenueDoesntExist")}</p>
         <Link to="/tereni" className="text-green-700 font-semibold hover:underline">
-          ← Svi tereni
+          {t("venueDetails.allVenues")}
         </Link>
       </div>
     );
   }
 
   if (!data) {
-    return <div className="text-center mt-20 text-xl">Učitavanje...</div>;
+    return <div className="text-center mt-20 text-xl">{t("common.loading")}</div>;
   }
 
   const {
@@ -149,14 +153,14 @@ function VenueDetails() {
 
         <Link to="/tereni" className="inline-flex items-center gap-1.5 text-gray-600 hover:text-gray-900">
           <ArrowLeft size={18} />
-          Svi tereni
+          {t("common.allVenues")}
         </Link>
 
         {banner && (
           <div className={`border rounded-2xl p-4 ${banner.className}`}>
             <p className="font-medium">{banner.text}</p>
             {venue.status === "rejected" && venue.rejection_reason && (
-              <p className="mt-1">Razlog: {venue.rejection_reason}</p>
+              <p className="mt-1">{t("common.reason", { rejection_reason: venue.rejection_reason })}</p>
             )}
 
             {isAdmin && venue.status !== "approved" && (
@@ -165,14 +169,14 @@ function VenueDetails() {
                   onClick={() => approveVenue(venue.id).then(load)}
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl font-semibold"
                 >
-                  Odobri
+                  {t("common.approve")}
                 </button>
                 {venue.status === "pending" && (
                   <button
                     onClick={() => rejectVenue(venue.id).then(load)}
                     className="border border-red-300 text-red-700 px-4 py-2 rounded-xl font-semibold hover:bg-red-100"
                   >
-                    Odbij
+                    {t("common.reject")}
                   </button>
                 )}
               </div>
@@ -192,7 +196,7 @@ function VenueDetails() {
                   <h1 className="text-2xl sm:text-3xl font-bold leading-tight break-words">{venue.name}</h1>
                   <div className="flex flex-wrap gap-1.5 mt-1.5">
                     <span className="text-xs font-semibold bg-white/20 px-2 py-0.5 rounded-full">
-                      {venue.sports.join(" · ")}
+                      {venue.sports.map(sportLabel).join(" · ")}
                     </span>
                     <span className="text-xs font-semibold bg-white/20 px-2 py-0.5 rounded-full">
                       {indoorLabel(venue.indoor)}
@@ -210,8 +214,8 @@ function VenueDetails() {
                 <div className="flex gap-1.5">
                   <Link
                     to={`/tereni/${venue.id}/izmeni`}
-                    title="Izmeni teren"
-                    aria-label="Izmeni teren"
+                    title={t("common.editVenue")}
+                    aria-label={t("common.editVenue")}
                     className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/35 flex items-center justify-center transition"
                   >
                     <Pencil size={16} />
@@ -219,8 +223,8 @@ function VenueDetails() {
                   {isAdmin && (
                     <button
                       onClick={deleteVenue}
-                      title="Obriši teren"
-                      aria-label="Obriši teren"
+                      title={t("venueDetails.deleteVenue")}
+                      aria-label={t("venueDetails.deleteVenue")}
                       className="w-9 h-9 rounded-full bg-white/20 hover:bg-red-500 flex items-center justify-center transition"
                     >
                       <Trash2 size={16} />
@@ -268,7 +272,7 @@ function VenueDetails() {
               {venue.surface && (
                 <div className="flex items-center gap-3">
                   <Layers className="text-green-600 shrink-0" size={18} />
-                  <span>Podloga: {venue.surface}</span>
+                  <span>{t("venueDetails.surface", { surface: surfaceLabel(venue.surface) })}</span>
                 </div>
               )}
 
@@ -276,7 +280,7 @@ function VenueDetails() {
                 <div className="flex items-center gap-3">
                   <Wallet className="text-green-600 shrink-0" size={18} />
                   <span>
-                    oko <span className="font-semibold">{formatRSD(venue.price_per_hour)}</span> po satu
+                    {t("common.about")} <span className="font-semibold">{formatRSD(venue.price_per_hour)}</span> {t("common.perHour")}
                   </span>
                 </div>
               )}
@@ -302,7 +306,7 @@ function VenueDetails() {
               )}
 
               {isAdmin && venue.suggested_by_name && (
-                <p className="text-sm text-gray-500">Predložio/la: {venue.suggested_by_name}</p>
+                <p className="text-sm text-gray-500">{t("venueDetails.suggestedBy", { suggested_by_name: venue.suggested_by_name })}</p>
               )}
             </div>
 
@@ -315,9 +319,9 @@ function VenueDetails() {
           <>
             {isOwner && (
               <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
-                🔑 Ti si vlasnik ovog terena. Zahteve za rezervacije potvrđuješ na stranici{" "}
+                {t("venueDetails.youOwnThisVenueYou")}{" "}
                 <Link to="/rezervacije" className="text-green-700 font-semibold hover:underline">
-                  Rezervacije
+                  {t("common.bookings")}
                 </Link>
                 .
               </div>
@@ -325,9 +329,9 @@ function VenueDetails() {
 
             {isAdmin && venue.owner_id && !isOwner && (
               <div className="bg-white border rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
-                <span>🔑 Vlasnik: <span className="font-semibold">{venue.owner_name}</span></span>
+                <span>{t("venueDetails.owner")} <span className="font-semibold">{venue.owner_name}</span></span>
                 <button onClick={removeOwner} className="text-red-600 font-semibold hover:underline">
-                  Ukloni vlasnika
+                  {t("venueDetails.removeOwner")}
                 </button>
               </div>
             )}
@@ -336,15 +340,15 @@ function VenueDetails() {
               <div className="bg-white border rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
                 <span className="text-gray-700">
                   {myClaim === "pending"
-                    ? "⏳ Zahtev za vlasništvo je poslat i čeka admina."
-                    : "Vlasnik si ovog terena? Primaj rezervacije preko SportWeb-a."}
+                    ? t("venueDetails.theOwnershipRequestWasSent")
+                    : t("venueDetails.doYouOwnThisVenue")}
                 </span>
                 {myClaim !== "pending" && (
                   <button
                     onClick={claimVenue}
                     className="px-4 py-2 rounded-xl border border-green-600 text-green-700 font-semibold hover:bg-green-50"
                   >
-                    Ja sam vlasnik
+                    {t("venueDetails.imTheOwner")}
                   </button>
                 )}
               </div>
@@ -363,7 +367,7 @@ function VenueDetails() {
         {/* Termini na terenu */}
         <div>
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <h2 className="text-2xl font-bold">Predstojeći termini</h2>
+            <h2 className="text-2xl font-bold">{t("venueDetails.upcomingGames")}</h2>
 
             {venue.status === "approved" && (
               <Link
@@ -371,7 +375,7 @@ function VenueDetails() {
                 className="inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full font-semibold shadow-sm"
               >
                 <Plus size={18} />
-                Napravi termin ovde
+                {t("venueDetails.createAGameHere")}
               </Link>
             )}
           </div>
@@ -399,7 +403,7 @@ function VenueDetails() {
             </div>
           ) : (
             <p className="text-gray-600 bg-white rounded-2xl border p-6 text-center">
-              Još nema zakazanih termina na ovom terenu.
+              {t("venueDetails.noGamesScheduledAtThis")}
             </p>
           )}
         </div>

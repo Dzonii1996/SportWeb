@@ -2,11 +2,15 @@ import { Link } from "react-router-dom";
 import { MapPin } from "lucide-react";
 import { formatRSD } from "../utils/price";
 import { indoorLabel } from "../utils/venues";
+import { useTranslation } from "react-i18next";
+import { surfaceLabel } from "../i18n";
 
 // Izbor terena iz kataloga u formi termina. value: ID terena ili "" (ručni unos).
 // onChange dobija ceo teren ili null. Prikazuju se samo tereni za izabrani sport;
 // currentName je naziv terena koji termin već ima, a više nije na listi.
 function VenuePicker({ venues, sport, value, onChange, currentName = null }) {
+  const { t } = useTranslation();
+
   const list = (venues || []).filter((v) => v.sports.includes(sport));
   const selected = list.find((v) => String(v.id) === String(value));
   const missing = value && !selected;
@@ -23,9 +27,9 @@ function VenuePicker({ venues, sport, value, onChange, currentName = null }) {
   return (
     <div className="space-y-2">
       <select value={value} onChange={handleChange} className="w-full border p-3 rounded-xl">
-        <option value="">✍️ Ručni unos lokacije</option>
+        <option value="">{t("venuePicker.enterLocationManually")}</option>
 
-        {missing && <option value={value}>🏟️ {currentName || "Trenutni teren"}</option>}
+        {missing && <option value={value}>🏟️ {currentName || t("venuePicker.currentVenue")}</option>}
 
         {list.map((v) => (
           <option key={v.id} value={v.id}>
@@ -36,9 +40,9 @@ function VenuePicker({ venues, sport, value, onChange, currentName = null }) {
 
       {venues && list.length === 0 && !value && (
         <p className="text-sm text-gray-500">
-          Još nema terena za ovaj sport na listi.{" "}
+          {t("venuePicker.noVenuesForThisSport")}{" "}
           <Link to="/tereni/predlozi" className="text-green-700 hover:underline">
-            Predloži teren
+            {t("common.suggestAVenue")}
           </Link>
         </p>
       )}
@@ -50,15 +54,15 @@ function VenuePicker({ venues, sport, value, onChange, currentName = null }) {
             <p>{selected.address}</p>
             <p className="text-gray-500">
               {indoorLabel(selected.indoor)}
-              {selected.surface && ` · ${selected.surface}`}
-              {selected.price_per_hour !== null && ` · oko ${formatRSD(selected.price_per_hour)}/h`}
+              {selected.surface && ` · ${surfaceLabel(selected.surface)}`}
+              {selected.price_per_hour !== null && t("venuePicker.aboutH", { amount: formatRSD(selected.price_per_hour) })}
             </p>
             <Link
               to={`/tereni/${selected.id}`}
               target="_blank"
               className="text-green-700 hover:underline font-medium"
             >
-              O terenu ↗
+              {t("venuePicker.aboutTheVenue")}
             </Link>
           </div>
         </div>

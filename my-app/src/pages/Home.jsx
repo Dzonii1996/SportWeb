@@ -12,24 +12,26 @@ import {
 import { API_URL } from "../config";
 import { isPastMatch, matchStart } from "../utils/matchDate";
 import { FootballPitch, BasketballCourt } from "../components/CourtBackgrounds";
+import { useTranslation } from "react-i18next";
+import i18n, { locale, sportLabel } from "../i18n";
 
 // Slajdovi u hero delu: pozadina, tekst i dugme za svaki sport
 const HERO_SLIDES = [
   {
     sport: "Fudbal",
     emoji: "⚽",
-    play: "fudbal",
-    tagline: "Mali fudbal, futsal i veliki teren u tvom gradu",
-    cta: "Pronađi fudbalski termin",
+    get play() { return i18n.t("home.playFootball"); },
+    get tagline() { return i18n.t("home.smallSidedFootballFutsalOr"); },
+    get cta() { return i18n.t("home.findAFootballGame"); },
     accent: "text-green-300",
     Background: FootballPitch,
   },
   {
     sport: "Košarka",
     emoji: "🏀",
-    play: "basket",
-    tagline: "Basket 3 na 3 ili puna ekipa u tvom gradu",
-    cta: "Pronađi košarkaški termin",
+    get play() { return i18n.t("home.playBasketball"); },
+    get tagline() { return i18n.t("home.3On3BasketballOr"); },
+    get cta() { return i18n.t("home.findABasketballGame"); },
     accent: "text-amber-300",
     Background: BasketballCourt,
   },
@@ -38,31 +40,31 @@ const HERO_SLIDES = [
 const SLIDE_MS = 6000;
 
 const SPORTS = [
-  { value: "Fudbal", emoji: "⚽", text: "Mali fudbal, futsal ili veliki teren" },
-  { value: "Košarka", emoji: "🏀", text: "Basket 3 na 3 ili puna ekipa" },
+  { value: "Fudbal", emoji: "⚽", get text() { return i18n.t("home.smallSidedFootballFutsalOr2"); } },
+  { value: "Košarka", emoji: "🏀", get text() { return i18n.t("home.3On3BasketballOr2"); } },
 ];
 
 const STEPS = [
   {
     icon: Search,
-    title: "Pronađi termin",
-    text: "Filtriraj po sportu, datumu i lokaciji ili vidi šta se igra blizu tebe.",
+    get title() { return i18n.t("home.findAGame"); },
+    get text() { return i18n.t("home.filterBySportDateAnd"); },
   },
   {
     icon: UserPlus,
-    title: "Prijavi se",
-    text: "Zauzmi mesto jednim klikom. Ako je pun, upiši se na listu čekanja.",
+    get title() { return i18n.t("common.join"); },
+    get text() { return i18n.t("home.grabASpotInOne"); },
   },
   {
     icon: Trophy,
-    title: "Igraj i oceni",
-    text: "Dogovori detalje u četu, odigraj i oceni fer plej saigrača.",
+    get title() { return i18n.t("home.playAndRate"); },
+    get text() { return i18n.t("home.agreeOnTheDetailsIn"); },
   },
 ];
 
 const formatDate = (match) =>
   // sr-Latn: bez toga Chrome piše dane i mesece ćirilicom ("чет", "дец")
-  matchStart(match.match_date, match.match_time).toLocaleDateString("sr-Latn-RS", {
+  matchStart(match.match_date, match.match_time).toLocaleDateString(locale(), {
     weekday: "short",
     day: "numeric",
     month: "short",
@@ -72,6 +74,8 @@ const sportEmoji = (sport) => (sport === "Košarka" ? "🏀" : "⚽");
 
 // Kompaktna kartica predstojećeg termina
 function UpcomingCard({ match }) {
+  const { t } = useTranslation();
+
   const players = Number(match.players || 0);
   const free = Math.max(0, match.max_players - players);
   const percentage = Math.min(100, (players / match.max_players) * 100);
@@ -88,7 +92,7 @@ function UpcomingCard({ match }) {
           </span>
 
           <div>
-            <p className="font-bold text-gray-900">{match.sport}</p>
+            <p className="font-bold text-gray-900">{sportLabel(match.sport)}</p>
             <p className="text-sm text-gray-500">{match.creator_name}</p>
           </div>
         </div>
@@ -100,7 +104,7 @@ function UpcomingCard({ match }) {
               : "bg-green-100 text-green-700"
           }`}
         >
-          {free === 0 ? "Popunjeno" : `${free} slobodno`}
+          {free === 0 ? t("home.full") : t("home.free", { free })}
         </span>
       </div>
 
@@ -117,9 +121,9 @@ function UpcomingCard({ match }) {
 
       <div className="mt-4">
         <div className="flex justify-between text-xs text-gray-500 mb-1">
-          <span>{players} / {match.max_players} igrača</span>
+          <span>{t("home.players", { players, max_players: match.max_players })}</span>
           <span className="text-green-700 font-semibold opacity-0 group-hover:opacity-100 transition">
-            Detalji →
+            {t("home.details")}
           </span>
         </div>
 
@@ -135,6 +139,8 @@ function UpcomingCard({ match }) {
 }
 
 function Home() {
+  const { t } = useTranslation();
+
   const [matches, setMatches] = useState(null);
   const loggedIn = Boolean(localStorage.getItem("user"));
 
@@ -228,7 +234,7 @@ function Home() {
                       : "bg-white/10 border-white/30 hover:bg-white/20"
                   }`}
                 >
-                  {s.emoji} {s.sport}
+                  {s.emoji} {sportLabel(s.sport)}
 
                   {/* Traka do sledećeg slajda, dok se smenjuju sami */}
                   {autoplay && i === active && (
@@ -247,16 +253,15 @@ function Home() {
             </span>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight">
-              Pronađi ekipu.
+              {t("home.findATeam")}
               <br />
-              Zakaži termin.
+              {t("home.scheduleAGame")}
               <br />
-              <span className={slide.accent}>Igraj {slide.play}.</span>
+              <span className={slide.accent}>{t("home.play", { play: slide.play })}</span>
             </h1>
 
             <p className="text-lg text-white/85 max-w-xl mt-6">
-              Više nema dopisivanja po grupama da bi se skupilo deset ljudi.
-              Napravi termin, podeli link i neka se ekipa sama prijavi.
+              {t("home.noMoreGroupChatsJust")}
             </p>
 
             <div className="flex flex-wrap gap-3 mt-8">
@@ -272,7 +277,7 @@ function Home() {
                 to={loggedIn ? "/create-match" : "/register"}
                 className="inline-flex items-center gap-2 border-2 border-white/70 px-6 py-3.5 rounded-xl font-bold hover:bg-white hover:text-gray-900 transition"
               >
-                {loggedIn ? "Kreiraj termin" : "Napravi nalog"}
+                {loggedIn ? t("common.createGame") : t("home.createAnAccount")}
               </Link>
             </div>
           </div>
@@ -281,7 +286,7 @@ function Home() {
           <div className="hidden lg:block">
             <div className="bg-black/30 border border-white/20 backdrop-blur rounded-3xl p-6 shadow-2xl">
               <p className="text-white/80 text-sm font-semibold uppercase tracking-wider mb-4">
-                Sledeći termin · {slide.emoji} {slide.sport}
+                {t("home.nextGame", { emoji: slide.emoji, sport: sportLabel(slide.sport) })}
               </p>
 
               {nextForSport ? (
@@ -292,13 +297,13 @@ function Home() {
                 <div className="bg-white/10 rounded-2xl p-6 text-center">
                   <p className="text-5xl mb-3" aria-hidden="true">{slide.emoji}</p>
                   <p className="font-semibold">
-                    Trenutno nema zakazanih termina.
+                    {t("home.noGamesScheduledAtThe")}
                   </p>
                   <Link
                     to={loggedIn ? "/create-match" : "/register"}
                     className="inline-block mt-4 bg-white text-gray-900 px-5 py-2.5 rounded-xl font-semibold hover:bg-gray-100"
                   >
-                    Napravi prvi
+                    {t("home.createTheFirstOne")}
                   </Link>
                 </div>
               )}
@@ -312,9 +317,9 @@ function Home() {
       <section className="max-w-5xl mx-auto px-4 sm:px-6 -mt-10 relative">
         <div className="grid grid-cols-3 bg-white rounded-2xl shadow-xl border divide-x">
           {[
-            { icon: Calendar, value: upcoming.length, label: "Predstojećih termina" },
-            { icon: Users, value: freeSpots, label: "Slobodnih mesta" },
-            { icon: MapPin, value: locations, label: "Lokacija" },
+            { icon: Calendar, value: upcoming.length, label: t("home.upcomingGames") },
+            { icon: Users, value: freeSpots, label: t("home.freeSpots") },
+            { icon: MapPin, value: locations, label: t("home.locations") },
           ].map(({ icon: Icon, value, label }) => (
             <div key={label} className="p-4 sm:p-6 text-center">
               <Icon className="mx-auto text-green-600 mb-2" size={24} />
@@ -332,10 +337,10 @@ function Home() {
         <div className="flex items-end justify-between gap-4 mb-6">
           <div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-              Uskoro se igra
+              {t("home.comingUpSoon")}
             </h2>
             <p className="text-gray-500 mt-1">
-              Najbliži termini sa slobodnim mestima
+              {t("home.theNearestGamesWithFree")}
             </p>
           </div>
 
@@ -343,26 +348,26 @@ function Home() {
             to="/matches"
             className="hidden sm:inline-flex items-center gap-1 text-green-700 font-semibold hover:underline"
           >
-            Svi termini
+            {t("common.allGames")}
             <ArrowRight size={16} />
           </Link>
         </div>
 
         {matches === null ? (
-          <p className="text-gray-500">Učitavanje...</p>
+          <p className="text-gray-500">{t("common.loading")}</p>
         ) : upcoming.length === 0 ? (
           <div className="bg-white border-2 border-dashed rounded-2xl p-10 text-center">
             <p className="text-lg font-semibold text-gray-800">
-              Još nema zakazanih termina.
+              {t("home.noGamesScheduledYet")}
             </p>
             <p className="text-gray-500 mt-1 mb-5">
-              Budi prvi i okupi ekipu.
+              {t("home.beTheFirstAndGather")}
             </p>
             <Link
               to={loggedIn ? "/create-match" : "/register"}
               className="inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold"
             >
-              Kreiraj termin
+              {t("common.createGame")}
             </Link>
           </div>
         ) : (
@@ -377,7 +382,7 @@ function Home() {
       {/* Sportovi */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-16">
         <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-6">
-          Izaberi sport
+          {t("home.pickASport")}
         </h2>
 
         <div className="grid sm:grid-cols-2 gap-5">
@@ -395,12 +400,12 @@ function Home() {
                 </span>
 
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-gray-900">{s.value}</h3>
+                  <h3 className="text-xl font-bold text-gray-900">{sportLabel(s.value)}</h3>
                   <p className="text-gray-500 text-sm">{s.text}</p>
                 </div>
 
                 <span className="text-sm font-semibold text-green-700 whitespace-nowrap">
-                  {count} {count === 1 ? "termin" : "termina"}
+                  {t("home.gamesCount", { count })}
                 </span>
               </Link>
             );
@@ -411,7 +416,7 @@ function Home() {
       {/* Kako radi */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-16">
         <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-6">
-          Kako radi
+          {t("home.howItWorks")}
         </h2>
 
         <div className="grid md:grid-cols-3 gap-5">
@@ -437,10 +442,10 @@ function Home() {
           <div className="bg-gray-900 text-white rounded-3xl p-8 sm:p-12 flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
               <h2 className="text-2xl sm:text-3xl font-extrabold">
-                Spreman za sledeću utakmicu?
+                {t("home.readyForYourNextGame")}
               </h2>
               <p className="text-gray-300 mt-2">
-                Registracija traje pola minuta.
+                {t("home.signingUpTakesHalfA")}
               </p>
             </div>
 
@@ -448,7 +453,7 @@ function Home() {
               to="/register"
               className="bg-green-500 hover:bg-green-400 text-gray-900 px-8 py-4 rounded-xl font-bold whitespace-nowrap transition"
             >
-              Napravi nalog
+              {t("home.createAnAccount")}
             </Link>
           </div>
         </section>
@@ -458,7 +463,7 @@ function Home() {
         <span>
           © {new Date().getFullYear()} Sport<span className="text-green-600 font-semibold">Web</span>
         </span>
-        <span>Rekreativni sport, bez dopisivanja.</span>
+        <span>{t("home.recreationalSportWithoutTheGroup")}</span>
       </footer>
 
     </div>

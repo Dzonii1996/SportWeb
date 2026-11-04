@@ -6,17 +6,19 @@ import { VenuesMap } from "../components/LocationMap";
 import { API_URL } from "../config";
 import { distanceKm, getMyPosition } from "../utils/geo";
 import { useAdminStatus } from "../utils/venues";
+import { useTranslation } from "react-i18next";
+import i18n from "../i18n";
 
 const SPORTS = [
-  { value: "", label: "Svi" },
-  { value: "Fudbal", label: "⚽ Fudbal" },
-  { value: "Košarka", label: "🏀 Košarka" },
+  { value: "", get label() { return i18n.t("common.all"); } },
+  { value: "Fudbal", get label() { return i18n.t("common.football"); } },
+  { value: "Košarka", get label() { return i18n.t("common.basketball"); } },
 ];
 
 const PLACES = [
-  { value: "", label: "Sve" },
-  { value: "false", label: "🌤️ Napolju" },
-  { value: "true", label: "🏠 Unutra" },
+  { value: "", get label() { return i18n.t("venues.all"); } },
+  { value: "false", get label() { return i18n.t("common.outdoors"); } },
+  { value: "true", get label() { return i18n.t("common.indoors"); } },
 ];
 
 const pill = (active) =>
@@ -25,6 +27,8 @@ const pill = (active) =>
   }`;
 
 function Venues() {
+  const { t } = useTranslation();
+
   const loggedIn = Boolean(localStorage.getItem("token"));
   const { isAdmin, pending, pendingClaims } = useAdminStatus();
 
@@ -99,9 +103,9 @@ function Venues() {
 
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-4xl font-bold">Tereni i sale</h1>
+            <h1 className="text-4xl font-bold">{t("venues.venuesAndHalls")}</h1>
             <p className="text-gray-600 mt-1">
-              Gde se igra fudbal i košarka: adrese, podloga, cene i zakazani termini.
+              {t("venues.whereFootballAndBasketballAre")}
             </p>
           </div>
 
@@ -112,7 +116,7 @@ function Venues() {
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full font-semibold border border-gray-300 bg-white hover:bg-gray-50"
               >
                 <ShieldCheck size={18} />
-                Predlozi
+                {t("venues.suggestions")}
                 {pending + pendingClaims > 0 && (
                   <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
                     {pending + pendingClaims}
@@ -127,7 +131,7 @@ function Venues() {
                 className="inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full font-semibold shadow-sm"
               >
                 <Plus size={18} />
-                {isAdmin ? "Dodaj teren" : "Predloži teren"}
+                {isAdmin ? t("common.addAVenue") : t("common.suggestAVenue")}
               </Link>
             )}
           </div>
@@ -152,12 +156,12 @@ function Venues() {
           </div>
 
           <button onClick={() => setGoodOnly(!goodOnly)} className={pill(goodOnly)}>
-            ⭐ Ocena 4+
+            {t("venues.rating4")}
           </button>
 
           <div className="flex items-center gap-2">
             <button onClick={toggleNearMe} disabled={locating} className={pill(Boolean(myPosition))}>
-              {locating ? "Tražim lokaciju..." : "📍 Blizu mene"}
+              {locating ? t("common.findingLocation") : t("common.nearMe")}
             </button>
 
             {myPosition && (
@@ -168,7 +172,7 @@ function Venues() {
               >
                 {[2, 5, 10, 25, 50].map((km) => (
                   <option key={km} value={km}>
-                    do {km} km
+                    {t("common.withinKm", { km })}
                   </option>
                 ))}
               </select>
@@ -182,18 +186,18 @@ function Venues() {
 
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <p className="text-gray-600">
-            {loading ? "Učitavanje..." : `Pronađeno terena: ${shown.length}`}
+            {loading ? t("common.loading") : t("venues.venuesFound", { length: shown.length })}
           </p>
 
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
             className="border p-2 rounded-xl bg-white"
-            aria-label="Redosled"
+            aria-label={t("venues.order")}
           >
-            <option value="name">Po nazivu</option>
-            <option value="rating">Najbolje ocenjeni</option>
-            {myPosition && <option value="distance">Najbliži</option>}
+            <option value="name">{t("venues.byName")}</option>
+            <option value="rating">{t("venues.topRated")}</option>
+            {myPosition && <option value="distance">{t("venues.nearest")}</option>}
           </select>
         </div>
 
@@ -204,12 +208,12 @@ function Venues() {
 
           {!loading && shown.length === 0 && (
             <div className="col-span-full text-center text-gray-600 py-10">
-              <p className="text-xl">Nema terena za izabrane filtere.</p>
+              <p className="text-xl">{t("venues.noVenuesMatchTheSelected")}</p>
               {loggedIn && (
                 <p className="mt-2">
-                  Znaš neki teren?{" "}
+                  {t("venues.knowAVenue")}{" "}
                   <Link to="/tereni/predlozi" className="text-green-700 font-semibold hover:underline">
-                    Predloži ga
+                    {t("venues.suggestIt")}
                   </Link>
                   .
                 </p>

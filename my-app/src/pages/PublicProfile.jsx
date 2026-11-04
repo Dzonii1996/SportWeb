@@ -3,8 +3,11 @@ import { useParams, Link } from "react-router-dom";
 import { User, Mail, CalendarDays, Users } from "lucide-react";
 import { API_URL } from "../config";
 import { authHeader } from "../utils/auth";
+import { useTranslation } from "react-i18next";
 
 function PublicProfile() {
+  const { t } = useTranslation();
+
   const { id } = useParams();
 
   const [profile, setProfile] = useState(null);
@@ -26,7 +29,7 @@ function PublicProfile() {
   if (loading) {
     return (
       <div className="text-center mt-20 text-xl">
-        Učitavanje...
+       {t("common.loading")}
       </div>
     );
   }
@@ -35,14 +38,14 @@ function PublicProfile() {
     return (
       <div className="text-center mt-20">
         <h1 className="text-2xl font-bold">
-          Korisnik nije pronađen.
+         {t("publicProfile.userNotFound")}
         </h1>
 
         <Link
           to="/matches"
           className="inline-block mt-5 bg-green-600 text-white px-5 py-3 rounded-xl"
         >
-          Nazad na termine
+         {t("common.backToGames")}
         </Link>
       </div>
     );
@@ -77,7 +80,7 @@ function PublicProfile() {
             </h1>
 
             <p className="text-green-100 mt-1">
-              Član SportWeb zajednice
+             {t("publicProfile.memberOfTheSportwebCommunity")}
             </p>
 
           </div>
@@ -89,7 +92,7 @@ function PublicProfile() {
               <User className="text-green-600" />
               <div>
                 <p className="text-sm text-gray-500">
-                  Ime
+                 {t("common.name")}
                 </p>
                 <p className="font-semibold">
                   {user.name}
@@ -103,7 +106,7 @@ function PublicProfile() {
               <Mail className="text-green-600" />
               <div>
                 <p className="text-sm text-gray-500">
-                  Email (vidiš samo ti)
+                 {t("publicProfile.emailOnlyYouCanSee")}
                 </p>
                 <p className="font-semibold">
                   {user.email}
@@ -115,7 +118,7 @@ function PublicProfile() {
             <div className="border-t pt-6">
 
               <h2 className="text-xl font-bold mb-5">
-                Statistika
+               {t("publicProfile.stats")}
               </h2>
 
               <div className="grid grid-cols-2 gap-4">
@@ -131,7 +134,7 @@ function PublicProfile() {
                   </p>
 
                   <p className="text-gray-600">
-                    Kreiranih termina
+                   {t("publicProfile.gamesCreated")}
                   </p>
                 </div>
 
@@ -146,7 +149,7 @@ function PublicProfile() {
                   </p>
 
                   <p className="text-gray-600">
-                    Prijavljenih termina
+                   {t("publicProfile.gamesJoined")}
                   </p>
                 </div>
 
@@ -160,7 +163,7 @@ function PublicProfile() {
                     {profile.stats.played}
                   </p>
                   <p className="text-gray-600 text-sm">
-                    Odigranih termina
+                   {t("publicProfile.gamesPlayed")}
                   </p>
                 </div>
 
@@ -171,9 +174,9 @@ function PublicProfile() {
                       : `${profile.stats.fairPlay}%`}
                   </p>
                   <p className="text-gray-600 text-sm">
-                    Fer plej
+                   {t("publicProfile.fairPlay")}
                     {profile.stats.fair + profile.stats.unfair > 0 &&
-                      ` (${profile.stats.fair + profile.stats.unfair} ocena)`}
+                      t("publicProfile.ratings", { value: profile.stats.fair + profile.stats.unfair })}
                   </p>
                 </div>
 
@@ -190,7 +193,7 @@ function PublicProfile() {
                     {profile.stats.noShows}
                   </p>
                   <p className="text-gray-600 text-sm">
-                    Nedolazaka
+                   {t("publicProfile.noShows")}
                   </p>
                 </div>
 
@@ -201,7 +204,7 @@ function PublicProfile() {
                 <div className="mt-4 bg-gray-50 rounded-xl p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm text-gray-500">Učinak (P / N / I)</p>
+                      <p className="text-sm text-gray-500">{t("publicProfile.recordWDL")}</p>
                       <p className="text-xl font-bold">
                         <span className="text-green-700">{profile.stats.wins}</span>
                         {" / "}
@@ -209,24 +212,24 @@ function PublicProfile() {
                         {" / "}
                         <span className="text-red-600">{profile.stats.losses}</span>
                         <span className="text-base font-medium text-gray-500">
-                          {" "}· {profile.stats.winRate}% pobeda
+                          {" "}{t("publicProfile.wins", { winRate: profile.stats.winRate })}
                         </span>
                       </p>
                     </div>
 
                     {profile.stats.streak >= 2 && (
                       <span className="bg-orange-100 text-orange-700 font-semibold px-3 py-1 rounded-full text-sm">
-                        🔥 {profile.stats.streak} pobede zaredom
+                       {t("publicProfile.winsInARow", { streak: profile.stats.streak })}
                       </span>
                     )}
                   </div>
 
                   <div className="flex items-center gap-1.5 mt-3">
-                    <span className="text-sm text-gray-500 mr-1">Forma:</span>
+                    <span className="text-sm text-gray-500 mr-1">{t("publicProfile.form")}</span>
                     {profile.stats.form.map((o, i) => (
                       <span
                         key={i}
-                        title={{ W: "Pobeda", D: "Nerešeno", L: "Poraz" }[o]}
+                        title={{ W: t("publicProfile.win"), D: t("publicProfile.draw"), L: t("publicProfile.loss") }[o]}
                         className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold text-white ${
                           { W: "bg-green-600", D: "bg-gray-400", L: "bg-red-500" }[o]
                         }`}
@@ -244,7 +247,7 @@ function PublicProfile() {
               to="/matches"
               className="block w-full text-center bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold"
             >
-              ⚽ Nazad na termine
+             {t("publicProfile.backToGames")}
             </Link>
 
           </div>

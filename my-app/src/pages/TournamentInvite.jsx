@@ -3,9 +3,12 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { API_URL } from "../config";
 import { authHeader } from "../utils/auth";
 import { sportIcon } from "../utils/tournaments";
+import { useTranslation } from "react-i18next";
 
 // Pozivnica u ekipu: kapiten deli link, igrač se pridružuje jednim klikom
 function TournamentInvite() {
+  const { t } = useTranslation();
+
   const { token } = useParams();
   const navigate = useNavigate();
   const loggedIn = Boolean(localStorage.getItem("token"));
@@ -33,36 +36,36 @@ function TournamentInvite() {
   };
 
   if (notFound) {
-    return <div className="max-w-xl mx-auto p-6 text-center mt-10 text-xl">Link nije ispravan.</div>;
+    return <div className="max-w-xl mx-auto p-6 text-center mt-10 text-xl">{t("tournamentInvite.theLinkIsntValid")}</div>;
   }
 
   if (!team) {
-    return <div className="text-center mt-20 text-xl">Učitavanje...</div>;
+    return <div className="text-center mt-20 text-xl">{t("common.loading")}</div>;
   }
 
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center py-10 px-4">
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md text-center space-y-4 h-fit">
         <p className="text-5xl">{sportIcon(team.sport)}</p>
-        <h1 className="text-2xl font-bold">Poziv u ekipu {team.name}</h1>
+        <h1 className="text-2xl font-bold">{t("tournamentInvite.invitationToTeam", { name: team.name })}</h1>
         <p className="text-gray-600">
-          Turnir: <span className="font-semibold">{team.tournament_name}</span>
+          {t("tournamentInvite.tournament")} <span className="font-semibold">{team.tournament_name}</span>
         </p>
-        <p className="text-gray-600">Igrača u ekipi: {team.players_count} / {team.max_roster}</p>
+        <p className="text-gray-600">{t("tournamentInvite.playersOnTheTeam", { players_count: team.players_count, max_roster: team.max_roster })}</p>
 
         {loggedIn ? (
           <button
             onClick={join}
             className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold"
           >
-            Pridruži se ekipi
+            {t("tournamentInvite.joinTheTeam")}
           </button>
         ) : (
           <p className="text-gray-700">
             <Link to="/login" className="text-green-700 font-semibold hover:underline">
-              Prijavi se
+              {t("common.signIn")}
             </Link>{" "}
-            pa ponovo otvori ovaj link.
+            {t("tournamentInvite.andThenOpenThisLink")}
           </p>
         )}
       </div>

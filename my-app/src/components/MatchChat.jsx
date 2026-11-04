@@ -2,10 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { Send } from "lucide-react";
 import { authHeader } from "../utils/auth";
 import { API_URL } from "../config";
+import { useTranslation } from "react-i18next";
+import { locale } from "../i18n";
 
 const POLL_INTERVAL = 3000;
 
 function MatchChat({ matchId, canWrite, linkKey = null }) {
+  const { t } = useTranslation();
+
   const user = JSON.parse(localStorage.getItem("user"));
 
   const [messages, setMessages] = useState([]);
@@ -97,7 +101,7 @@ function MatchChat({ matchId, canWrite, linkKey = null }) {
 
     } catch (error) {
       console.error(error);
-      alert("Greška pri slanju poruke");
+      alert(t("matchChat.couldNotSendTheMessage"));
     } finally {
       setSending(false);
     }
@@ -108,14 +112,14 @@ function MatchChat({ matchId, canWrite, linkKey = null }) {
 
         <div className="p-4 border-b">
           <h2 className="text-2xl font-bold">
-            💬 Čet termina
+            {t("matchChat.gameChat")}
           </h2>
         </div>
 
         <div ref={listRef} className="flex-1 overflow-y-auto p-4 space-y-3">
           {messages.length === 0 && (
             <p className="text-center text-gray-500">
-              Još nema poruka.
+              {t("matchChat.noMessagesYet")}
             </p>
           )}
 
@@ -149,7 +153,7 @@ function MatchChat({ matchId, canWrite, linkKey = null }) {
                       mine ? "text-green-100" : "text-gray-500"
                     }`}
                   >
-                    {new Date(msg.created_at).toLocaleTimeString("sr-RS", {
+                    {new Date(msg.created_at).toLocaleTimeString(locale(), {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
@@ -169,7 +173,7 @@ function MatchChat({ matchId, canWrite, linkKey = null }) {
               value={text}
               onChange={(e) => setText(e.target.value)}
               maxLength={1000}
-              placeholder="Napiši poruku..."
+              placeholder={t("matchChat.writeAMessage")}
               className="flex-1 border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-600"
             />
 
@@ -183,7 +187,7 @@ function MatchChat({ matchId, canWrite, linkKey = null }) {
           </form>
         ) : (
           <p className="p-4 border-t text-center text-gray-500 text-sm">
-            Prijavi se na termin da bi pisao u četu.
+            {t("matchChat.joinTheGameToWrite")}
           </p>
         )}
 

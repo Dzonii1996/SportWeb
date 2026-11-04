@@ -2,8 +2,11 @@ import { useEffect, useState } from "react";
 import MatchCard from "../components/MatchCard";
 import { API_URL } from "../config";
 import { isPastMatch } from "../utils/matchDate";
+import { useTranslation } from "react-i18next";
 
 function MyMatches() {
+  const { t } = useTranslation();
+
   const [createdMatches, setCreatedMatches] = useState([]);
   const [joinedMatches, setJoinedMatches] = useState([]);
 
@@ -23,10 +26,10 @@ function MyMatches() {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <h1 className="text-4xl font-bold mb-8">Moji termini</h1>
+      <h1 className="text-4xl font-bold mb-8">{t("common.myGames")}</h1>
 
       <h2 className="text-2xl font-semibold mb-4">
-        Termini koje sam napravio
+       {t("myMatches.gamesICreated")}
       </h2>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
@@ -53,12 +56,12 @@ function MyMatches() {
             />
           ))
         ) : (
-          <p>Niste napravili nijedan termin.</p>
+          <p>{t("myMatches.youHaventCreatedAnyGames")}</p>
         )}
       </div>
 
       <h2 className="text-2xl font-semibold mb-4">
-        Termini na koje sam prijavljen
+       {t("myMatches.gamesIJoined")}
       </h2>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -85,7 +88,7 @@ function MyMatches() {
             />
           ))
         ) : (
-          <p>Niste prijavljeni ni na jedan termin.</p>
+          <p>{t("myMatches.youHaventJoinedAnyGames")}</p>
         )}
       </div>
     </div>

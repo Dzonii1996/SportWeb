@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { API_URL } from "../config";
 import { authHeader } from "./auth";
+import i18n from "../i18n";
 
 // Iste vrednosti kao na serveru (controllers/venueController.js)
 export const SURFACES = [
@@ -19,7 +20,7 @@ export const MAX_IMAGES = 6;
 export const sportIcons = (sports = []) =>
   sports.map((s) => (s === "Košarka" ? "🏀" : "⚽")).join(" ");
 
-export const indoorLabel = (indoor) => (indoor ? "🏠 Unutra (sala)" : "🌤️ Napolju");
+export const indoorLabel = (indoor) => (indoor ? i18n.t("venues.indoorsHall") : i18n.t("common.outdoors"));
 
 export const imageUrl = (path) => `${API_URL}${path}`;
 
@@ -71,7 +72,7 @@ export const approveVenue = async (id) => {
 
 // Admin odbija predlog uz razlog (nije obavezan); otkazivanje ne radi ništa
 export const rejectVenue = async (id) => {
-  const reason = window.prompt("Razlog odbijanja (nije obavezno, predlagač će ga videti):", "");
+  const reason = window.prompt(i18n.t("venues.reasonForRejectionOptionalThe"), "");
 
   if (reason === null) return false;
 

@@ -12,8 +12,11 @@ import VenuePicker from "../components/VenuePicker";
 import ReserveVenueField from "../components/ReserveVenueField";
 import { useVenues } from "../utils/venues";
 import { hourLabel, formatReservationDate } from "../utils/reservations";
+import { useTranslation } from "react-i18next";
 
 function CreateMatch() {
+  const { t } = useTranslation();
+
   const navigate = useNavigate();
 
   const user = JSON.parse(localStorage.getItem("user"));
@@ -132,7 +135,7 @@ function CreateMatch() {
 
     } catch (error) {
       alert(
-        error.response?.data?.message || "Greška prilikom kreiranja termina."
+        error.response?.data?.message || t("createMatch.couldNotCreateTheGame")
       );
     }
   };
@@ -143,7 +146,7 @@ function CreateMatch() {
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-lg">
 
         <h1 className="text-3xl font-bold mb-6">
-          Kreiraj novi termin
+          {t("createMatch.createANewGame")}
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -154,14 +157,14 @@ function CreateMatch() {
             onChange={handleSportChange}
             className="w-full border p-3 rounded-xl"
           >
-            <option value="Fudbal">⚽ Fudbal</option>
-            <option value="Košarka">🏀 Košarka</option>
+            <option value="Fudbal">{t("common.football")}</option>
+            <option value="Košarka">{t("common.basketball")}</option>
           </select>
 
           {/* Iz rezervacije: teren, datum i vreme su zaključani */}
           {reservationId ? (
             <div className="border border-green-200 bg-green-50 rounded-xl p-4 text-gray-700">
-              <p className="font-semibold">📅 Termin za tvoju rezervaciju</p>
+              <p className="font-semibold">{t("createMatch.gameForYourBooking")}</p>
               <p className="text-sm">
                 🏟️ {selectedVenue?.name || formData.location} ·{" "}
                 {formData.match_date && formatReservationDate(`${formData.match_date}T00:00`)}{" "}
@@ -183,7 +186,7 @@ function CreateMatch() {
               <input
                 type="text"
                 name="location"
-                placeholder="Lokacija"
+                placeholder={t("common.location")}
                 value={formData.location}
                 onChange={handleChange}
                 required
@@ -256,7 +259,7 @@ function CreateMatch() {
             type="submit"
             className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl"
           >
-            Kreiraj termin
+            {t("common.createGame")}
           </button>
 
         </form>

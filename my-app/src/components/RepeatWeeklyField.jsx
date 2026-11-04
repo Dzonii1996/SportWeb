@@ -1,5 +1,9 @@
+import { useTranslation } from "react-i18next";
+
 // Polje za ponavljajući termin u formama za kreiranje i izmenu
 function RepeatWeeklyField({ checked, onChange, inSeries = false }) {
+  const { t } = useTranslation();
+
   return (
     <label className="flex items-start gap-3 p-4 border rounded-xl cursor-pointer hover:bg-gray-50">
       <input
@@ -10,12 +14,12 @@ function RepeatWeeklyField({ checked, onChange, inSeries = false }) {
       />
 
       <span>
-        <span className="font-semibold">🔁 Ponavljaj svake nedelje</span>
+        <span className="font-semibold">{t("repeatWeeklyField.repeatEveryWeek")}</span>
 
         <span className="block text-sm text-gray-500">
           {inSeries && checked
-            ? "Izmene važe i za sledeće termine. Isključi da zaustaviš seriju."
-            : "Kad ovaj termin počne, automatski se otvara isti termin nedelju dana kasnije. Igrači sa stalnim mestom se prijavljuju sami."}
+            ? t("repeatWeeklyField.changesAlsoApplyToUpcoming")
+            : t("repeatWeeklyField.whenThisGameStartsThe")}
         </span>
       </span>
     </label>

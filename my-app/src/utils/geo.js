@@ -1,3 +1,5 @@
+import i18n from "../i18n";
+
 // Kosovska Mitrovica: početni prikaz mape kad termin nema lokaciju
 export const DEFAULT_CENTER = [42.8914, 20.866];
 
@@ -27,13 +29,13 @@ export const formatDistance = (km) =>
 export const getMyPosition = () =>
   new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
-      reject(new Error("Browser ne podržava lokaciju."));
+      reject(new Error(i18n.t("geo.yourBrowserDoesntSupportLocation")));
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
       (pos) => resolve([pos.coords.latitude, pos.coords.longitude]),
-      () => reject(new Error("Lokacija nije dostupna. Proveri dozvole u browseru.")),
+      () => reject(new Error(i18n.t("geo.locationIsntAvailableCheckYour"))),
       { enableHighAccuracy: true, timeout: 10000 }
     );
   });

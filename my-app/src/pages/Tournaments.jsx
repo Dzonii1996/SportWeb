@@ -5,18 +5,20 @@ import { API_URL } from "../config";
 import { formatRSD } from "../utils/price";
 import { useAdminStatus } from "../utils/venues";
 import { FORMATS, STATUS, formatDate, sportIcon } from "../utils/tournaments";
+import { useTranslation } from "react-i18next";
+import i18n from "../i18n";
 
 const SPORTS = [
   { value: "", label: "Svi" },
-  { value: "Fudbal", label: "⚽ Fudbal" },
-  { value: "Košarka", label: "🏀 Košarka" },
+  { get value() { return i18n.t("tournaments.all"); }, get label() { return i18n.t("common.football"); } },
+  { value: "Košarka", get label() { return i18n.t("common.basketball"); } },
 ];
 
 const STATUSES = [
-  { value: "", label: "Svi turniri" },
-  { value: "registration", label: "Prijave otvorene" },
-  { value: "in_progress", label: "U toku" },
-  { value: "finished", label: "Završeni" },
+  { value: "", get label() { return i18n.t("common.allTournaments"); } },
+  { value: "registration", get label() { return i18n.t("common.registrationOpen"); } },
+  { value: "in_progress", get label() { return i18n.t("common.inProgress"); } },
+  { value: "finished", get label() { return i18n.t("tournaments.finished"); } },
 ];
 
 const pill = (active) =>
@@ -25,6 +27,8 @@ const pill = (active) =>
   }`;
 
 function TournamentCard({ tournament: t }) {
+  const { t: tr } = useTranslation();
+
   const status = STATUS[t.status];
 
   return (
@@ -64,13 +68,13 @@ function TournamentCard({ tournament: t }) {
 
         <div className="flex items-center gap-3">
           <Users className="text-green-600 shrink-0" size={18} />
-          <span>Ekipa: {t.teams_count} / {t.max_teams}</span>
+          <span>{tr("tournaments.teams", { teams_count: t.teams_count, max_teams: t.max_teams })}</span>
         </div>
 
         {t.entry_fee !== null && (
           <div className="flex items-center gap-3">
             <Wallet className="text-green-600 shrink-0" size={18} />
-            <span>Kotizacija: {formatRSD(t.entry_fee)}</span>
+            <span>{tr("tournaments.entryFee", { amount: formatRSD(t.entry_fee) })}</span>
           </div>
         )}
       </div>
@@ -79,6 +83,8 @@ function TournamentCard({ tournament: t }) {
 }
 
 function Tournaments() {
+  const { t } = useTranslation();
+
   const { isAdmin, ownedVenues } = useAdminStatus();
 
   const [tournaments, setTournaments] = useState([]);
@@ -106,9 +112,9 @@ function Tournaments() {
       <div className="max-w-7xl mx-auto p-6">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-4xl font-bold">Turniri</h1>
+            <h1 className="text-4xl font-bold">{t("common.tournaments")}</h1>
             <p className="text-gray-600 mt-1">
-              Prijavi ekipu i prati raspored, rezultate i tabelu.
+              {t("tournaments.registerATeamAndFollow")}
             </p>
           </div>
 
@@ -118,7 +124,7 @@ function Tournaments() {
               className="inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full font-semibold shadow-sm"
             >
               <Plus size={18} />
-              Napravi turnir
+              {t("common.createATournament")}
             </Link>
           )}
         </div>
@@ -136,7 +142,7 @@ function Tournaments() {
             value={status}
             onChange={(e) => setStatus(e.target.value)}
             className="border p-2.5 rounded-xl"
-            aria-label="Status turnira"
+            aria-label={t("tournaments.tournamentStatus")}
           >
             {STATUSES.map((s) => (
               <option key={s.value} value={s.value}>{s.label}</option>
@@ -151,7 +157,7 @@ function Tournaments() {
 
           {!loading && tournaments.length === 0 && (
             <p className="col-span-full text-center text-gray-600 text-xl py-10">
-              Nema turnira za izabrane filtere.
+              {t("tournaments.noTournamentsMatchTheSelected")}
             </p>
           )}
         </div>

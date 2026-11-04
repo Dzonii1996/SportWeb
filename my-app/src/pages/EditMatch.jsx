@@ -11,8 +11,11 @@ import PrivateMatchField from "../components/PrivateMatchField";
 import VenuePicker from "../components/VenuePicker";
 import { useVenues } from "../utils/venues";
 import { hourLabel } from "../utils/reservations";
+import { useTranslation } from "react-i18next";
 
 function EditMatch() {
+  const { t } = useTranslation();
+
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -123,7 +126,7 @@ function EditMatch() {
   if (!loaded) {
     return (
       <div className="text-center mt-20 text-xl">
-        Učitavanje...
+        {t("common.loading")}
       </div>
     );
   }
@@ -131,7 +134,7 @@ function EditMatch() {
   return (
     <div className="max-w-xl mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">
-        Izmeni termin
+        {t("common.editGame")}
       </h1>
 
       <form
@@ -141,11 +144,10 @@ function EditMatch() {
         {reservation && (
           <div className="border border-green-200 bg-green-50 rounded-xl p-4 text-sm text-gray-700">
             <p className="font-semibold">
-              📅 Uz termin je rezervisan teren {venueName} ({hourLabel(reservation.start)}–{hourLabel(reservation.end)})
+              {t("editMatch.theVenueIsBookedFor", { venueName, hourLabel: hourLabel(reservation.start), hourLabel2: hourLabel(reservation.end) })}
             </p>
             <p>
-              Teren, datum i vreme ne mogu da se menjaju dok rezervacija važi. Da ih promeniš, otkaži
-              rezervaciju na stranici Rezervacije.
+              {t("editMatch.theVenueDateAndTime")}
             </p>
           </div>
         )}
@@ -172,7 +174,7 @@ function EditMatch() {
               required
               minLength={2}
               maxLength={100}
-              placeholder="Lokacija"
+              placeholder={t("common.location")}
             />
 
             <LocationPicker value={position} onChange={setPosition} />
@@ -231,7 +233,7 @@ function EditMatch() {
         <button
           className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl"
         >
-          Sačuvaj izmene
+          {t("common.saveChanges")}
         </button>
       </form>
     </div>

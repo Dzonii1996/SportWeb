@@ -2,11 +2,14 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Trophy } from "lucide-react";
 import { API_URL } from "../config";
+import { useTranslation } from "react-i18next";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 
 // Rang lista: bodovi kao u fudbalu (pobeda 3, nerešeno 1)
 function Leaderboard() {
+  const { t } = useTranslation();
+
   const [players, setPlayers] = useState(null);
 
   const me = JSON.parse(localStorage.getItem("user"));
@@ -25,24 +28,23 @@ function Leaderboard() {
         <div className="flex items-center gap-3 mb-2">
           <Trophy className="text-amber-500" size={32} />
           <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900">
-            Rang lista
+            {t("common.leaderboard")}
           </h1>
         </div>
 
         <p className="text-gray-500 mb-6">
-          Pobeda 3 boda, nerešeno 1. Računaju se termini sa upisanim
-          rezultatom i podeljenim timovima.
+          {t("leaderboard.aWinIs3Points")}
         </p>
 
         {players === null ? (
-          <p className="text-gray-500">Učitavanje...</p>
+          <p className="text-gray-500">{t("common.loading")}</p>
         ) : players.length === 0 ? (
           <div className="bg-white border-2 border-dashed rounded-2xl p-10 text-center">
             <p className="text-lg font-semibold text-gray-800">
-              Još nema odigranih utakmica sa rezultatom.
+              {t("leaderboard.noPlayedGamesWithA")}
             </p>
             <p className="text-gray-500 mt-1">
-              Posle termina organizator podeli timove i upiše rezultat.
+              {t("leaderboard.afterTheGameTheOrganizer")}
             </p>
           </div>
         ) : (
@@ -51,10 +53,10 @@ function Leaderboard() {
               <thead className="bg-gray-50 text-sm text-gray-500">
                 <tr>
                   <th className="text-left font-semibold py-3 pl-4 w-12">#</th>
-                  <th className="text-left font-semibold py-3">Igrač</th>
-                  <th className="font-semibold py-3 w-12" title="Odigrano">U</th>
-                  <th className="font-semibold py-3 w-24 hidden sm:table-cell" title="Pobede / Nerešeno / Porazi">P-N-I</th>
-                  <th className="font-semibold py-3 pr-4 w-16 text-right">Bod.</th>
+                  <th className="text-left font-semibold py-3">{t("leaderboard.player")}</th>
+                  <th className="font-semibold py-3 w-12" title={t("common.played2")}>U</th>
+                  <th className="font-semibold py-3 w-24 hidden sm:table-cell" title={t("leaderboard.winsDrawsLosses")}>P-N-I</th>
+                  <th className="font-semibold py-3 pr-4 w-16 text-right">{t("leaderboard.pts")}</th>
                 </tr>
               </thead>
 
@@ -89,7 +91,7 @@ function Leaderboard() {
                         <span className="font-semibold">
                           {p.name}
                           {p.id === me?.id && (
-                            <span className="text-gray-500 font-normal"> (ti)</span>
+                            <span className="text-gray-500 font-normal"> {t("common.you")}</span>
                           )}
                         </span>
                       </Link>

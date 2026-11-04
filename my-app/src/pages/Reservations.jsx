@@ -14,9 +14,12 @@ import {
   createMatchUrl,
   reservationAction,
 } from "../utils/reservations";
+import { useTranslation } from "react-i18next";
 
 // Kartica jedne rezervacije; "children" su dugmad za akcije
 function ReservationCard({ reservation: r, showUser = false, children }) {
+  const { t } = useTranslation();
+
   const status = STATUS[r.status];
   const hours = r.end_hour - r.start_hour;
 
@@ -39,7 +42,7 @@ function ReservationCard({ reservation: r, showUser = false, children }) {
             {hourLabel(r.start_hour)}–{hourLabel(r.end_hour)}
           </span>
           {r.price_per_hour !== null && (
-            <span className="text-gray-500">· okvirno {formatRSD(r.price_per_hour * hours)}</span>
+            <span className="text-gray-500">{t("reservations.approx", { amount: formatRSD(r.price_per_hour * hours) })}</span>
           )}
         </p>
 
@@ -63,12 +66,12 @@ function ReservationCard({ reservation: r, showUser = false, children }) {
 
         {showUser && r.match_max_players !== null && r.match_max_players !== undefined && (
           <p className="text-gray-700 text-sm">
-            👥 Termin na SportWeb-u: prijavljeno {r.match_players} od {r.match_max_players} igrača
+            {t("reservations.gameOnSportwebOfPlayers", { match_players: r.match_players, match_max_players: r.match_max_players })}
           </p>
         )}
 
         {r.note && <p className="text-gray-700 text-sm">📝 {r.note}</p>}
-        {r.owner_note && <p className="text-gray-700 text-sm">💬 Vlasnik: {r.owner_note}</p>}
+        {r.owner_note && <p className="text-gray-700 text-sm">{t("reservations.owner", { owner_note: r.owner_note })}</p>}
       </div>
 
       {children && <div className="flex sm:flex-col gap-2 shrink-0">{children}</div>}
@@ -79,6 +82,8 @@ function ReservationCard({ reservation: r, showUser = false, children }) {
 const button = "px-4 py-2 rounded-xl font-semibold text-center whitespace-nowrap";
 
 function Reservations() {
+  const { t } = useTranslation();
+
   const { ownedVenues, loaded } = useAdminStatus();
   const [tab, setTab] = useState("mine");
   const [mine, setMine] = useState([]);
@@ -118,7 +123,7 @@ function Reservations() {
     if (ask) {
       reason = window.prompt(ask, "");
       if (reason === null) return;
-    } else if (name === "cancel" && !window.confirm("Otkazati rezervaciju?")) {
+    } else if (name === "cancel" && !window.confirm(t("reservations.cancelTheBooking"))) {
       return;
     }
 
@@ -140,19 +145,19 @@ function Reservations() {
     <div className="min-h-screen bg-gray-100">
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-3xl font-bold">Rezervacije</h1>
+          <h1 className="text-3xl font-bold">{t("common.bookings")}</h1>
           <Link to="/tereni" className="text-green-700 font-semibold hover:underline">
-            Tereni koji primaju rezervacije →
+            {t("reservations.venuesThatTakeBookings")}
           </Link>
         </div>
 
         {isOwner && (
           <div className="flex gap-2">
             <button onClick={() => setTab("mine")} className={tabClass("mine")}>
-              Moje rezervacije
+              {t("reservations.myBookings")}
             </button>
             <button onClick={() => setTab("owner")} className={tabClass("owner")}>
-              Na mojim terenima
+              {t("reservations.atMyVenues")}
               {pendingForOwner.length > 0 && (
                 <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
                   {pendingForOwner.length}
@@ -166,7 +171,7 @@ function Reservations() {
           <>
             {upcoming.length === 0 && (
               <p className="text-gray-600 bg-white rounded-2xl border p-6 text-center">
-                Nemaš predstojećih rezervacija. Otvori stranicu terena i izaberi slobodan sat.
+                {t("reservations.youHaveNoUpcomingBookings")}
               </p>
             )}
 
@@ -178,12 +183,12 @@ function Reservations() {
                       to={`/matches/${r.match_id}`}
                       className={`${button} border border-green-600 text-green-700 hover:bg-green-50`}
                     >
-                      Otvori termin
+                      {t("reservations.openGame")}
                     </Link>
                   ) : ACTIVE.includes(r.status) && (
                     <Link to={createMatchUrl(r)} className={`${button} bg-green-600 hover:bg-green-700 text-white inline-flex items-center gap-1.5 justify-center`}>
                       <Plus size={16} />
-                      Napravi termin
+                      {t("reservations.createGame")}
                     </Link>
                   )}
                   {ACTIVE.includes(r.status) && (
@@ -191,7 +196,7 @@ function Reservations() {
                       onClick={() => act(r, "cancel")}
                       className={`${button} border border-red-300 text-red-700 hover:bg-red-50`}
                     >
-                      Otkaži
+                      {t("common.cancel")}
                     </button>
                   )}
                 </ReservationCard>
@@ -200,7 +205,7 @@ function Reservations() {
 
             {past.length > 0 && (
               <>
-                <h2 className="text-xl font-bold pt-4">Prošle</h2>
+                <h2 className="text-xl font-bold pt-4">{t("reservations.past")}</h2>
                 <div className="space-y-4 opacity-75">
                   {past.map((r) => (
                     <ReservationCard key={r.id} reservation={r} />
@@ -211,10 +216,10 @@ function Reservations() {
           </>
         ) : (
           <>
-            <h2 className="text-xl font-bold">Zahtevi na čekanju</h2>
+            <h2 className="text-xl font-bold">{t("reservations.pendingRequests")}</h2>
             {pendingForOwner.length === 0 ? (
               <p className="text-gray-600 bg-white rounded-2xl border p-6 text-center">
-                Nema novih zahteva.
+                {t("reservations.noNewRequests")}
               </p>
             ) : (
               <div className="space-y-4">
@@ -224,23 +229,23 @@ function Reservations() {
                       onClick={() => act(r, "confirm")}
                       className={`${button} bg-green-600 hover:bg-green-700 text-white`}
                     >
-                      Potvrdi
+                      {t("common.confirm")}
                     </button>
                     <button
-                      onClick={() => act(r, "reject", "Poruka za korisnika (nije obavezno):")}
+                      onClick={() => act(r, "reject", t("reservations.messageForTheUserOptional"))}
                       className={`${button} border border-red-300 text-red-700 hover:bg-red-50`}
                     >
-                      Odbij
+                      {t("common.reject")}
                     </button>
                   </ReservationCard>
                 ))}
               </div>
             )}
 
-            <h2 className="text-xl font-bold pt-4">Potvrđene</h2>
+            <h2 className="text-xl font-bold pt-4">{t("reservations.confirmed")}</h2>
             {confirmedForOwner.length === 0 ? (
               <p className="text-gray-600 bg-white rounded-2xl border p-6 text-center">
-                Nema potvrđenih predstojećih rezervacija.
+                {t("reservations.noConfirmedUpcomingBookings")}
               </p>
             ) : (
               <div className="space-y-4">
@@ -248,10 +253,10 @@ function Reservations() {
                   <ReservationCard key={r.id} reservation={r} showUser>
                     {reservationStart(r) > now && (
                       <button
-                        onClick={() => act(r, "cancel", "Razlog otkazivanja (korisnik će ga videti):")}
+                        onClick={() => act(r, "cancel", t("reservations.reasonForCancellingTheUser"))}
                         className={`${button} border border-red-300 text-red-700 hover:bg-red-50`}
                       >
-                        Otkaži
+                        {t("common.cancel")}
                       </button>
                     )}
                   </ReservationCard>

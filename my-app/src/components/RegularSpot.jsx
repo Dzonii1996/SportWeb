@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { API_URL } from "../config";
 import { authHeader } from "../utils/auth";
+import { useTranslation } from "react-i18next";
 
 // Stalno mesto u ponavljajućem terminu: igrač se sam prijavljuje svake nedelje
 function RegularSpot({ matchId }) {
+  const { t } = useTranslation();
+
   const [regular, setRegular] = useState(null);
   const [busy, setBusy] = useState(false);
 
@@ -62,10 +65,9 @@ function RegularSpot({ matchId }) {
       />
 
       <span>
-        <span className="font-semibold text-green-800">Stalno mesto</span>
+        <span className="font-semibold text-green-800">{t("regularSpot.regularSpot")}</span>
         <span className="block text-sm text-green-700">
-          Automatski te prijavljujemo na ovaj termin svake nedelje.
-          Ako ne možeš neke nedelje, samo napusti taj termin.
+          {t("regularSpot.weSignYouUpFor")}
         </span>
       </span>
     </label>

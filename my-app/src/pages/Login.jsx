@@ -2,8 +2,11 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, LogIn } from "lucide-react";
 import { API_URL } from "../config";
+import { useTranslation } from "react-i18next";
 
 function Login() {
+  const { t } = useTranslation();
+
 
   const navigate = useNavigate();
 
@@ -65,7 +68,7 @@ function Login() {
         window.dispatchEvent(new Event("storage"));
 
 
-        alert("Uspešna prijava!");
+        alert(t("login.signedInSuccessfully"));
 
 
         navigate("/");
@@ -82,7 +85,7 @@ function Login() {
 
       console.log(error);
 
-      alert("Greška pri povezivanju sa serverom");
+      alert(t("common.couldNotConnectToThe2"));
 
     }
 
@@ -100,12 +103,12 @@ function Login() {
         <div className="text-center mb-8">
 
           <h1 className="text-3xl font-bold text-gray-800">
-            Dobrodošli 👋
+           {t("login.welcome")}
           </h1>
 
 
           <p className="text-gray-500 mt-2">
-            Prijavite se na svoj nalog
+           {t("login.signInToYourAccount")}
           </p>
 
         </div>
@@ -124,7 +127,7 @@ function Login() {
           <div>
 
             <label className="block text-gray-700 mb-2">
-              Email
+             {t("common.email")}
             </label>
 
 
@@ -147,7 +150,7 @@ function Login() {
 
                 type="email"
 
-                placeholder="Unesite email"
+                placeholder={t("common.enterYourEmail")}
 
                 className="w-full p-3 outline-none"
 
@@ -168,7 +171,7 @@ function Login() {
 
 
             <label className="block text-gray-700 mb-2">
-              Lozinka
+             {t("common.password")}
             </label>
 
 
@@ -191,7 +194,7 @@ function Login() {
 
                 type="password"
 
-                placeholder="Unesite lozinku"
+                placeholder={t("login.enterYourPassword")}
 
                 className="w-full p-3 outline-none"
 
@@ -205,7 +208,7 @@ function Login() {
                 to="/forgot-password"
                 className="text-sm text-green-700 hover:underline"
               >
-                Zaboravljena lozinka?
+               {t("login.forgotYourPassword")}
               </Link>
             </div>
 
@@ -228,8 +231,7 @@ function Login() {
 
             <LogIn size={20} />
 
-            Prijavi se
-
+          {t("common.signIn")}
 
           </button>
 
@@ -246,8 +248,7 @@ function Login() {
 
           <p className="text-gray-600">
 
-            Nemate nalog?
-
+          {t("login.dontHaveAnAccount")}
           </p>
 
 
@@ -260,8 +261,7 @@ function Login() {
 
           >
 
-            Registrujte se
-
+          {t("login.signUp")}
 
           </Link>
 

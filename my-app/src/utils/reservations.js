@@ -1,15 +1,16 @@
 import { API_URL } from "../config";
 import { authHeader } from "./auth";
 import { localDateKey } from "./matchDate";
+import i18n, { locale } from "../i18n";
 
 export const MAX_HOURS = 4;
 export const MAX_DAYS_AHEAD = 60;
 
 export const STATUS = {
-  pending: { label: "Čeka potvrdu", className: "bg-amber-100 text-amber-800" },
-  confirmed: { label: "Potvrđena", className: "bg-green-100 text-green-800" },
-  rejected: { label: "Odbijena", className: "bg-red-100 text-red-700" },
-  cancelled: { label: "Otkazana", className: "bg-gray-200 text-gray-600" },
+  pending: { get label() { return i18n.t("reservations.awaitingConfirmation"); }, className: "bg-amber-100 text-amber-800" },
+  confirmed: { get label() { return i18n.t("reservations.confirmed2"); }, className: "bg-green-100 text-green-800" },
+  rejected: { get label() { return i18n.t("reservations.rejected"); }, className: "bg-red-100 text-red-700" },
+  cancelled: { get label() { return i18n.t("reservations.cancelled"); }, className: "bg-gray-200 text-gray-600" },
 };
 
 export const ACTIVE = ["pending", "confirmed"];
@@ -42,7 +43,7 @@ export const reservationStart = (r) => {
 
 // "pet, 20. 11. 2026."
 export const formatReservationDate = (date) =>
-  new Date(date).toLocaleDateString("sr-Latn-RS", {
+  new Date(date).toLocaleDateString(locale(), {
     weekday: "short",
     day: "numeric",
     month: "numeric",

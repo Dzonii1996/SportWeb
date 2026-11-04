@@ -16,6 +16,8 @@ import { authHeader } from "../utils/auth";
 import { isPastMatch, matchStart, inConfirmWindow } from "../utils/matchDate";
 import AttendanceBox from "../components/AttendanceBox";
 import { hourLabel } from "../utils/reservations";
+import { useTranslation } from "react-i18next";
+import { locale, sportLabel } from "../i18n";
 
 function Avatar({ name, avatar, size = "w-10 h-10", text = "text-lg" }) {
   return avatar ? (
@@ -38,6 +40,8 @@ const CARD = "bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hid
 
 // showConfirm: u poslednja 24 h prikazuje da li je igrač potvrdio dolazak
 function PlayerRow({ player, isMe, showConfirm = false }) {
+  const { t } = useTranslation();
+
   return (
     <li className="flex items-center justify-between gap-3">
       <Link
@@ -49,7 +53,7 @@ function PlayerRow({ player, isMe, showConfirm = false }) {
         <span className="font-semibold truncate">
           {player.name}
           {isMe && (
-            <span className="text-gray-500 font-normal"> (ti)</span>
+            <span className="text-gray-500 font-normal"> {t("common.you")}</span>
           )}
         </span>
       </Link>
@@ -57,11 +61,11 @@ function PlayerRow({ player, isMe, showConfirm = false }) {
       {showConfirm && (
         player.confirmed ? (
           <span className="text-xs font-semibold bg-green-100 text-green-700 px-2 py-1 rounded-full whitespace-nowrap">
-            ✓ dolazi
+            {t("matchDetails.coming")}
           </span>
         ) : (
           <span className="text-xs font-semibold bg-gray-100 text-gray-500 px-2 py-1 rounded-full whitespace-nowrap">
-            ? nije potvrdio
+            {t("matchDetails.notConfirmed")}
           </span>
         )
       )}
@@ -71,23 +75,26 @@ function PlayerRow({ player, isMe, showConfirm = false }) {
 
 // Stanje rezervacije terena za termin, vidljivo svim igračima
 const RESERVATION_TEXT = {
-  pending: ["bg-amber-50 border-amber-200 text-amber-900", "⏳ Rezervacija terena čeka potvrdu vlasnika"],
-  confirmed: ["bg-green-50 border-green-200 text-green-800", "✅ Teren je rezervisan"],
-  rejected: ["bg-red-50 border-red-200 text-red-800", "❌ Vlasnik nije prihvatio rezervaciju terena"],
-  cancelled: ["bg-gray-50 border-gray-200 text-gray-700", "🚫 Rezervacija terena je otkazana"],
+  pending: ["bg-amber-50 border-amber-200 text-amber-900", "matchDetails.venueBookingIsAwaitingThe"],
+  confirmed: ["bg-green-50 border-green-200 text-green-800", "matchDetails.theVenueIsBooked"],
+  rejected: ["bg-red-50 border-red-200 text-red-800", "matchDetails.theOwnerDidNotAccept"],
+  cancelled: ["bg-gray-50 border-gray-200 text-gray-700", "matchDetails.theVenueBookingWasCancelled"],
 };
 
 function ReservationBadge({ status, start, end }) {
+  const { t } = useTranslation();
   const [className, text] = RESERVATION_TEXT[status];
 
   return (
     <div className={`border rounded-xl px-3 py-2 text-sm font-medium ${className}`}>
-      {text} ({hourLabel(start)}–{hourLabel(end)})
+      {t(text)} ({hourLabel(start)}–{hourLabel(end)})
     </div>
   );
 }
 
 function MatchDetails() {
+  const { t } = useTranslation();
+
   const { id } = useParams();
 
   // Ključ iz linka privatnog termina (/matches/14?key=...)
@@ -150,10 +157,10 @@ function MatchDetails() {
   if (notFound) {
     return (
       <div className="text-center mt-20">
-        <p className="text-xl mb-4">Termin ne postoji.</p>
+        <p className="text-xl mb-4">{t("matchDetails.thisGameDoesntExist")}</p>
 
         <Link to="/matches" className="text-green-600 hover:underline">
-          Nazad na termine
+          {t("common.backToGames")}
         </Link>
       </div>
     );
@@ -162,7 +169,7 @@ function MatchDetails() {
   if (!match) {
     return (
       <div className="text-center mt-20 text-xl">
-        Učitavanje...
+        {t("common.loading")}
       </div>
     );
   }
@@ -189,7 +196,7 @@ function MatchDetails() {
   const freeSpots = Math.max(0, match.max_players - players.length);
   // "uto, 10. 11." (sr-Latn: bez toga Chrome piše dane ćirilicom)
   const formattedDate = matchStart(match.match_date, match.match_time).toLocaleDateString(
-    "sr-Latn-RS",
+    locale(),
     { weekday: "long", day: "numeric", month: "numeric", year: "numeric" }
   );
 
@@ -237,7 +244,7 @@ function MatchDetails() {
   const hasTeams = players.some((p) => p.team);
 
   const splitTeams = async (mode) => {
-    if (hasTeams && !window.confirm("Podeliti timove ponovo?")) {
+    if (hasTeams && !window.confirm(t("matchDetails.splitTheTeamsAgain"))) {
       return;
     }
 
@@ -270,8 +277,8 @@ function MatchDetails() {
 
   const deleteMatch = async () => {
     const question = ["pending", "confirmed"].includes(match.reservation_status)
-      ? "Obrisati termin? Rezervacija terena za ovaj termin će biti otkazana i vlasnik obavešten."
-      : "Da li ste sigurni da želite da obrišete termin?";
+      ? t("matchDetails.deleteTheGameTheVenue")
+      : t("matchDetails.areYouSureYouWant");
 
     if (!window.confirm(question)) {
       return;
@@ -305,7 +312,7 @@ function MatchDetails() {
           className="inline-flex items-center gap-2 text-green-700 hover:underline mb-4"
         >
           <ArrowLeft size={18} />
-          Svi termini
+          {t("common.allGames")}
         </Link>
 
         <div className="grid gap-6 lg:grid-cols-2">
@@ -331,33 +338,33 @@ function MatchDetails() {
 
                     <div>
                       <h1 className="text-3xl font-bold leading-tight">
-                        {match.sport}
+                        {sportLabel(match.sport)}
                       </h1>
 
                       <div className="flex flex-wrap gap-1.5 mt-1">
                         {match.is_private && (
                           <span className="text-xs font-semibold bg-black/20 px-2 py-0.5 rounded-full">
-                            🔒 Privatno
+                            {t("matchDetails.private")}
                           </span>
                         )}
 
                         {match.repeat_weekly && (
                           <span className="text-xs font-semibold bg-white/20 px-2 py-0.5 rounded-full">
-                            🔁 Svake nedelje
+                            {t("matchDetails.everyWeek")}
                           </span>
                         )}
 
                         {isPast ? (
                           <span className="text-xs font-bold bg-black/20 px-2 py-0.5 rounded-full">
-                            ODIGRAN
+                            {t("common.played")}
                           </span>
                         ) : isFull ? (
                           <span className="text-xs font-bold bg-red-500 px-2 py-0.5 rounded-full">
-                            POPUNJENO
+                            {t("common.full")}
                           </span>
                         ) : (
                           <span className="text-xs font-bold bg-white text-green-700 px-2 py-0.5 rounded-full">
-                            {freeSpots} {freeSpots === 1 ? "slobodno mesto" : "slobodnih mesta"}
+                            {freeSpots} {freeSpots === 1 ? t("matchDetails.freeSpot") : t("matchDetails.freeSpots")}
                           </span>
                         )}
                       </div>
@@ -369,8 +376,8 @@ function MatchDetails() {
                     <div className="flex gap-1.5">
                       <Link
                         to={`/matches/${id}/edit`}
-                        title="Izmeni termin"
-                        aria-label="Izmeni termin"
+                        title={t("common.editGame")}
+                        aria-label={t("common.editGame")}
                         className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/35 flex items-center justify-center transition"
                       >
                         <Pencil size={18} />
@@ -378,8 +385,8 @@ function MatchDetails() {
 
                       <button
                         onClick={deleteMatch}
-                        title="Obriši termin"
-                        aria-label="Obriši termin"
+                        title={t("common.deleteGame")}
+                        aria-label={t("common.deleteGame")}
                         className="w-10 h-10 rounded-full bg-white/20 hover:bg-red-500 flex items-center justify-center transition"
                       >
                         <Trash2 size={18} />
@@ -400,10 +407,10 @@ function MatchDetails() {
                   />
 
                   {isCreator ? (
-                    <span className="font-semibold">Tvoj termin</span>
+                    <span className="font-semibold">{t("common.yourGame")}</span>
                   ) : (
                     <>
-                      <span className="text-white/80">Organizuje</span>
+                      <span className="text-white/80">{t("common.organizer")}</span>
                       <span className="font-semibold">{match.creator_name}</span>
                     </>
                   )}
@@ -420,7 +427,7 @@ function MatchDetails() {
                       to={`/tereni/${match.venue_id}`}
                       className="ml-auto text-sm text-green-700 hover:underline font-medium whitespace-nowrap"
                     >
-                      🏟️ O terenu
+                      {t("matchDetails.aboutTheVenue")}
                     </Link>
                   )}
                 </div>
@@ -453,11 +460,11 @@ function MatchDetails() {
                   <div className="flex justify-between text-sm mb-1.5">
                     <span className="flex items-center gap-1.5 text-gray-600">
                       <Users size={15} />
-                      {players.length} / {match.max_players} igrača
+                      {t("matchDetails.players", { length: players.length, max_players: match.max_players })}
                     </span>
 
                     {joined && !isPast && (
-                      <span className="text-green-700 font-semibold">✓ Prijavljen si</span>
+                      <span className="text-green-700 font-semibold">{t("common.youreIn")}</span>
                     )}
                   </div>
 
@@ -491,14 +498,14 @@ function MatchDetails() {
                   }`}
                 >
                   {isPast
-                    ? "Termin je odigran"
+                    ? t("common.gameHasBeenPlayed")
                     : joined
-                    ? "Napusti termin"
+                    ? t("common.leaveGame")
                     : waitlistPosition
-                    ? "Izađi sa liste čekanja"
+                    ? t("matchDetails.leaveTheWaitlist")
                     : isFull
-                    ? "⏳ Upiši se na listu čekanja"
-                    : "Prijavi se"}
+                    ? t("matchDetails.joinTheWaitlist")
+                    : t("common.join")}
                 </button>
 
                 {joined && confirmWindow && (
@@ -515,8 +522,7 @@ function MatchDetails() {
 
                 {waitlistPosition > 0 && !isPast && (
                   <p className="text-center text-orange-700 font-medium">
-                    Ti si {waitlistPosition}. na listi čekanja. Kad se oslobodi
-                    mesto, automatski ćeš biti prijavljen.
+                    {t("matchDetails.youAreNumberOnThe", { waitlistPosition })}
                   </p>
                 )}
 
@@ -532,8 +538,7 @@ function MatchDetails() {
 
                 {isCreator && match.is_private && !isPast && (
                   <p className="text-sm text-gray-600 bg-gray-50 border rounded-xl p-3">
-                    🔒 Privatni termin nije na listi termina. Ekipi pošalji
-                    link ispod ili pozivnicu.
+                    {t("matchDetails.thisPrivateGameIsntIn")}
                   </p>
                 )}
 
@@ -568,12 +573,12 @@ function MatchDetails() {
             <div className={`${CARD} p-6`}>
               <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <h2 className="text-2xl font-bold">
-                  👥 Učesnici
+                  {t("matchDetails.participants")}
                 </h2>
 
                 {confirmWindow && players.length > 0 && (
                   <span className="text-sm font-semibold text-gray-600">
-                    Potvrdilo {confirmedCount} / {players.length}
+                    {t("matchDetails.confirmed", { confirmedCount, length: players.length })}
                   </span>
                 )}
 
@@ -585,30 +590,30 @@ function MatchDetails() {
                       onClick={() => splitTeams("random")}
                       disabled={busy}
                       className="text-sm px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 font-medium"
-                      title="Nasumična podela"
+                      title={t("matchDetails.randomSplit")}
                     >
-                      🎲 Nasumično
+                      {t("matchDetails.random")}
                     </button>
 
                     <button
                       onClick={() => splitTeams("balanced")}
                       disabled={busy}
                       className="text-sm px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 font-medium"
-                      title="Najbolje ocenjeni igrači se ravnomerno raspoređuju"
+                      title={t("matchDetails.theBestRatedPlayersAre")}
                     >
-                      ⚖️ Ujednačeno
+                      {t("matchDetails.balanced")}
                     </button>
                   </div>
                 )}
               </div>
 
               {players.length === 0 ? (
-                <p className="text-gray-500">Nema prijavljenih igrača.</p>
+                <p className="text-gray-500">{t("common.noPlayersHaveJoined")}</p>
               ) : hasTeams ? (
                 <div className="grid sm:grid-cols-2 gap-4">
                   {[
-                    { team: "A", label: "Tim A", color: "border-green-500 bg-green-50" },
-                    { team: "B", label: "Tim B", color: "border-blue-500 bg-blue-50" },
+                    { team: "A", label: t("common.teamA"), color: "border-green-500 bg-green-50" },
+                    { team: "B", label: t("common.teamB"), color: "border-blue-500 bg-blue-50" },
                   ].map(({ team, label, color }) => {
                     const members = players.filter((p) => p.team === team);
 
@@ -630,7 +635,7 @@ function MatchDetails() {
                   {players.some((p) => !p.team) && (
                     <div className="sm:col-span-2">
                       <h3 className="font-bold text-gray-600">
-                        Prijavili su se posle podele
+                        {t("matchDetails.joinedAfterTheSplit")}
                       </h3>
 
                       <ul className="divide-y">
@@ -652,7 +657,7 @@ function MatchDetails() {
               {waitlist.length > 0 && (
                 <>
                   <h3 className="text-xl font-bold mt-6 mb-2">
-                    ⏳ Lista čekanja
+                    {t("matchDetails.waitlist")}
                   </h3>
 
                   <ol className="divide-y">
@@ -671,7 +676,7 @@ function MatchDetails() {
                           <span className="font-semibold">
                             {player.name}
                             {player.id === user?.id && (
-                              <span className="text-gray-500 font-normal"> (ti)</span>
+                              <span className="text-gray-500 font-normal"> {t("common.you")}</span>
                             )}
                           </span>
                         </Link>
@@ -693,13 +698,13 @@ function MatchDetails() {
               />
             ) : (
               <div className={`${CARD} p-6 text-center`}>
-                <p className="mb-4">Prijavi se da bi video čet termina.</p>
+                <p className="mb-4">{t("matchDetails.signInToSeeThe")}</p>
 
                 <Link
                   to="/login"
                   className="inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl"
                 >
-                  Login
+                  {t("matchDetails.signIn")}
                 </Link>
               </div>
             )}

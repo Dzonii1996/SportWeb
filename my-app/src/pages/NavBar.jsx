@@ -2,23 +2,26 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { Menu, X, Plus, ChevronDown, User, CalendarCheck, CalendarClock, LogOut } from "lucide-react";
 import { logout } from "../utils/auth";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 import NotificationBell from "../components/NotificationBell";
+import { useTranslation } from "react-i18next";
+import i18n from "../i18n";
 
 const LINKS = [
-  { to: "/", label: "Početna", end: true },
-  { to: "/matches", label: "Termini" },
-  { to: "/tereni", label: "Tereni" },
-  { to: "/turniri", label: "Turniri" },
-  { to: "/rang-lista", label: "Rang lista" },
+  { to: "/", get label() { return i18n.t("nav.home"); }, end: true },
+  { to: "/matches", get label() { return i18n.t("nav.games"); } },
+  { to: "/tereni", get label() { return i18n.t("nav.venues"); } },
+  { to: "/turniri", get label() { return i18n.t("common.tournaments"); } },
+  { to: "/rang-lista", get label() { return i18n.t("common.leaderboard"); } },
 ];
 
 const USER_LINKS = [
-  { to: "/my-matches", label: "Moji termini" },
+  { to: "/my-matches", get label() { return i18n.t("common.myGames"); } },
 ];
 
 // Aktivni link dobija zelenu pozadinu
 const linkClass = ({ isActive }) =>
-  `px-3 xl:px-4 py-2 rounded-full font-medium whitespace-nowrap transition ${
+  `px-3 py-2 rounded-full font-medium whitespace-nowrap transition ${
     isActive
       ? "bg-green-50 text-green-700"
       : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
@@ -30,6 +33,8 @@ const mobileLinkClass = ({ isActive }) =>
   }`;
 
 function Navbar() {
+  const { t } = useTranslation();
+
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -129,14 +134,19 @@ useEffect(() => {
         {/* Desna strana */}
         <div className="flex items-center gap-2">
 
+          <LanguageSwitcher className="hidden lg:inline-flex" />
+
           {user ? (
             <>
               <Link
                 to="/create-match"
+                aria-label={t("common.createGame")}
+                title={t("common.createGame")}
                 className="hidden sm:inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full font-semibold shadow-sm whitespace-nowrap transition"
               >
                 <Plus size={18} />
-                Kreiraj termin
+                {/* Na lg nema mesta za tekst pored linkova i izbora jezika */}
+                <span className="lg:hidden xl:inline">{t("common.createGame")}</span>
               </Link>
 
               <NotificationBell key={user.id} userId={user.id} />
@@ -163,7 +173,7 @@ useEffect(() => {
                       className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50"
                     >
                       <User size={18} className="text-gray-500" />
-                      Moj profil
+                      {t("common.myProfile")}
                     </Link>
 
                     <Link
@@ -171,7 +181,7 @@ useEffect(() => {
                       className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50"
                     >
                       <CalendarCheck size={18} className="text-gray-500" />
-                      Moji termini
+                      {t("common.myGames")}
                     </Link>
 
                     <Link
@@ -179,7 +189,7 @@ useEffect(() => {
                       className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50"
                     >
                       <CalendarClock size={18} className="text-gray-500" />
-                      Rezervacije
+                      {t("common.bookings")}
                     </Link>
 
                     <div className="my-1 border-t" />
@@ -189,7 +199,7 @@ useEffect(() => {
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-red-600 hover:bg-red-50"
                     >
                       <LogOut size={18} />
-                      Odjavi se
+                      {t("common.signOut")}
                     </button>
                   </div>
                 )}
@@ -201,14 +211,14 @@ useEffect(() => {
                 to="/login"
                 className="px-4 py-2 rounded-full font-medium text-gray-700 hover:bg-gray-100"
               >
-                Prijava
+                {t("nav.signIn")}
               </Link>
 
               <Link
                 to="/register"
                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full font-semibold shadow-sm transition"
               >
-                Registracija
+                {t("nav.signUp")}
               </Link>
             </div>
           )}
@@ -217,7 +227,7 @@ useEffect(() => {
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             className="lg:hidden p-2 rounded-full hover:bg-gray-100"
-            aria-label="Meni"
+            aria-label={t("nav.menu")}
           >
             {mobileOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -229,6 +239,11 @@ useEffect(() => {
       {/* Mobilni meni */}
       {mobileOpen && (
         <div className="lg:hidden border-t bg-white px-4 py-3 space-y-1">
+
+          <div className="flex items-center justify-between px-4 py-2">
+            <span className="font-medium text-gray-700">{t("nav.language")}</span>
+            <LanguageSwitcher />
+          </div>
 
           {user && (
             <div className="flex items-center gap-3 px-4 py-3 mb-1">
@@ -248,15 +263,15 @@ useEffect(() => {
           {user ? (
             <>
               <NavLink to="/my-matches" className={mobileLinkClass}>
-                Moji termini
+                {t("common.myGames")}
               </NavLink>
 
               <NavLink to="/rezervacije" className={mobileLinkClass}>
-                Rezervacije
+                {t("common.bookings")}
               </NavLink>
 
               <NavLink to="/profile" className={mobileLinkClass}>
-                Moj profil
+                {t("common.myProfile")}
               </NavLink>
 
               <Link
@@ -264,14 +279,14 @@ useEffect(() => {
                 className="flex items-center justify-center gap-1.5 mt-2 bg-green-600 text-white px-4 py-3 rounded-xl font-semibold"
               >
                 <Plus size={18} />
-                Kreiraj termin
+                {t("common.createGame")}
               </Link>
 
               <button
                 onClick={handleLogout}
                 className="w-full text-left px-4 py-3 rounded-xl font-medium text-red-600 hover:bg-red-50"
               >
-                Odjavi se
+                {t("common.signOut")}
               </button>
             </>
           ) : (
@@ -280,14 +295,14 @@ useEffect(() => {
                 to="/login"
                 className="text-center px-4 py-3 rounded-xl font-medium border"
               >
-                Prijava
+                {t("nav.signIn")}
               </Link>
 
               <Link
                 to="/register"
                 className="text-center bg-green-600 text-white px-4 py-3 rounded-xl font-semibold"
               >
-                Registracija
+                {t("nav.signUp")}
               </Link>
             </div>
           )}

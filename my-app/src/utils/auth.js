@@ -1,4 +1,6 @@
 import axios from "axios";
+import i18n from "../i18n";
+import { API_URL } from "../config";
 
 // Header sa JWT tokenom za zaštićene rute na serveru
 export const authHeader = () => {
@@ -48,8 +50,14 @@ export const setupAuth = () => {
   // Svaki 401 sa servera znači da sesija više ne važi
   const originalFetch = window.fetch.bind(window);
 
-  window.fetch = async (...args) => {
-    const res = await originalFetch(...args);
+  window.fetch = async (url, options = {}) => {
+    // Server na ovom jeziku vraća poruke i notifikacije
+    const res = await originalFetch(
+      url,
+      String(url).startsWith(API_URL)
+        ? { ...options, headers: { ...options.headers, "Accept-Language": i18n.language } }
+        : options
+    );
 
     if (res.status === 401 && localStorage.getItem("token")) {
       logoutAndRedirect();
@@ -57,6 +65,12 @@ export const setupAuth = () => {
 
     return res;
   };
+
+  axios.interceptors.request.use((config) => {
+    config.headers["Accept-Language"] = i18n.language;
+
+    return config;
+  });
 
   axios.interceptors.response.use(
     (res) => res,

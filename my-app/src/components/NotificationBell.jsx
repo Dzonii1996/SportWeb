@@ -3,10 +3,14 @@ import { Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { API_URL } from "../config";
 import { authHeader } from "../utils/auth";
+import { useTranslation } from "react-i18next";
+import { locale } from "../i18n";
 
 const POLL_INTERVAL = 30000;
 
 function NotificationBell({ userId }) {
+  const { t } = useTranslation();
+
   const navigate = useNavigate();
 
   const [open, setOpen] = useState(false);
@@ -155,7 +159,7 @@ function NotificationBell({ userId }) {
       <button
         onClick={toggle}
         className="relative p-2 rounded-full hover:bg-gray-100"
-        aria-label="Notifikacije"
+        aria-label={t("notificationBell.notifications")}
       >
         <Bell size={22} />
 
@@ -171,7 +175,7 @@ function NotificationBell({ userId }) {
 
           <div className="flex items-center justify-between p-4 border-b">
             <h3 className="font-bold">
-              Notifikacije
+              {t("notificationBell.notifications")}
             </h3>
 
             {unread > 0 && (
@@ -179,7 +183,7 @@ function NotificationBell({ userId }) {
                 onClick={markAllAsRead}
                 className="text-sm text-green-600 hover:underline"
               >
-                Označi sve kao pročitano
+                {t("notificationBell.markAllAsRead")}
               </button>
             )}
           </div>
@@ -187,7 +191,7 @@ function NotificationBell({ userId }) {
           <div className="max-h-96 overflow-y-auto">
             {notifications.length === 0 ? (
               <p className="p-4 text-center text-gray-500">
-                Nema notifikacija.
+                {t("notificationBell.noNotifications")}
               </p>
             ) : (
               notifications.map((n) => (
@@ -201,7 +205,7 @@ function NotificationBell({ userId }) {
                   <p>{n.message}</p>
 
                   <p className="text-xs text-gray-400 mt-1 font-normal">
-                    {new Date(n.created_at).toLocaleString("sr-RS")}
+                    {new Date(n.created_at).toLocaleString(locale())}
                   </p>
                 </button>
               ))

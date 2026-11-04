@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Mail, X } from "lucide-react";
 import { API_URL } from "../config";
 import { authHeader } from "../utils/auth";
+import { useTranslation } from "react-i18next";
 
 const avatarOf = (p) =>
   p.avatar ? (
@@ -14,6 +15,8 @@ const avatarOf = (p) =>
 
 // Kreator poziva ljude sa kojima je već igrao; oni dobijaju notifikaciju
 function InvitePlayers({ matchId }) {
+  const { t } = useTranslation();
+
   const [open, setOpen] = useState(false);
   const [candidates, setCandidates] = useState(null);
   const [selected, setSelected] = useState([]);
@@ -69,7 +72,7 @@ function InvitePlayers({ matchId }) {
       }
     } catch (error) {
       console.error(error);
-      setStatus("Greška pri slanju poziva.");
+      setStatus(t("invitePlayers.couldNotSendTheInvitations"));
     } finally {
       setSending(false);
     }
@@ -82,7 +85,7 @@ function InvitePlayers({ matchId }) {
         className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 hover:border-gray-300 transition"
       >
         <Mail size={17} />
-        Pozovi saigrače
+        {t("invitePlayers.inviteTeammates")}
       </button>
 
       {open && (
@@ -96,16 +99,16 @@ function InvitePlayers({ matchId }) {
           >
             <div className="flex items-center justify-between p-5 border-b">
               <div>
-                <h2 className="text-xl font-bold">📩 Pozovi igrače</h2>
+                <h2 className="text-xl font-bold">{t("invitePlayers.invitePlayers")}</h2>
                 <p className="text-sm text-gray-500">
-                  Saigrači iz tvojih ranijih termina
+                  {t("invitePlayers.teammatesFromYourEarlierGames")}
                 </p>
               </div>
 
               <button
                 onClick={() => setOpen(false)}
                 className="p-1.5 rounded-full hover:bg-gray-100"
-                aria-label="Zatvori"
+                aria-label={t("common.close")}
               >
                 <X size={20} />
               </button>
@@ -113,11 +116,10 @@ function InvitePlayers({ matchId }) {
 
             <div className="flex-1 overflow-y-auto p-3">
               {candidates === null ? (
-                <p className="p-4 text-center text-gray-500">Učitavanje...</p>
+                <p className="p-4 text-center text-gray-500">{t("common.loading")}</p>
               ) : candidates.length === 0 ? (
                 <p className="p-4 text-center text-gray-500">
-                  Ovde se pojavljuju saigrači iz tvojih ranijih termina.
-                  Za sada ih nema, pa podeli link termina.
+                  {t("invitePlayers.teammatesFromYourEarlierGames2")}
                 </p>
               ) : (
                 <>
@@ -132,7 +134,7 @@ function InvitePlayers({ matchId }) {
                       }
                       className="text-sm text-green-700 hover:underline px-3 mb-1"
                     >
-                      {selected.length === available.length ? "Poništi izbor" : "Izaberi sve"}
+                      {selected.length === available.length ? t("invitePlayers.clearSelection") : t("invitePlayers.selectAll")}
                     </button>
                   )}
 
@@ -157,13 +159,13 @@ function InvitePlayers({ matchId }) {
                           <span className="flex-1 min-w-0">
                             <span className="block font-semibold truncate">{c.name}</span>
                             <span className="block text-xs text-gray-500">
-                              {c.together} {c.together === 1 ? "zajednički termin" : "zajedničkih termina"}
+                              {c.together} {c.together === 1 ? t("invitePlayers.sharedGame") : t("invitePlayers.sharedGames")}
                             </span>
                           </span>
 
                           {c.invited && (
                             <span className="text-xs font-semibold bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                              Poziv poslat
+                              {t("invitePlayers.invitationSent")}
                             </span>
                           )}
                         </label>
@@ -185,8 +187,8 @@ function InvitePlayers({ matchId }) {
                 className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white py-3 rounded-xl font-semibold"
               >
                 {sending
-                  ? "Šaljem..."
-                  : `Pošalji pozive${selected.length ? ` (${selected.length})` : ""}`}
+                  ? t("common.sending")
+                  : t("invitePlayers.sendInvitations", { value: selected.length ? ` (${selected.length})` : "" })}
               </button>
             </div>
           </div>
@@ -198,6 +200,8 @@ function InvitePlayers({ matchId }) {
 
 // Traka za pozvanog igrača koji se još nije prijavio
 export function InviteBanner({ matchId }) {
+  const { t } = useTranslation();
+
   const [invitedBy, setInvitedBy] = useState(null);
 
   useEffect(() => {
@@ -211,7 +215,7 @@ export function InviteBanner({ matchId }) {
 
   return (
     <div className="bg-blue-50 border border-blue-200 text-blue-900 rounded-xl px-4 py-3 font-medium">
-      📩 Pozivnica za ovaj termin od: <strong>{invitedBy}</strong>
+      {t("invitePlayers.invitationToThisGameFrom")} <strong>{invitedBy}</strong>
     </div>
   );
 }

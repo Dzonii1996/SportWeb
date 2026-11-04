@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { API_URL } from "../config";
 import { authHeader } from "../utils/auth";
+import { useTranslation } from "react-i18next";
 
 const input = "w-full border p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600";
 
@@ -14,6 +15,8 @@ const Status = ({ status }) =>
 
 // Izmena imena i lozinke na stranici Profil
 function AccountSettings({ user, onNameChange }) {
+  const { t } = useTranslation();
+
   const [name, setName] = useState(user.name);
   const [nameStatus, setNameStatus] = useState(null);
 
@@ -45,7 +48,7 @@ function AccountSettings({ user, onNameChange }) {
         onNameChange(data.user.name);
       }
     } catch {
-      setNameStatus({ ok: false, text: "Greška pri povezivanju sa serverom." });
+      setNameStatus({ ok: false, text: t("common.couldNotConnectToThe") });
     } finally {
       setSaving(false);
     }
@@ -55,7 +58,7 @@ function AccountSettings({ user, onNameChange }) {
     e.preventDefault();
 
     if (passwords.next !== passwords.confirm) {
-      setPasswordStatus({ ok: false, text: "Nove lozinke se ne poklapaju." });
+      setPasswordStatus({ ok: false, text: t("accountSettings.theNewPasswordsDoNot") });
       return;
     }
 
@@ -75,7 +78,7 @@ function AccountSettings({ user, onNameChange }) {
         setPasswords({ current: "", next: "", confirm: "" });
       }
     } catch {
-      setPasswordStatus({ ok: false, text: "Greška pri povezivanju sa serverom." });
+      setPasswordStatus({ ok: false, text: t("common.couldNotConnectToThe") });
     } finally {
       setSaving(false);
     }
@@ -86,10 +89,10 @@ function AccountSettings({ user, onNameChange }) {
 
   return (
     <div className="border-t pt-8 mt-8 space-y-8">
-      <h2 className="text-2xl font-bold">⚙️ Podešavanja naloga</h2>
+      <h2 className="text-2xl font-bold">{t("accountSettings.accountSettings")}</h2>
 
       <form onSubmit={saveName} className="space-y-3">
-        <label className="block font-semibold">Ime</label>
+        <label className="block font-semibold">{t("common.name")}</label>
 
         <div className="flex gap-2">
           <input
@@ -106,7 +109,7 @@ function AccountSettings({ user, onNameChange }) {
             disabled={saving || name.trim() === user.name}
             className="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white px-5 rounded-xl font-semibold"
           >
-            Sačuvaj
+            {t("common.save")}
           </button>
         </div>
 
@@ -114,14 +117,14 @@ function AccountSettings({ user, onNameChange }) {
       </form>
 
       <form onSubmit={savePassword} className="space-y-3">
-        <label className="block font-semibold">Promena lozinke</label>
+        <label className="block font-semibold">{t("accountSettings.changePassword")}</label>
 
         <input
           type="password"
           value={passwords.current}
           onChange={setPassword("current")}
           required
-          placeholder="Trenutna lozinka"
+          placeholder={t("accountSettings.currentPassword")}
           autoComplete="current-password"
           className={input}
         />
@@ -132,7 +135,7 @@ function AccountSettings({ user, onNameChange }) {
           onChange={setPassword("next")}
           required
           minLength={6}
-          placeholder="Nova lozinka (najmanje 6 znakova)"
+          placeholder={t("common.newPasswordAtLeast6")}
           autoComplete="new-password"
           className={input}
         />
@@ -143,7 +146,7 @@ function AccountSettings({ user, onNameChange }) {
           onChange={setPassword("confirm")}
           required
           minLength={6}
-          placeholder="Ponovi novu lozinku"
+          placeholder={t("common.repeatNewPassword")}
           autoComplete="new-password"
           className={input}
         />
@@ -155,11 +158,11 @@ function AccountSettings({ user, onNameChange }) {
           disabled={saving}
           className="w-full bg-gray-800 hover:bg-gray-900 disabled:bg-gray-400 text-white py-3 rounded-xl font-semibold"
         >
-          Promeni lozinku
+          {t("accountSettings.changePassword2")}
         </button>
 
         <p className="text-sm text-gray-500">
-          Posle promene lozinke biće odjavljeni svi ostali uređaji.
+          {t("accountSettings.afterChangingYourPasswordAll")}
         </p>
       </form>
     </div>

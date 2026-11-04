@@ -10,6 +10,7 @@ import {
   hourLabel,
   maxDurationFrom,
 } from "../utils/reservations";
+import { useTranslation } from "react-i18next";
 
 const dateKeyIn = (days) => {
   const d = new Date();
@@ -21,6 +22,8 @@ const dateKeyIn = (days) => {
 // Rezervacija terena: izbor dana, slobodnog sata i trajanja.
 // Vlasnik istom formom upisuje zauzeto vreme (npr. rezervaciju telefonom).
 function VenueBooking({ venue, isOwner }) {
+  const { t } = useTranslation();
+
   const loggedIn = Boolean(localStorage.getItem("token"));
 
   const [date, setDate] = useState(todayKey());
@@ -84,11 +87,11 @@ function VenueBooking({ venue, isOwner }) {
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold">Rezerviši teren</h2>
+          <h2 className="text-2xl font-bold">{t("venueBooking.bookTheVenue")}</h2>
           <p className="text-gray-600 text-sm">
             {isOwner
-              ? "Upiši vreme koje je zauzeto mimo SportWeb-a (npr. rezervacija telefonom)."
-              : "Izaberi dan i slobodan sat. Vlasnik potvrđuje zahtev, a ti dobijaš obaveštenje."}
+              ? t("venueBooking.enterTimeTakenOutsideSportweb")
+              : t("venueBooking.pickADayAndA")}
           </p>
         </div>
 
@@ -120,7 +123,7 @@ function VenueBooking({ venue, isOwner }) {
               type="button"
               disabled={disabled}
               onClick={() => pick(hour)}
-              title={taken ? (taken.status === "confirmed" ? "Zauzeto" : "Ima zahtev na čekanju") : ""}
+              title={taken ? (taken.status === "confirmed" ? t("venueBooking.taken") : t("venueBooking.hasAPendingRequest")) : ""}
               className={`border rounded-xl py-2 text-sm font-semibold transition ${className}`}
             >
               {hourLabel(hour)}
@@ -130,9 +133,9 @@ function VenueBooking({ venue, isOwner }) {
       </div>
 
       <div className="flex flex-wrap gap-4 text-xs text-gray-500">
-        <span>⬜ slobodno</span>
-        <span className="text-amber-600">🟨 čeka potvrdu</span>
-        <span className="text-red-500">🟥 zauzeto</span>
+        <span>{t("venueBooking.free")}</span>
+        <span className="text-amber-600">{t("venueBooking.awaitingConfirmation")}</span>
+        <span className="text-red-500">{t("venueBooking.taken2")}</span>
       </div>
 
       {start !== null && maxHours > 0 && (
@@ -140,25 +143,25 @@ function VenueBooking({ venue, isOwner }) {
           <form onSubmit={submit} className="border rounded-xl p-4 space-y-3 bg-gray-50">
             <div className="flex flex-wrap items-center gap-3">
               <span className="font-semibold">
-                Od {hourLabel(start)} do {hourLabel(start + hours)}
+                {t("venueBooking.fromTo", { hourLabel: hourLabel(start), hourLabel2: hourLabel(start + hours) })}
               </span>
 
               <select
                 value={hours}
                 onChange={(e) => setHours(Number(e.target.value))}
                 className="border p-2 rounded-xl bg-white"
-                aria-label="Trajanje"
+                aria-label={t("venueBooking.duration")}
               >
                 {Array.from({ length: maxHours }, (_, i) => i + 1).map((h) => (
                   <option key={h} value={h}>
-                    {h} {h === 1 ? "sat" : "sata"}
+                    {t("common.hours", { count: h })}
                   </option>
                 ))}
               </select>
 
               {price !== null && (
                 <span className="text-gray-600">
-                  okvirno <span className="font-semibold">{formatRSD(price * hours)}</span>
+                  {t("venueBooking.approx")} <span className="font-semibold">{formatRSD(price * hours)}</span>
                 </span>
               )}
             </div>
@@ -168,7 +171,7 @@ function VenueBooking({ venue, isOwner }) {
               onChange={(e) => setNote(e.target.value)}
               rows={2}
               maxLength={300}
-              placeholder={isOwner ? "Za koga je (npr. Marko, telefonom)" : "Napomena za vlasnika (nije obavezno)"}
+              placeholder={isOwner ? t("venueBooking.whoIsItForE") : t("venueBooking.noteForTheOwnerOptional")}
               className="w-full border p-3 rounded-xl bg-white"
             />
 
@@ -177,15 +180,15 @@ function VenueBooking({ venue, isOwner }) {
               disabled={saving}
               className="bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white px-5 py-2.5 rounded-xl font-semibold"
             >
-              {saving ? "Šaljem..." : isOwner ? "Upiši kao zauzeto" : "Pošalji zahtev"}
+              {saving ? t("common.sending") : isOwner ? t("venueBooking.markAsTaken") : t("venueBooking.sendRequest")}
             </button>
           </form>
         ) : (
           <p className="text-gray-600">
             <Link to="/login" className="text-green-700 font-semibold hover:underline">
-              Prijavi se
+              {t("common.signIn")}
             </Link>{" "}
-            da pošalješ zahtev za rezervaciju.
+            {t("venueBooking.toSendABookingRequest")}
           </p>
         )
       )}

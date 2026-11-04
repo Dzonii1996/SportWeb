@@ -1,16 +1,17 @@
 import { API_URL } from "../config";
 import { authHeader } from "./auth";
+import i18n, { locale } from "../i18n";
 
 export const FORMATS = {
-  league: { label: "Liga", hint: "Svako igra sa svakim, pobednik je prvi na tabeli." },
-  knockout: { label: "Kup", hint: "Ko izgubi, ispada. Najbolje za 4, 8 ili 16 ekipa." },
+  league: { get label() { return i18n.t("tournaments.league"); }, get hint() { return i18n.t("tournaments.everyonePlaysEveryoneTheWinner"); } },
+  knockout: { get label() { return i18n.t("tournaments.cup"); }, get hint() { return i18n.t("tournaments.loseAndYoureOutBest"); } },
 };
 
 export const STATUS = {
-  registration: { label: "Prijave otvorene", className: "bg-green-100 text-green-800" },
-  in_progress: { label: "U toku", className: "bg-amber-100 text-amber-800" },
-  finished: { label: "Završen", className: "bg-gray-200 text-gray-700" },
-  cancelled: { label: "Otkazan", className: "bg-red-100 text-red-700" },
+  registration: { get label() { return i18n.t("common.registrationOpen"); }, className: "bg-green-100 text-green-800" },
+  in_progress: { get label() { return i18n.t("common.inProgress"); }, className: "bg-amber-100 text-amber-800" },
+  finished: { get label() { return i18n.t("tournaments.finished2"); }, className: "bg-gray-200 text-gray-700" },
+  cancelled: { get label() { return i18n.t("tournaments.cancelled"); }, className: "bg-red-100 text-red-700" },
 };
 
 export const sportIcon = (sport) => (sport === "Košarka" ? "🏀" : "⚽");
@@ -20,12 +21,12 @@ export const roundLabel = (format, round, totalRounds) => {
   if (format === "knockout") {
     const fromEnd = totalRounds - round;
 
-    if (fromEnd === 0) return "Finale";
-    if (fromEnd === 1) return "Polufinale";
-    if (fromEnd === 2) return "Četvrtfinale";
+    if (fromEnd === 0) return i18n.t("tournaments.final");
+    if (fromEnd === 1) return i18n.t("tournaments.semifinal");
+    if (fromEnd === 2) return i18n.t("tournaments.quarterfinal");
   }
 
-  return `${round}. kolo`;
+  return i18n.t("tournaments.round", { round });
 };
 
 // Utakmice po kolima: [{ round, games }]
@@ -43,7 +44,7 @@ export const isBye = (game) =>
   game.winner_team_id !== null && (game.team_a_id === null || game.team_b_id === null);
 
 export const formatDate = (date) =>
-  new Date(date).toLocaleDateString("sr-Latn-RS", {
+  new Date(date).toLocaleDateString(locale(), {
     weekday: "short",
     day: "numeric",
     month: "numeric",

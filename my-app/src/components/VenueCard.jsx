@@ -4,9 +4,13 @@ import { formatDistance } from "../utils/geo";
 import { formatRSD } from "../utils/price";
 import { sportIcons, indoorLabel, imageUrl } from "../utils/venues";
 import { RatingBadge } from "./Stars";
+import { useTranslation } from "react-i18next";
+import { surfaceLabel } from "../i18n";
 
 // Kartica terena na listi; izgled prati MatchCard
 function VenueCard({ venue, distance = null }) {
+  const { t } = useTranslation();
+
   return (
     <Link
       to={`/tereni/${venue.id}`}
@@ -39,7 +43,7 @@ function VenueCard({ venue, distance = null }) {
 
           {venue.surface && (
             <span className="text-xs font-semibold bg-white/90 text-gray-800 px-2 py-0.5 rounded-full">
-              {venue.surface}
+              {surfaceLabel(venue.surface)}
             </span>
           )}
         </div>
@@ -66,7 +70,7 @@ function VenueCard({ venue, distance = null }) {
           <div className="flex items-center gap-3">
             <Wallet className="text-green-600 shrink-0" size={18} />
             <span>
-              oko <span className="font-semibold">{formatRSD(venue.price_per_hour)}</span> po satu
+              {t("common.about")} <span className="font-semibold">{formatRSD(venue.price_per_hour)}</span> {t("common.perHour")}
             </span>
           </div>
         )}
@@ -75,8 +79,8 @@ function VenueCard({ venue, distance = null }) {
           <CalendarDays className="text-green-600 shrink-0" size={18} />
           <span>
             {venue.upcoming_matches > 0
-              ? `Predstojećih termina: ${venue.upcoming_matches}`
-              : "Nema zakazanih termina"}
+              ? t("venueCard.upcomingGames", { upcoming_matches: venue.upcoming_matches })
+              : t("venueCard.noGamesScheduled")}
           </span>
         </div>
       </div>

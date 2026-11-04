@@ -15,6 +15,8 @@ import { API_URL } from "../config";
 import { formatDistance } from "../utils/geo";
 import { formatRSD, pricePerPlayer } from "../utils/price";
 import { matchStart, inConfirmWindow } from "../utils/matchDate";
+import { useTranslation } from "react-i18next";
+import { locale, sportLabel } from "../i18n";
 
 
 function MatchCard({
@@ -37,6 +39,8 @@ function MatchCard({
   scoreB = null,
   isPrivate = false,
 }) {
+  const { t } = useTranslation();
+
   const [showPlayers, setShowPlayers] = useState(false);
   const [playersList, setPlayersList] = useState([]);
   const [joined, setJoined] = useState(false);
@@ -50,7 +54,7 @@ function MatchCard({
   const inactive = isFull || isPast;
 
   // "uto, 10. 11. • 20:30" (sr-Latn: bez toga Chrome piše dane ćirilicom)
-  const formattedDate = matchStart(date, time).toLocaleDateString("sr-Latn-RS", {
+  const formattedDate = matchStart(date, time).toLocaleDateString(locale(), {
     weekday: "short",
     day: "numeric",
     month: "numeric",
@@ -90,7 +94,7 @@ function MatchCard({
     const user = JSON.parse(localStorage.getItem("user"));
 
     if (!user) {
-      alert("Morate biti prijavljeni.");
+      alert(t("matchCard.youMustBeSignedIn"));
       return;
     }
 
@@ -146,7 +150,7 @@ function MatchCard({
 
   const deleteMatch = async () => {
     const confirmDelete = window.confirm(
-      "Da li ste sigurni da želite da obrišete termin? Ako je uz termin rezervisan teren, i rezervacija se otkazuje."
+      t("matchCard.areYouSureYouWant")
     );
 
     if (!confirmDelete) return;
@@ -196,7 +200,7 @@ function MatchCard({
     if (isPast) {
       return (
         <div className={`${base} bg-gray-100 text-gray-500`}>
-          Termin je odigran
+          {t("common.gameHasBeenPlayed")}
         </div>
       );
     }
@@ -207,7 +211,7 @@ function MatchCard({
           onClick={leaveMatch}
           className={`${base} border-2 border-red-200 text-red-600 hover:bg-green-600 hover:border-green-600 hover:text-white`}
         >
-          Napusti termin
+          {t("common.leaveGame")}
         </button>
       );
     }
@@ -219,7 +223,7 @@ function MatchCard({
           to={`/matches/${id}`}
           className={`${base} bg-orange-500 hover:bg-orange-600 text-white shadow-sm`}
         >
-          ⏳ Popunjeno · lista čekanja
+          {t("matchCard.fullWaitlist")}
         </Link>
       );
     }
@@ -229,7 +233,7 @@ function MatchCard({
         onClick={joinMatch}
         className={`${base} bg-green-600 hover:bg-green-700 text-white shadow-sm`}
       >
-        Prijavi se
+        {t("common.join")}
       </button>
     );
   };
@@ -260,18 +264,18 @@ function MatchCard({
             </span>
 
             <div>
-              <h2 className="text-xl font-bold leading-tight">{sport}</h2>
+              <h2 className="text-xl font-bold leading-tight">{sportLabel(sport)}</h2>
 
               <div className="flex flex-wrap gap-1.5 mt-1">
                 {isPrivate && (
                   <span className="text-xs font-semibold bg-black/20 px-2 py-0.5 rounded-full">
-                    🔒 privatno
+                    {t("matchCard.private")}
                   </span>
                 )}
 
                 {repeatWeekly && (
                   <span className="text-xs font-semibold bg-white/20 px-2 py-0.5 rounded-full">
-                    🔁 nedeljno
+                    {t("matchCard.weekly")}
                   </span>
                 )}
 
@@ -279,15 +283,15 @@ function MatchCard({
                   <span className="text-xs font-bold bg-black/20 px-2 py-0.5 rounded-full">
                     {scoreA !== null && scoreA !== undefined
                       ? `🏆 ${scoreA} : ${scoreB}`
-                      : "ODIGRAN"}
+                      : t("common.played")}
                   </span>
                 ) : isFull ? (
                   <span className="text-xs font-bold bg-red-500 px-2 py-0.5 rounded-full">
-                    POPUNJENO
+                    {t("common.full")}
                   </span>
                 ) : (
                   <span className="text-xs font-bold bg-white text-green-700 px-2 py-0.5 rounded-full">
-                    {freeSpots} {freeSpots === 1 ? "mesto" : "mesta"}
+                    {t("matchCard.spots", { count: freeSpots })}
                   </span>
                 )}
               </div>
@@ -299,8 +303,8 @@ function MatchCard({
             <div className="flex gap-1.5">
               <Link
                 to={`/matches/${id}/edit`}
-                title="Izmeni termin"
-                aria-label="Izmeni termin"
+                title={t("common.editGame")}
+                aria-label={t("common.editGame")}
                 className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/35 flex items-center justify-center transition"
               >
                 <Pencil size={16} />
@@ -308,8 +312,8 @@ function MatchCard({
 
               <button
                 onClick={deleteMatch}
-                title="Obriši termin"
-                aria-label="Obriši termin"
+                title={t("common.deleteGame")}
+                aria-label={t("common.deleteGame")}
                 className="w-9 h-9 rounded-full bg-white/20 hover:bg-red-500 flex items-center justify-center transition"
               >
                 <Trash2 size={16} />
@@ -335,12 +339,12 @@ function MatchCard({
           )}
 
           {isCreator ? (
-            <span className="font-semibold">Tvoj termin</span>
+            <span className="font-semibold">{t("common.yourGame")}</span>
           ) : (
             <>
-              <span className="text-white/80">Organizuje</span>
+              <span className="text-white/80">{t("common.organizer")}</span>
               <span className="font-semibold">
-                {creatorName || "Nepoznat korisnik"}
+                {creatorName || t("matchCard.unknownUser")}
               </span>
             </>
           )}
@@ -378,7 +382,7 @@ function MatchCard({
                 <span className="font-semibold">
                   {formatRSD(pricePerPlayer(fieldPrice, players))}
                 </span>{" "}
-                po igraču
+                {t("common.perPlayer")}
               </span>
             </div>
           )}
@@ -389,11 +393,11 @@ function MatchCard({
           <div className="flex justify-between text-sm mb-1.5">
             <span className="flex items-center gap-1.5 text-gray-600">
               <Users size={15} />
-              {players} / {maxPlayers} igrača
+              {t("matchCard.players", { players, maxPlayers })}
             </span>
 
             {joined && !isPast && (
-              <span className="text-green-700 font-semibold">✓ Prijavljen si</span>
+              <span className="text-green-700 font-semibold">{t("common.youreIn")}</span>
             )}
           </div>
 
@@ -414,7 +418,7 @@ function MatchCard({
               to={`/matches/${id}`}
               className="block text-center text-sm font-semibold bg-amber-50 border border-amber-300 text-amber-900 rounded-xl py-2 hover:bg-amber-100"
             >
-              ⚠️ Termin je uskoro: potvrdi dolazak
+              {t("matchCard.gameIsComingUpConfirm")}
             </Link>
           )}
 
@@ -423,12 +427,12 @@ function MatchCard({
           <div className="grid grid-cols-2 gap-2">
             <Link to={`/matches/${id}`} className={secondary}>
               <MessageCircle size={17} />
-              Detalji i čet
+              {t("matchCard.detailsAndChat")}
             </Link>
 
             <button onClick={getPlayers} className={secondary}>
               <Users size={17} />
-              Učesnici
+              {t("matchCard.participants")}
             </button>
           </div>
         </div>
@@ -445,13 +449,13 @@ function MatchCard({
           >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold">
-                Prijavljeni igrači ({playersList.length})
+                {t("matchCard.joinedPlayers", { length: playersList.length })}
               </h2>
 
               <button
                 onClick={() => setShowPlayers(false)}
                 className="p-1.5 rounded-full hover:bg-gray-100"
-                aria-label="Zatvori"
+                aria-label={t("common.close")}
               >
                 <X size={20} />
               </button>
@@ -474,7 +478,7 @@ function MatchCard({
                 ))}
               </ul>
             ) : (
-              <p className="text-gray-500">Nema prijavljenih igrača.</p>
+              <p className="text-gray-500">{t("common.noPlayersHaveJoined")}</p>
             )}
           </div>
         </div>

@@ -2,9 +2,12 @@ import { useState } from "react";
 import { API_URL } from "../config";
 import { authHeader } from "../utils/auth";
 import { formatRSD, pricePerPlayer } from "../utils/price";
+import { useTranslation } from "react-i18next";
 
 // Troškovi terena: cena po igraču, a kreator čekira ko je platio
 function MatchCosts({ match, players, isCreator, userId, onChange }) {
+  const { t } = useTranslation();
+
   const [busyId, setBusyId] = useState(null);
 
   const total = match.field_price;
@@ -42,28 +45,28 @@ function MatchCosts({ match, players, isCreator, userId, onChange }) {
   return (
     <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
       <div className="flex items-baseline justify-between gap-3">
-        <h3 className="font-bold text-amber-900">💰 Teren</h3>
+        <h3 className="font-bold text-amber-900">{t("matchCosts.venue")}</h3>
 
         <p className="text-sm text-amber-800">
-          ukupno {formatRSD(total)}
+          {t("matchCosts.total", { amount: formatRSD(total) })}
         </p>
       </div>
 
       <p className="text-2xl font-extrabold text-amber-900">
         {formatRSD(perPlayer)}{" "}
-        <span className="text-base font-medium">po igraču</span>
+        <span className="text-base font-medium">{t("common.perPlayer")}</span>
       </p>
 
       <p className="text-xs text-amber-700">
         {players.length === 0
-          ? "Iznos će se podeliti na sve prijavljene igrače."
-          : `Podeljeno na ${players.length} igrača; menja se kad se neko prijavi ili odjavi.`}
+          ? t("matchCosts.theAmountWillBeSplit")
+          : t("matchCosts.splitAmongPlayersChangesWhen", { length: players.length })}
       </p>
 
       {/* Igrač vidi svoj status */}
       {me && !isCreator && (
         <p className={`font-semibold ${me.paid ? "text-green-700" : "text-amber-900"}`}>
-          {me.paid ? "✅ Platio si svoj deo." : `Tvoj deo: ${formatRSD(perPlayer)}, nije još označen kao plaćen.`}
+          {me.paid ? t("matchCosts.youPaidYourShare") : t("matchCosts.yourShareNotYetMarked", { amount: formatRSD(perPlayer) })}
         </p>
       )}
 
@@ -71,7 +74,7 @@ function MatchCosts({ match, players, isCreator, userId, onChange }) {
       {isCreator && players.length > 0 && (
         <div className="border-t border-amber-200 pt-3">
           <div className="flex justify-between text-sm font-semibold text-amber-900 mb-2">
-            <span>Ko je platio</span>
+            <span>{t("matchCosts.whoHasPaid")}</span>
             <span>
               {formatRSD(Math.min(total, paidCount * perPlayer))} / {formatRSD(total)}
             </span>

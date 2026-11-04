@@ -1,10 +1,14 @@
 import { useState } from "react";
 import { Star } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { locale } from "../i18n";
 
 // Prikaz ocene zvezdicama; value može biti decimalan (4.5 = četiri i po)
 export function Stars({ value = 0, size = 16 }) {
+  const { t } = useTranslation();
+
   return (
-    <span className="inline-flex items-center" aria-label={`Ocena ${value} od 5`}>
+    <span className="inline-flex items-center" aria-label={t("stars.ratingOutOf5", { value })}>
       {[1, 2, 3, 4, 5].map((n) => {
         const fill = Math.max(0, Math.min(1, value - (n - 1)));
 
@@ -23,10 +27,12 @@ export function Stars({ value = 0, size = 16 }) {
   );
 }
 
-const LABELS = ["", "Loše", "Slabo", "Solidno", "Dobro", "Odlično"];
+const LABELS = ["", "stars.bad", "stars.poor", "stars.decent", "stars.good", "stars.excellent"];
 
 // Izbor ocene od 1 do 5 klikom na zvezdicu
 export function StarInput({ value, onChange }) {
+  const { t } = useTranslation();
+
   const [hover, setHover] = useState(0);
   const shown = hover || value;
 
@@ -39,7 +45,7 @@ export function StarInput({ value, onChange }) {
             type="button"
             onClick={() => onChange(n)}
             onMouseEnter={() => setHover(n)}
-            aria-label={`${n} od 5`}
+            aria-label={t("stars.outOf5", { n })}
             className="p-0.5"
           >
             <Star
@@ -50,7 +56,7 @@ export function StarInput({ value, onChange }) {
         ))}
       </div>
 
-      <span className="text-sm text-gray-600 w-16">{LABELS[shown]}</span>
+      <span className="text-sm text-gray-600 w-16">{shown > 0 && t(LABELS[shown])}</span>
     </div>
   );
 }
@@ -62,7 +68,7 @@ export function RatingBadge({ avg, count, className = "" }) {
   return (
     <span className={`inline-flex items-center gap-1 ${className}`}>
       <Star size={14} className="text-amber-400 fill-amber-400" />
-      <span className="font-semibold">{avg.toLocaleString("sr-Latn-RS", { minimumFractionDigits: 1 })}</span>
+      <span className="font-semibold">{avg.toLocaleString(locale(), { minimumFractionDigits: 1 })}</span>
       <span className="opacity-75">({count})</span>
     </span>
   );

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Home from "./pages/Home";
 import Login  from "./pages/Login";
 import Register  from "./pages/Registration";
@@ -25,6 +26,8 @@ import TournamentDetails from "./pages/TournamentDetails";
 import TournamentForm from "./pages/TournamentForm";
 import TournamentInvite from "./pages/TournamentInvite";
 function App() {
+  // Promena jezika ponovo iscrtava celu aplikaciju, pa i tekstove iz pomoćnih funkcija
+  useTranslation();
 
   return (
     <BrowserRouter>

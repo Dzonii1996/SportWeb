@@ -1,5 +1,6 @@
 const pool = require("../database/db");
 const { describeMatch } = require("../utils/notify");
+const { translate } = require("../utils/i18n");
 
 // Adresa frontenda na koju link vodi. Za produkciju postavi FRONTEND_URL u .env
 const frontendUrl = () =>
@@ -13,13 +14,13 @@ const escapeHtml = (text) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
-const page = ({ title, description, url }) => {
+const page = ({ title, description, url, language }) => {
   const t = escapeHtml(title);
   const d = escapeHtml(description);
   const u = escapeHtml(url);
 
   return `<!doctype html>
-<html lang="sr">
+<html lang="${language}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -70,8 +71,9 @@ const shareMatch = async (req, res) => {
     if (!match) {
       return res.status(404).type("html").send(
         page({
-          title: "Termin ne postoji",
-          description: "Ovaj termin je otkazan ili ne postoji.",
+          title: translate("Termin ne postoji", req.language),
+          language: req.language,
+          description: translate("Ovaj termin je otkazan ili ne postoji.", req.language),
           url: `${frontendUrl()}/matches`,
         })
       );
@@ -82,10 +84,15 @@ const shareMatch = async (req, res) => {
 
     res.type("html").send(
       page({
-        title: `${emoji} ${match.sport} · ${
-          free === 0 ? "popunjeno" : `slobodno još ${free}`
-        }`,
-        description: `${describeMatch(match)} · organizuje ${match.creator_name}. Prijavi se na SportWeb-u.`,
+        title: translate(
+          `${emoji} ${match.sport} · ${free === 0 ? "popunjeno" : `slobodno još ${free}`}`,
+          req.language
+        ),
+        language: req.language,
+        description: translate(
+          `${describeMatch(match)} · organizuje ${match.creator_name}. Prijavi se na SportWeb-u.`,
+          req.language
+        ),
         url: `${frontendUrl()}/matches/${match.id}${
           match.is_private ? `?key=${match.share_token}` : ""
         }`,
@@ -94,7 +101,7 @@ const shareMatch = async (req, res) => {
 
   } catch (error) {
     console.error(error);
-    res.status(500).send("Greška servera.");
+    res.status(500).send(translate("Greška servera.", req.language));
   }
 };
 

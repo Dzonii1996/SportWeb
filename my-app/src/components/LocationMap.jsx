@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { DEFAULT_CENTER, getMyPosition } from "../utils/geo";
+import { useTranslation } from "react-i18next";
 
 // Sopstvena ikonica, jer se podrazumevane Leaflet slike ne učitavaju kroz webpack
 const pinIcon = L.divIcon({
@@ -59,6 +60,8 @@ function ClickToPick({ onPick }) {
 // Izbor lokacije u formi: klik na mapu postavlja pin.
 // value: [lat, lng] ili null; required samo menja tekst uputstva
 export function LocationPicker({ value, onChange, required = false }) {
+  const { t } = useTranslation();
+
   const [center, setCenter] = useState(null);
   const [locating, setLocating] = useState(false);
 
@@ -81,10 +84,10 @@ export function LocationPicker({ value, onChange, required = false }) {
       <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
         <p className="text-sm text-gray-600">
           {value
-            ? "📍 Lokacija je označena. Klikni na mapu da je promeniš."
+            ? t("locationMap.locationIsMarkedClickThe")
             : required
-            ? "Klikni na mapu da označiš tačno mesto (obavezno)."
-            : "Klikni na mapu da označiš tačno mesto (nije obavezno)."}
+            ? t("locationMap.clickTheMapToMark")
+            : t("locationMap.clickTheMapToMark2")}
         </p>
 
         <div className="flex gap-2">
@@ -94,7 +97,7 @@ export function LocationPicker({ value, onChange, required = false }) {
             disabled={locating}
             className="text-sm px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200"
           >
-            {locating ? "Tražim..." : "Moja lokacija"}
+            {locating ? t("locationMap.searching") : t("locationMap.myLocation")}
           </button>
 
           {value && (
@@ -103,7 +106,7 @@ export function LocationPicker({ value, onChange, required = false }) {
               onClick={() => onChange(null)}
               className="text-sm px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-red-600"
             >
-              Ukloni
+              {t("common.remove")}
             </button>
           )}
         </div>
@@ -125,6 +128,8 @@ export function LocationPicker({ value, onChange, required = false }) {
 
 // Prikaz lokacije termina sa linkom za navigaciju
 export function LocationView({ latitude, longitude }) {
+  const { t } = useTranslation();
+
   const position = [latitude, longitude];
 
   return (
@@ -145,7 +150,7 @@ export function LocationView({ latitude, longitude }) {
         rel="noopener noreferrer"
         className="inline-block mt-2 text-green-700 hover:underline font-medium"
       >
-        🧭 Uputstva do terena
+        {t("locationMap.directionsToTheVenue")}
       </a>
     </div>
   );
@@ -171,6 +176,8 @@ function FitBounds({ points }) {
 
 // Mapa svih terena iz kataloga; klik na teren otvara kratak opis sa linkom
 export function VenuesMap({ venues, myPosition = null }) {
+  const { t } = useTranslation();
+
   const points = venues.map((v) => [v.latitude, v.longitude]);
 
   if (myPosition) points.push(myPosition);
@@ -198,7 +205,7 @@ export function VenuesMap({ venues, myPosition = null }) {
               <p className="font-bold text-base">{venue.name}</p>
               <p className="text-gray-600">{venue.address}</p>
               <Link to={`/tereni/${venue.id}`} className="text-green-700 font-semibold">
-                Detalji terena →
+                {t("locationMap.venueDetails")}
               </Link>
             </div>
           </Popup>

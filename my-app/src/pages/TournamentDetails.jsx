@@ -15,6 +15,8 @@ import {
   sportIcon,
   tournamentRequest,
 } from "../utils/tournaments";
+import { useTranslation } from "react-i18next";
+import i18n, { sportLabel } from "../i18n";
 
 const card = "bg-white rounded-2xl border border-gray-100 shadow-sm p-6";
 const primary = "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl font-semibold";
@@ -23,32 +25,34 @@ const danger = "px-4 py-2 rounded-xl border border-red-300 text-red-700 font-sem
 const number = "w-16 border p-2 rounded-lg text-center";
 
 const RESERVATION_LABELS = {
-  pending: "⏳ teren čeka potvrdu",
-  confirmed: "✅ teren rezervisan",
-  rejected: "❌ vlasnik nije prihvatio",
-  cancelled: "🚫 rezervacija otkazana",
+  get pending() { return i18n.t("tournamentDetails.venueAwaitingConfirmation"); },
+  get confirmed() { return i18n.t("tournamentDetails.venueBooked"); },
+  get rejected() { return i18n.t("tournamentDetails.ownerDidNotAccept"); },
+  get cancelled() { return i18n.t("tournamentDetails.bookingCancelled"); },
 };
 
 // Tabela lige
 function Standings({ rows, sport }) {
-  const diffLabel = sport === "Košarka" ? "Koš-razlika" : "Gol-razlika";
+  const { t } = useTranslation();
+
+  const diffLabel = sport === "Košarka" ? t("tournamentDetails.pointDiff") : t("tournamentDetails.goalDiff");
 
   return (
     <div className={card}>
-      <h2 className="text-2xl font-bold mb-4">Tabela</h2>
+      <h2 className="text-2xl font-bold mb-4">{t("tournamentDetails.table")}</h2>
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-gray-500 border-b">
               <th className="py-2 pr-2">#</th>
-              <th className="py-2 pr-2">Ekipa</th>
-              <th className="py-2 px-2 text-center" title="Odigrano">O</th>
-              <th className="py-2 px-2 text-center" title="Pobede">P</th>
-              {sport !== "Košarka" && <th className="py-2 px-2 text-center" title="Nerešeno">N</th>}
-              <th className="py-2 px-2 text-center" title="Porazi">I</th>
+              <th className="py-2 pr-2">{t("tournamentDetails.team")}</th>
+              <th className="py-2 px-2 text-center" title={t("common.played2")}>O</th>
+              <th className="py-2 px-2 text-center" title={t("tournamentDetails.wins")}>P</th>
+              {sport !== "Košarka" && <th className="py-2 px-2 text-center" title={t("tournamentDetails.draws")}>N</th>}
+              <th className="py-2 px-2 text-center" title={t("tournamentDetails.losses")}>I</th>
               <th className="py-2 px-2 text-center" title={diffLabel}>+/−</th>
-              <th className="py-2 pl-2 text-center">Bod</th>
+              <th className="py-2 pl-2 text-center">{t("tournamentDetails.pts")}</th>
             </tr>
           </thead>
           <tbody>
@@ -73,6 +77,8 @@ function Standings({ rows, sport }) {
 
 // Jedna utakmica; organizator odavde upisuje rezultat i vreme
 function GameRow({ game, tournament, canEdit, onChange }) {
+  const { t } = useTranslation();
+
   const [mode, setMode] = useState(null);
   const [scoreA, setScoreA] = useState(game.score_a ?? "");
   const [scoreB, setScoreB] = useState(game.score_b ?? "");
@@ -127,7 +133,7 @@ function GameRow({ game, tournament, canEdit, onChange }) {
   };
 
   const nameOf = (name) =>
-    name || <span className="text-gray-400 font-normal">{bye ? "—" : "čeka se"}</span>;
+    name || <span className="text-gray-400 font-normal">{bye ? "—" : t("tournamentDetails.toBeDecided")}</span>;
   const isWinner = (id) => id !== null && Number(game.winner_team_id) === Number(id);
 
   return (
@@ -146,11 +152,11 @@ function GameRow({ game, tournament, canEdit, onChange }) {
         </span>
       </div>
 
-      {bye && <p className="text-center text-sm text-gray-500">Slobodan prolaz u sledeće kolo</p>}
+      {bye && <p className="text-center text-sm text-gray-500">{t("tournamentDetails.byeToTheNextRound")}</p>}
 
       {game.penalties_a !== null && (
         <p className="text-center text-sm text-gray-500">
-          Penali {game.penalties_a} : {game.penalties_b}
+          {t("tournamentDetails.penalties", { penalties_a: game.penalties_a, penalties_b: game.penalties_b })}
         </p>
       )}
 
@@ -168,7 +174,7 @@ function GameRow({ game, tournament, canEdit, onChange }) {
               onClick={() => setMode(mode === "result" ? null : "result")}
               className="text-green-700 font-semibold hover:underline"
             >
-              {played ? "Ispravi rezultat" : "Upiši rezultat"}
+              {played ? t("tournamentDetails.correctResult") : t("tournamentDetails.enterResult")}
             </button>
           )}
 
@@ -177,7 +183,7 @@ function GameRow({ game, tournament, canEdit, onChange }) {
               onClick={() => setMode(mode === "schedule" ? null : "schedule")}
               className="text-green-700 font-semibold hover:underline"
             >
-              {game.game_date ? "Promeni vreme" : "Odredi vreme"}
+              {game.game_date ? t("tournamentDetails.changeTime") : t("tournamentDetails.setTime")}
             </button>
           )}
         </div>
@@ -193,7 +199,7 @@ function GameRow({ game, tournament, canEdit, onChange }) {
             value={scoreA}
             onChange={(e) => setScoreA(e.target.value)}
             className={number}
-            aria-label={`Rezultat ${game.team_a_name}`}
+            aria-label={t("tournamentDetails.scoreOf", { team_a_name: game.team_a_name })}
           />
           <span className="font-bold">:</span>
           <input
@@ -204,12 +210,12 @@ function GameRow({ game, tournament, canEdit, onChange }) {
             value={scoreB}
             onChange={(e) => setScoreB(e.target.value)}
             className={number}
-            aria-label={`Rezultat ${game.team_b_name}`}
+            aria-label={t("tournamentDetails.scoreOf2", { team_b_name: game.team_b_name })}
           />
 
           {needsPenalties && (
             <>
-              <span className="text-sm text-gray-600">Penali</span>
+              <span className="text-sm text-gray-600">{t("tournamentDetails.penalties2")}</span>
               <input
                 type="number"
                 min="0"
@@ -218,7 +224,7 @@ function GameRow({ game, tournament, canEdit, onChange }) {
                 value={penaltiesA}
                 onChange={(e) => setPenaltiesA(e.target.value)}
                 className={number}
-                aria-label="Penali prve ekipe"
+                aria-label={t("tournamentDetails.firstTeamsPenalties")}
               />
               <span className="font-bold">:</span>
               <input
@@ -229,12 +235,12 @@ function GameRow({ game, tournament, canEdit, onChange }) {
                 value={penaltiesB}
                 onChange={(e) => setPenaltiesB(e.target.value)}
                 className={number}
-                aria-label="Penali druge ekipe"
+                aria-label={t("tournamentDetails.secondTeamsPenalties")}
               />
             </>
           )}
 
-          <button type="submit" className={primary}>Sačuvaj</button>
+          <button type="submit" className={primary}>{t("common.save")}</button>
         </form>
       )}
 
@@ -254,7 +260,7 @@ function GameRow({ game, tournament, canEdit, onChange }) {
             onChange={(e) => setTime(e.target.value)}
             className="border p-2 rounded-lg"
           />
-          <button type="submit" className={primary}>Sačuvaj</button>
+          <button type="submit" className={primary}>{t("common.save")}</button>
         </form>
       )}
     </div>
@@ -263,6 +269,8 @@ function GameRow({ game, tournament, canEdit, onChange }) {
 
 // Moja ekipa: igrači i (za kapitena) link za pozivanje
 function MyTeam({ team, tournament, me, onChange }) {
+  const { t } = useTranslation();
+
   const isCaptain = Number(team.captain_id) === Number(me?.id);
   const open = tournament.status === "registration";
   const inviteUrl = team.invite_token
@@ -272,16 +280,16 @@ function MyTeam({ team, tournament, me, onChange }) {
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(inviteUrl);
-      alert("Link je kopiran.");
+      alert(t("tournamentDetails.linkCopied"));
     } catch {
-      window.prompt("Kopiraj link:", inviteUrl);
+      window.prompt(t("tournamentDetails.copyTheLink"), inviteUrl);
     }
   };
 
   const remove = async (player) => {
     const self = Number(player.id) === Number(me?.id);
 
-    if (!window.confirm(self ? "Napustiti ekipu?" : `Ukloniti igrača ${player.name}?`)) return;
+    if (!window.confirm(self ? t("tournamentDetails.leaveTheTeam") : t("tournamentDetails.removePlayer", { name: player.name }))) return;
 
     const ok = await tournamentRequest(
       `/${tournament.id}/teams/${team.id}/players/${player.id}`,
@@ -292,7 +300,7 @@ function MyTeam({ team, tournament, me, onChange }) {
   };
 
   const withdraw = async () => {
-    if (!window.confirm("Odjaviti celu ekipu sa turnira?")) return;
+    if (!window.confirm(t("tournamentDetails.withdrawTheWholeTeamFrom"))) return;
 
     if (await tournamentRequest(`/${tournament.id}/teams/${team.id}`, { method: "DELETE" })) {
       onChange();
@@ -302,10 +310,10 @@ function MyTeam({ team, tournament, me, onChange }) {
   return (
     <div className="bg-green-50 border border-green-200 rounded-2xl p-5 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-xl font-bold">Tvoja ekipa: {team.name}</h2>
+        <h2 className="text-xl font-bold">{t("tournamentDetails.yourTeam", { name: team.name })}</h2>
         {team.status === "pending" && (
           <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
-            Čeka potvrdu organizatora
+            {t("tournamentDetails.awaitingTheOrganizersConfirmation")}
           </span>
         )}
       </div>
@@ -320,11 +328,11 @@ function MyTeam({ team, tournament, me, onChange }) {
             <li key={player.id} className="flex items-center justify-between gap-2">
               <span>
                 {player.name}
-                {Number(player.id) === Number(team.captain_id) && " (kapiten)"}
+                {Number(player.id) === Number(team.captain_id) && t("tournamentDetails.captain")}
               </span>
               {removable && (
                 <button onClick={() => remove(player)} className="text-sm text-red-600 hover:underline">
-                  {self ? "Napusti" : "Ukloni"}
+                  {self ? t("tournamentDetails.leave") : t("common.remove")}
                 </button>
               )}
             </li>
@@ -332,12 +340,12 @@ function MyTeam({ team, tournament, me, onChange }) {
         })}
       </ul>
 
-      <p className="text-sm text-gray-600">Igrača: {team.players.length} / {tournament.max_roster}</p>
+      <p className="text-sm text-gray-600">{t("tournamentDetails.players", { length: team.players.length, max_roster: tournament.max_roster })}</p>
 
       {isCaptain && open && (
         <div className="flex flex-wrap gap-2">
-          <button onClick={copy} className={primary}>Kopiraj link za igrače</button>
-          <button onClick={withdraw} className={danger}>Odjavi ekipu</button>
+          <button onClick={copy} className={primary}>{t("tournamentDetails.copyLinkForPlayers")}</button>
+          <button onClick={withdraw} className={danger}>{t("tournamentDetails.withdrawTeam")}</button>
         </div>
       )}
     </div>
@@ -346,6 +354,8 @@ function MyTeam({ team, tournament, me, onChange }) {
 
 // Organizator: potvrda ekipa, kotizacija, početak i otkazivanje
 function Organizer({ tournament, teams, onChange }) {
+  const { t } = useTranslation();
+
   const base = `/${tournament.id}`;
   const approved = teams.filter((t) => t.status === "approved");
   const pending = teams.filter((t) => t.status === "pending");
@@ -357,43 +367,43 @@ function Organizer({ tournament, teams, onChange }) {
 
   const start = () => {
     const warning = pending.length
-      ? ` Ekipe na čekanju (${pending.length}) će biti odbijene.`
+      ? t("tournamentDetails.pendingTeamsWillBeRejected", { length: pending.length })
       : "";
 
-    if (window.confirm(`Zatvoriti prijave i napraviti raspored? Potvrđenih ekipa: ${approved.length}.${warning}`)) {
+    if (window.confirm(t("tournamentDetails.closeRegistrationAndCreateThe", { length: approved.length, warning }))) {
       act(`${base}/start`);
     }
   };
 
   const cancel = () => {
-    if (window.confirm("Otkazati turnir? Ekipe dobijaju obaveštenje, a rezervacije terena se oslobađaju.")) {
+    if (window.confirm(t("tournamentDetails.cancelTheTournamentTeamsGet"))) {
       act(`${base}/cancel`);
     }
   };
 
   return (
     <div className={`${card} space-y-4`}>
-      <h2 className="text-xl font-bold">Organizator</h2>
+      <h2 className="text-xl font-bold">{t("tournamentDetails.organizer")}</h2>
 
       {pending.length > 0 && (
         <div className="space-y-2">
-          <p className="font-medium">Prijave na čekanju</p>
+          <p className="font-medium">{t("tournamentDetails.pendingRegistrations")}</p>
 
           {pending.map((team) => (
             <div key={team.id} className="flex flex-wrap items-center justify-between gap-2 border rounded-xl p-3">
               <span className="font-semibold">
                 {team.name}{" "}
                 <span className="text-sm font-normal text-gray-500">
-                  (igrača: {team.players.length})
+                  {t("tournamentDetails.players2", { length: team.players.length })}
                 </span>
               </span>
 
               <span className="flex gap-2">
                 <button onClick={() => act(`${base}/teams/${team.id}/approve`, { silent: true })} className={primary}>
-                  Potvrdi
+                  {t("common.confirm")}
                 </button>
                 <button onClick={() => act(`${base}/teams/${team.id}/reject`, { silent: true })} className={danger}>
-                  Odbij
+                  {t("common.reject")}
                 </button>
               </span>
             </div>
@@ -403,7 +413,7 @@ function Organizer({ tournament, teams, onChange }) {
 
       {tournament.entry_fee !== null && approved.length > 0 && (
         <div className="space-y-1">
-          <p className="font-medium">Kotizacija ({formatRSD(tournament.entry_fee)})</p>
+          <p className="font-medium">{t("tournamentDetails.entryFee", { amount: formatRSD(tournament.entry_fee) })}</p>
 
           {approved.map((team) => (
             <label key={team.id} className="flex items-center gap-2 cursor-pointer">
@@ -430,27 +440,29 @@ function Organizer({ tournament, teams, onChange }) {
           {tournament.status === "registration" && (
             <>
               <button onClick={start} disabled={approved.length < 2} className={`${primary} disabled:opacity-50`}>
-                Počni turnir
+                {t("tournamentDetails.startTournament")}
               </button>
               <Link to={`/turniri/${tournament.id}/izmeni`} className={`${outline} inline-flex items-center gap-1.5`}>
                 <Pencil size={16} />
-                Izmeni
+                {t("common.edit")}
               </Link>
             </>
           )}
 
-          <button onClick={cancel} className={danger}>Otkaži turnir</button>
+          <button onClick={cancel} className={danger}>{t("tournamentDetails.cancelTournament")}</button>
         </div>
       )}
 
       {tournament.status === "registration" && approved.length < 2 && (
-        <p className="text-sm text-gray-500">Za početak trebaju bar 2 potvrđene ekipe.</p>
+        <p className="text-sm text-gray-500">{t("tournamentDetails.atLeast2ConfirmedTeams")}</p>
       )}
     </div>
   );
 }
 
 function TournamentDetails() {
+  const { t: tr } = useTranslation();
+
   const { id } = useParams();
   const me = JSON.parse(localStorage.getItem("user") || "null");
 
@@ -483,16 +495,16 @@ function TournamentDetails() {
   if (notFound) {
     return (
       <div className="max-w-xl mx-auto p-6 text-center mt-10">
-        <p className="text-xl mb-4">Turnir ne postoji.</p>
+        <p className="text-xl mb-4">{tr("tournamentDetails.thisTournamentDoesntExist")}</p>
         <Link to="/turniri" className="text-green-700 font-semibold hover:underline">
-          ← Svi turniri
+          {tr("tournamentDetails.allTournaments")}
         </Link>
       </div>
     );
   }
 
   if (!data) {
-    return <div className="text-center mt-20 text-xl">Učitavanje...</div>;
+    return <div className="text-center mt-20 text-xl">{tr("common.loading")}</div>;
   }
 
   const { tournament: t, teams, games, standings, can_manage: canManage, my_team_id: myTeamId } = data;
@@ -508,7 +520,7 @@ function TournamentDetails() {
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         <Link to="/turniri" className="inline-flex items-center gap-1.5 text-gray-600 hover:text-gray-900">
           <ArrowLeft size={18} />
-          Svi turniri
+          {tr("common.allTournaments")}
         </Link>
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -522,7 +534,7 @@ function TournamentDetails() {
                 <h1 className="text-2xl sm:text-3xl font-bold leading-tight break-words">{t.name}</h1>
                 <div className="flex flex-wrap gap-1.5 mt-1.5">
                   <span className="text-xs font-semibold bg-white/20 px-2 py-0.5 rounded-full">
-                    {t.sport} · {FORMATS[t.format].label}
+                    {sportLabel(t.sport)} · {FORMATS[t.format].label}
                   </span>
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${status.className}`}>
                     {status.label}
@@ -534,7 +546,7 @@ function TournamentDetails() {
 
           <div className="p-6 space-y-3 text-gray-700">
             {t.winner_name && (
-              <p className="text-xl font-bold text-gray-900">🏆 Pobednik: {t.winner_name}</p>
+              <p className="text-xl font-bold text-gray-900">{tr("tournamentDetails.winner", { winner_name: t.winner_name })}</p>
             )}
 
             <div className="flex items-center gap-3">
@@ -556,18 +568,18 @@ function TournamentDetails() {
             <div className="flex items-center gap-3">
               <Users className="text-green-600 shrink-0" size={18} />
               <span>
-                Ekipa: {approved.length} / {t.max_teams} · do {t.max_roster} igrača u ekipi
+                {tr("tournamentDetails.teamsUpToPlayersPer", { length: approved.length, max_teams: t.max_teams, max_roster: t.max_roster })}
               </span>
             </div>
 
             {t.entry_fee !== null && (
               <div className="flex items-center gap-3">
                 <Wallet className="text-green-600 shrink-0" size={18} />
-                <span>Kotizacija: {formatRSD(t.entry_fee)} po ekipi</span>
+                <span>{tr("tournamentDetails.entryFeePerTeam", { amount: formatRSD(t.entry_fee) })}</span>
               </div>
             )}
 
-            <p className="text-sm text-gray-500">Organizator: {t.organizer_name}</p>
+            <p className="text-sm text-gray-500">{tr("tournamentDetails.organizer2", { organizer_name: t.organizer_name })}</p>
 
             {t.rules && <p className="whitespace-pre-line pt-2 border-t">{t.rules}</p>}
           </div>
@@ -580,32 +592,32 @@ function TournamentDetails() {
         {/* Prijava ekipe */}
         {t.status === "registration" && !myTeam && (
           <div className={card}>
-            <h2 className="text-xl font-bold mb-3">Prijavi ekipu</h2>
+            <h2 className="text-xl font-bold mb-3">{tr("tournamentDetails.registerATeam")}</h2>
 
             {me ? (
               <form onSubmit={registerTeam} className="flex flex-wrap gap-2">
                 <input
                   value={teamName}
                   onChange={(e) => setTeamName(e.target.value)}
-                  placeholder="Naziv ekipe"
+                  placeholder={tr("tournamentDetails.teamName")}
                   required
                   minLength={2}
                   maxLength={50}
                   className="flex-1 min-w-[12rem] border p-3 rounded-xl"
                 />
-                <button type="submit" className={primary}>Prijavi ekipu</button>
+                <button type="submit" className={primary}>{tr("tournamentDetails.registerATeam")}</button>
               </form>
             ) : (
               <p className="text-gray-600">
                 <Link to="/login" className="text-green-700 font-semibold hover:underline">
-                  Prijavi se
+                  {tr("common.signIn")}
                 </Link>{" "}
-                da prijaviš ekipu.
+                {tr("tournamentDetails.toRegisterATeam")}
               </p>
             )}
 
             <p className="text-sm text-gray-500 mt-2">
-              Postaješ kapiten i dobijaš link kojim pozivaš igrače. Ako imaš link od kapitena, otvori njega.
+              {tr("tournamentDetails.youBecomeTheCaptainAnd")}
             </p>
           </div>
         )}
@@ -615,7 +627,7 @@ function TournamentDetails() {
         {/* Raspored */}
         {rounds.length > 0 && (
           <div className={`${card} space-y-5`}>
-            <h2 className="text-2xl font-bold">Raspored i rezultati</h2>
+            <h2 className="text-2xl font-bold">{tr("tournamentDetails.scheduleAndResults")}</h2>
 
             {rounds.map(({ round, games: list }) => (
               <div key={round} className="space-y-2">
@@ -638,7 +650,7 @@ function TournamentDetails() {
         {/* Ekipe */}
         {approved.length > 0 && (
           <div className={card}>
-            <h2 className="text-2xl font-bold mb-4">Ekipe</h2>
+            <h2 className="text-2xl font-bold mb-4">{tr("tournamentDetails.teams")}</h2>
 
             <div className="grid sm:grid-cols-2 gap-3">
               {approved.map((team) => (

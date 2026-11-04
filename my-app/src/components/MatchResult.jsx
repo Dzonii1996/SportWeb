@@ -2,6 +2,8 @@ import { useState } from "react";
 import { API_URL } from "../config";
 import { authHeader } from "../utils/auth";
 import { matchStart } from "../utils/matchDate";
+import { useTranslation } from "react-i18next";
+import i18n from "../i18n";
 
 const RESULT_DAYS = 7;
 
@@ -10,13 +12,15 @@ const outcome = (team, a, b) =>
   a === b ? "D" : (team === "A" ? a > b : b > a) ? "W" : "L";
 
 const MY_RESULT = {
-  W: { text: "🏆 Tvoj tim je pobedio!", style: "bg-green-100 text-green-800" },
-  D: { text: "🤝 Nerešeno", style: "bg-gray-100 text-gray-700" },
-  L: { text: "Poraz, ali sledeći put je vaš 💪", style: "bg-red-50 text-red-700" },
+  W: { get text() { return i18n.t("matchResult.yourTeamWon"); }, style: "bg-green-100 text-green-800" },
+  D: { get text() { return i18n.t("matchResult.draw"); }, style: "bg-gray-100 text-gray-700" },
+  L: { get text() { return i18n.t("matchResult.aLossButNextTime"); }, style: "bg-red-50 text-red-700" },
 };
 
 // Rezultat odigranog termina: prikaz za sve, upis za kreatora (7 dana posle)
 function MatchResult({ match, players, isCreator, userId, onChange }) {
+  const { t } = useTranslation();
+
   const hasScore = match.score_a !== null && match.score_a !== undefined;
 
   const [editing, setEditing] = useState(false);
@@ -82,14 +86,14 @@ function MatchResult({ match, players, isCreator, userId, onChange }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold">🏆 Rezultat</h2>
+        <h2 className="text-2xl font-bold">{t("matchResult.result")}</h2>
 
         {canEdit && hasScore && !editing && (
           <button
             onClick={() => setEditing(true)}
             className="text-sm text-green-700 hover:underline"
           >
-            Izmeni
+            {t("common.edit")}
           </button>
         )}
       </div>
@@ -98,14 +102,14 @@ function MatchResult({ match, players, isCreator, userId, onChange }) {
         <>
           <div className="flex items-center justify-center gap-4">
             <div className={`text-center ${winnerA ? "" : "opacity-60"}`}>
-              <p className="text-sm font-semibold text-green-700">Tim A</p>
+              <p className="text-sm font-semibold text-green-700">{t("common.teamA")}</p>
               <p className="text-5xl font-extrabold">{match.score_a}</p>
             </div>
 
             <span className="text-3xl font-bold text-gray-300">:</span>
 
             <div className={`text-center ${winnerB ? "" : "opacity-60"}`}>
-              <p className="text-sm font-semibold text-blue-700">Tim B</p>
+              <p className="text-sm font-semibold text-blue-700">{t("common.teamB")}</p>
               <p className="text-5xl font-extrabold">{match.score_b}</p>
             </div>
           </div>
@@ -124,22 +128,21 @@ function MatchResult({ match, players, isCreator, userId, onChange }) {
         <form onSubmit={submit} className="space-y-4">
           <div className="flex items-center justify-center gap-4">
             <div className="text-center">
-              <p className="text-sm font-semibold text-green-700 mb-1">Tim A</p>
-              {scoreInput(scoreA, setScoreA, "Golovi tima A")}
+              <p className="text-sm font-semibold text-green-700 mb-1">{t("common.teamA")}</p>
+              {scoreInput(scoreA, setScoreA, t("matchResult.teamAGoals"))}
             </div>
 
             <span className="text-3xl font-bold text-gray-300 mt-6">:</span>
 
             <div className="text-center">
-              <p className="text-sm font-semibold text-blue-700 mb-1">Tim B</p>
-              {scoreInput(scoreB, setScoreB, "Golovi tima B")}
+              <p className="text-sm font-semibold text-blue-700 mb-1">{t("common.teamB")}</p>
+              {scoreInput(scoreB, setScoreB, t("matchResult.teamBGoals"))}
             </div>
           </div>
 
           {!hasTeams && (
             <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3">
-              Timovi nisu podeljeni. Podeli ih u odeljku „Učesnici“, da bi
-              rezultat ušao u statistiku igrača.
+              {t("matchResult.teamsArentSplitSplitThem")}
             </p>
           )}
 
@@ -149,7 +152,7 @@ function MatchResult({ match, players, isCreator, userId, onChange }) {
               disabled={busy}
               className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white py-2.5 rounded-xl font-semibold"
             >
-              Sačuvaj rezultat
+              {t("matchResult.saveResult")}
             </button>
 
             {editing && (
@@ -158,7 +161,7 @@ function MatchResult({ match, players, isCreator, userId, onChange }) {
                 onClick={() => setEditing(false)}
                 className="px-4 rounded-xl border border-gray-200 hover:bg-gray-50"
               >
-                Otkaži
+                {t("common.cancel")}
               </button>
             )}
           </div>
@@ -170,7 +173,7 @@ function MatchResult({ match, players, isCreator, userId, onChange }) {
               onClick={() => save({ score_a: null, score_b: null })}
               className="w-full text-sm text-red-600 hover:underline"
             >
-              Obriši rezultat
+              {t("matchResult.deleteResult")}
             </button>
           )}
         </form>

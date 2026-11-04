@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
 import { API_URL } from "../config";
 import { authHeader } from "../utils/auth";
+import { useTranslation } from "react-i18next";
+import i18n, { locale } from "../i18n";
 
 const VOTES = [
-  { value: "fair", label: "👍 Fer plej", active: "bg-green-600 text-white" },
-  { value: "unfair", label: "👎 Nesportski", active: "bg-red-600 text-white" },
-  { value: "no_show", label: "🚫 Nije došao", active: "bg-gray-700 text-white" },
+  { value: "fair", get label() { return i18n.t("matchRatings.fairPlay"); }, active: "bg-green-600 text-white" },
+  { value: "unfair", get label() { return i18n.t("matchRatings.unsporting"); }, active: "bg-red-600 text-white" },
+  { value: "no_show", get label() { return i18n.t("matchRatings.noShow"); }, active: "bg-gray-700 text-white" },
 ];
 
 // Ocenjivanje ostalih učesnika posle odigranog termina.
 // "people" su učesnici termina bez trenutnog korisnika.
 function MatchRatings({ matchId, people }) {
+  const { t } = useTranslation();
+
   const [canRate, setCanRate] = useState(false);
   const [deadline, setDeadline] = useState(null);
   const [votes, setVotes] = useState({});
@@ -65,13 +69,11 @@ function MatchRatings({ matchId, people }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
       <h2 className="text-2xl font-bold">
-        ⭐ Oceni saigrače
+        {t("matchRatings.rateYourTeammates")}
       </h2>
 
       <p className="text-gray-500 text-sm mt-1 mb-4">
-        Ocene su vidljive na profilu kao fer plej i nedolasci.
-        Možeš ih menjati do{" "}
-        {new Date(deadline).toLocaleDateString("sr-RS")}.
+        {t("matchRatings.ratingsAppearOnProfilesAs", { value: new Date(deadline).toLocaleDateString(locale()) })}
       </p>
 
       <ul className="divide-y">

@@ -3,6 +3,7 @@ const pool = require("../database/db");
 const bcrypt = require("bcrypt");
 const { validatePassword, signToken } = require("../utils/password");
 const { sendMail } = require("../utils/mailer");
+const { translate } = require("../utils/i18n");
 
 const RESET_MINUTES = 60;
 
@@ -217,13 +218,15 @@ const forgotPassword = async (req, res) => {
 
         await sendMail({
           to: user.email,
-          subject: "SportWeb – nova lozinka",
-          text:
+          subject: translate("SportWeb – nova lozinka", req.language),
+          text: translate(
             `Zdravo ${user.name},\n\n` +
             `neko je zatražio novu lozinku za tvoj SportWeb nalog. ` +
             `Ako si to bio ti, otvori ovaj link u narednih ${RESET_MINUTES} minuta:\n\n` +
             `${frontendUrl()}/reset-password?token=${token}\n\n` +
             `Ako nisi ti tražio, slobodno ignoriši ovaj mejl. Lozinka ostaje ista.`,
+            req.language
+          ),
         });
       }
     }
@@ -273,6 +276,7 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Link je istekao ili je već iskorišćen.",
+        expired: true,
       });
     }
 

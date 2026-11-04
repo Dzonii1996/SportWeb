@@ -2,8 +2,11 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail } from "lucide-react";
 import { API_URL } from "../config";
+import { useTranslation } from "react-i18next";
 
 function ForgotPassword() {
+  const { t } = useTranslation();
+
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState("");
@@ -25,7 +28,7 @@ function ForgotPassword() {
 
     } catch (error) {
       console.error(error);
-      setMessage("Greška pri povezivanju sa serverom.");
+      setMessage(t("common.couldNotConnectToThe"));
     } finally {
       setSending(false);
     }
@@ -37,10 +40,10 @@ function ForgotPassword() {
 
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800">
-            Zaboravljena lozinka 🔑
+            {t("forgotPassword.forgotPassword")}
           </h1>
           <p className="text-gray-500 mt-2">
-            Unesi email naloga i poslaćemo ti link za novu lozinku.
+            {t("forgotPassword.enterYourAccountEmailAnd")}
           </p>
         </div>
 
@@ -48,7 +51,7 @@ function ForgotPassword() {
           <div className="bg-green-50 border border-green-200 text-green-800 rounded-xl p-4 text-center">
             {message}
             <p className="text-sm text-green-700 mt-2">
-              Proveri i spam folder. Link važi sat vremena.
+              {t("forgotPassword.checkYourSpamFolderToo")}
             </p>
           </div>
         ) : (
@@ -60,7 +63,7 @@ function ForgotPassword() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="Unesite email"
+                placeholder={t("common.enterYourEmail")}
                 className="w-full p-3 outline-none"
               />
             </div>
@@ -70,14 +73,14 @@ function ForgotPassword() {
               disabled={sending}
               className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white py-3 rounded-xl font-semibold transition"
             >
-              {sending ? "Šaljem..." : "Pošalji link"}
+              {sending ? t("common.sending") : t("forgotPassword.sendLink")}
             </button>
           </form>
         )}
 
         <div className="text-center mt-6">
           <Link to="/login" className="text-green-600 font-semibold hover:underline">
-            Nazad na prijavu
+            {t("forgotPassword.backToSignIn")}
           </Link>
         </div>
 

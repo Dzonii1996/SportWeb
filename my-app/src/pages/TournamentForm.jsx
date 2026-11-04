@@ -6,11 +6,14 @@ import { authHeader } from "../utils/auth";
 import { localDateKey, todayKey, maxDateKey } from "../utils/matchDate";
 import { useAdminStatus, useVenues } from "../utils/venues";
 import { FORMATS } from "../utils/tournaments";
+import { useTranslation } from "react-i18next";
 
 const input = "w-full border p-3 rounded-xl";
 
 // Pravljenje turnira (/turniri/novi) i izmena dok traju prijave (/turniri/:id/izmeni)
 function TournamentForm() {
+  const { t: tr } = useTranslation();
+
   const { id } = useParams();
   const navigate = useNavigate();
   const editing = Boolean(id);
@@ -49,9 +52,9 @@ function TournamentForm() {
         const t = data.tournament;
 
         if (!data.success || !data.can_manage) {
-          setError("Samo organizator može da menja turnir.");
+          setError(tr("tournamentForm.onlyTheOrganizerCanEdit"));
         } else if (t.status !== "registration") {
-          setError("Turnir može da se menja samo dok traju prijave.");
+          setError(tr("tournamentForm.aTournamentCanOnlyBe"));
         } else {
           setForm({
             name: t.name,
@@ -93,7 +96,7 @@ function TournamentForm() {
     e.preventDefault();
 
     if (!isAdmin && !venueId) {
-      alert("Izaberi svoj teren.");
+      alert(tr("tournamentForm.pickYourVenue"));
       return;
     }
 
@@ -116,13 +119,13 @@ function TournamentForm() {
   };
 
   if (!loaded || !statusLoaded) {
-    return <div className="text-center mt-20 text-xl">Učitavanje...</div>;
+    return <div className="text-center mt-20 text-xl">{tr("common.loading")}</div>;
   }
 
   if (!editing && !isAdmin && ownedVenues === 0) {
     return (
       <div className="max-w-xl mx-auto p-6 text-center mt-10 text-xl">
-        Turnire prave admin i vlasnici terena.
+        {tr("tournamentForm.tournamentsAreCreatedByThe")}
       </div>
     );
   }
@@ -134,12 +137,12 @@ function TournamentForm() {
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center py-10 px-4">
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-2xl">
-        <h1 className="text-3xl font-bold mb-6">{editing ? "Izmeni turnir" : "Napravi turnir"}</h1>
+        <h1 className="text-3xl font-bold mb-6">{editing ? tr("tournamentForm.editTournament") : tr("common.createATournament")}</h1>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <input
             className={input}
-            placeholder="Naziv turnira (npr. Letnji kup 2027)"
+            placeholder={tr("tournamentForm.tournamentNameEGSummer")}
             value={form.name}
             onChange={set("name")}
             required
@@ -147,13 +150,13 @@ function TournamentForm() {
             maxLength={100}
           />
 
-          <select className={input} value={form.sport} onChange={changeSport} aria-label="Sport">
-            <option value="Fudbal">⚽ Fudbal</option>
-            <option value="Košarka">🏀 Košarka</option>
+          <select className={input} value={form.sport} onChange={changeSport} aria-label={tr("tournamentForm.sport")}>
+            <option value="Fudbal">{tr("common.football")}</option>
+            <option value="Košarka">{tr("common.basketball")}</option>
           </select>
 
           <fieldset>
-            <legend className="font-medium mb-2">Format</legend>
+            <legend className="font-medium mb-2">{tr("tournamentForm.format")}</legend>
             <div className="grid sm:grid-cols-2 gap-3">
               {Object.entries(FORMATS).map(([value, format]) => (
                 <label
@@ -189,7 +192,7 @@ function TournamentForm() {
           {!venueId && isAdmin && (
             <input
               className={input}
-              placeholder="Lokacija"
+              placeholder={tr("common.location")}
               value={form.location}
               onChange={set("location")}
               required
@@ -199,7 +202,7 @@ function TournamentForm() {
           )}
 
           <label className="block">
-            <span className="font-medium">Datum početka</span>
+            <span className="font-medium">{tr("tournamentForm.startDate")}</span>
             <input
               type="date"
               className={`${input} mt-1`}
@@ -213,7 +216,7 @@ function TournamentForm() {
 
           <div className="grid sm:grid-cols-2 gap-5">
             <label className="block">
-              <span className="font-medium">Najviše ekipa</span>
+              <span className="font-medium">{tr("tournamentForm.maximumTeams")}</span>
               <input
                 type="number"
                 className={`${input} mt-1`}
@@ -226,7 +229,7 @@ function TournamentForm() {
             </label>
 
             <label className="block">
-              <span className="font-medium">Najviše igrača u ekipi</span>
+              <span className="font-medium">{tr("tournamentForm.maximumPlayersPerTeam")}</span>
               <input
                 type="number"
                 className={`${input} mt-1`}
@@ -247,17 +250,17 @@ function TournamentForm() {
               step="1"
               value={form.entry_fee}
               onChange={set("entry_fee")}
-              placeholder="Kotizacija po ekipi (nije obavezno)"
+              placeholder={tr("tournamentForm.entryFeePerTeamOptional")}
               className="w-full p-3 rounded-xl outline-none"
             />
-            <span className="text-gray-500">din</span>
+            <span className="text-gray-500">{tr("common.rsd")}</span>
           </div>
 
           <textarea
             className={input}
             rows={4}
             maxLength={2000}
-            placeholder="Pravila: trajanje utakmica, broj igrača na terenu, oprema..."
+            placeholder={tr("tournamentForm.rulesGameLengthPlayersOn")}
             value={form.rules}
             onChange={set("rules")}
           />
@@ -267,7 +270,7 @@ function TournamentForm() {
             disabled={saving}
             className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white py-3 rounded-xl font-semibold"
           >
-            {saving ? "Čuvam..." : editing ? "Sačuvaj izmene" : "Napravi turnir"}
+            {saving ? tr("common.saving") : editing ? tr("common.saveChanges") : tr("common.createATournament")}
           </button>
         </form>
       </div>

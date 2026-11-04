@@ -10,6 +10,8 @@ import {
   imageUrl,
   useAdminStatus,
 } from "../utils/venues";
+import { useTranslation } from "react-i18next";
+import { surfaceLabel } from "../i18n";
 
 const EMPTY = {
   name: "",
@@ -27,6 +29,8 @@ const input = "w-full border p-3 rounded-xl";
 
 // Predlog novog terena (korisnik), dodavanje (admin) i izmena (admin ili vlasnik, /tereni/:id/izmeni)
 function VenueForm() {
+  const { t } = useTranslation();
+
   const { id } = useParams();
   const navigate = useNavigate();
   const editing = Boolean(id);
@@ -47,7 +51,7 @@ function VenueForm() {
       .then((res) => res.json())
       .then((data) => {
         if (!data.success || !data.can_edit) {
-          setError("Samo admin ili vlasnik može da menja teren.");
+          setError(t("venueForm.onlyTheAdminOrThe"));
         } else {
           const v = data.venue;
 
@@ -86,7 +90,7 @@ function VenueForm() {
     const files = [...newFiles, ...e.target.files];
 
     if (files.length > freeSlots) {
-      alert(`Teren može imati najviše ${MAX_IMAGES} slika.`);
+      alert(t("venueForm.aVenueCanHaveAt", { MAX_IMAGES }));
     }
 
     setNewFiles(files.slice(0, freeSlots));
@@ -94,7 +98,7 @@ function VenueForm() {
   };
 
   const deleteImage = async (image) => {
-    if (!window.confirm("Obrisati sliku?")) return;
+    if (!window.confirm(t("venueForm.deleteTheImage"))) return;
 
     const res = await fetch(`${API_URL}/api/venues/${id}/images/${image.id}`, {
       method: "DELETE",
@@ -123,7 +127,7 @@ function VenueForm() {
     const data = await res.json();
 
     if (!data.success) {
-      alert(`Teren je sačuvan, ali slike nisu: ${data.message}`);
+      alert(t("venueForm.theVenueWasSavedBut", { message: data.message }));
     }
 
     return data.success;
@@ -133,12 +137,12 @@ function VenueForm() {
     e.preventDefault();
 
     if (!position) {
-      alert("Označi teren na mapi (klikni na mesto gde se nalazi).");
+      alert(t("venueForm.markTheVenueOnThe"));
       return;
     }
 
     if (form.sports.length === 0) {
-      alert("Izaberi bar jedan sport.");
+      alert(t("venueForm.pickAtLeastOneSport"));
       return;
     }
 
@@ -167,21 +171,21 @@ function VenueForm() {
       navigate(`/tereni/${data.venue.id}`);
 
     } catch (err) {
-      alert("Greška pri čuvanju terena.");
+      alert(t("venueForm.couldNotSaveTheVenue"));
     } finally {
       setSaving(false);
     }
   };
 
   if (!loaded) {
-    return <div className="text-center mt-20 text-xl">Učitavanje...</div>;
+    return <div className="text-center mt-20 text-xl">{t("common.loading")}</div>;
   }
 
   if (error) {
     return <div className="max-w-xl mx-auto p-6 text-center mt-10 text-xl">{error}</div>;
   }
 
-  const title = editing ? "Izmeni teren" : isAdmin ? "Dodaj teren" : "Predloži teren";
+  const title = editing ? t("common.editVenue") : isAdmin ? t("common.addAVenue") : t("common.suggestAVenue");
 
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center py-10 px-4">
@@ -190,14 +194,14 @@ function VenueForm() {
 
         {!editing && !isAdmin && (
           <p className="text-gray-600 mb-6">
-            Predlog vidi admin i kad ga odobri, teren se pojavljuje na listi. Dobićeš obaveštenje.
+            {t("venueForm.theAdminSeesYourSuggestion")}
           </p>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5 mt-4">
           <input
             className={input}
-            placeholder="Naziv (npr. SC Sunce, sala OŠ Vuk Karadžić)"
+            placeholder={t("venueForm.nameEGScSunce")}
             value={form.name}
             onChange={set("name")}
             required
@@ -207,7 +211,7 @@ function VenueForm() {
 
           <input
             className={input}
-            placeholder="Adresa"
+            placeholder={t("venueForm.address")}
             value={form.address}
             onChange={set("address")}
             required
@@ -219,7 +223,7 @@ function VenueForm() {
 
           <div className="grid sm:grid-cols-2 gap-5">
             <fieldset>
-              <legend className="font-medium mb-2">Sportovi</legend>
+              <legend className="font-medium mb-2">{t("venueForm.sports")}</legend>
               <div className="flex gap-4">
                 {["Fudbal", "Košarka"].map((sport) => (
                   <label key={sport} className="flex items-center gap-2 cursor-pointer">
@@ -229,18 +233,18 @@ function VenueForm() {
                       onChange={() => toggleSport(sport)}
                       className="w-4 h-4"
                     />
-                    {sport === "Fudbal" ? "⚽ Fudbal" : "🏀 Košarka"}
+                    {sport === "Fudbal" ? t("common.football") : t("common.basketball")}
                   </label>
                 ))}
               </div>
             </fieldset>
 
             <fieldset>
-              <legend className="font-medium mb-2">Gde</legend>
+              <legend className="font-medium mb-2">{t("venueForm.where")}</legend>
               <div className="flex gap-4">
                 {[
-                  [false, "🌤️ Napolju"],
-                  [true, "🏠 Unutra"],
+                  [false, t("common.outdoors")],
+                  [true, t("common.indoors")],
                 ].map(([value, label]) => (
                   <label key={label} className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -259,9 +263,9 @@ function VenueForm() {
 
           <div className="grid sm:grid-cols-2 gap-5">
             <select className={input} value={form.surface} onChange={set("surface")}>
-              <option value="">Podloga (nije obavezno)</option>
+              <option value="">{t("venueForm.surfaceOptional")}</option>
               {SURFACES.map((s) => (
-                <option key={s} value={s}>{s}</option>
+                <option key={s} value={s}>{surfaceLabel(s)}</option>
               ))}
             </select>
 
@@ -273,17 +277,17 @@ function VenueForm() {
                 step="1"
                 value={form.price_per_hour}
                 onChange={set("price_per_hour")}
-                placeholder="Okvirna cena po satu"
+                placeholder={t("venueForm.approximatePricePerHour")}
                 className="w-full p-3 rounded-xl outline-none"
               />
-              <span className="text-gray-500 whitespace-nowrap">din/h</span>
+              <span className="text-gray-500 whitespace-nowrap">{t("venueForm.rsdH")}</span>
             </div>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-5">
             <input
               className={input}
-              placeholder="Radno vreme (npr. svaki dan 8–23h)"
+              placeholder={t("venueForm.openingHoursEGEvery")}
               value={form.working_hours}
               onChange={set("working_hours")}
               maxLength={200}
@@ -292,7 +296,7 @@ function VenueForm() {
             <input
               className={input}
               type="tel"
-              placeholder="Telefon za rezervaciju (nije obavezno)"
+              placeholder={t("venueForm.bookingPhoneOptional")}
               value={form.phone}
               onChange={set("phone")}
               maxLength={30}
@@ -302,7 +306,7 @@ function VenueForm() {
           <textarea
             className={input}
             rows={4}
-            placeholder="Opis: osvetljenje, svlačionice, parking..."
+            placeholder={t("venueForm.descriptionLightingChangingRoomsParking")}
             value={form.description}
             onChange={set("description")}
             maxLength={2000}
@@ -310,9 +314,9 @@ function VenueForm() {
 
           {/* Slike */}
           <div>
-            <p className="font-medium mb-1">Slike (najviše {MAX_IMAGES}, JPG/PNG/WEBP do 5 MB)</p>
+            <p className="font-medium mb-1">{t("venueForm.imagesUpToJpgPng", { MAX_IMAGES })}</p>
             <p className="text-sm text-gray-500 mb-2">
-              Samo sopstvene fotografije, ne slike sa tuđih sajtova.
+              {t("venueForm.onlyYourOwnPhotosNo")}
             </p>
 
             {(images.length > 0 || newFiles.length > 0) && (
@@ -323,7 +327,7 @@ function VenueForm() {
                     <button
                       type="button"
                       onClick={() => deleteImage(img)}
-                      aria-label="Obriši sliku"
+                      aria-label={t("venueForm.deleteImage")}
                       className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center"
                     >
                       <X size={14} />
@@ -341,7 +345,7 @@ function VenueForm() {
                     <button
                       type="button"
                       onClick={() => setNewFiles(newFiles.filter((_, j) => j !== i))}
-                      aria-label="Ukloni sliku"
+                      aria-label={t("venueForm.removeImage")}
                       className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gray-700 text-white flex items-center justify-center"
                     >
                       <X size={14} />
@@ -367,7 +371,7 @@ function VenueForm() {
             disabled={saving}
             className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white py-3 rounded-xl font-semibold"
           >
-            {saving ? "Čuvam..." : editing ? "Sačuvaj izmene" : isAdmin ? "Dodaj teren" : "Pošalji predlog"}
+            {saving ? t("common.saving") : editing ? t("common.saveChanges") : isAdmin ? t("common.addAVenue") : t("venueForm.sendSuggestion")}
           </button>
         </form>
       </div>

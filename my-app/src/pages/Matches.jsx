@@ -13,14 +13,18 @@ import {
   normalizeText,
 } from "../utils/matchDate";
 import { distanceKm, getMyPosition, hasCoords } from "../utils/geo";
+import { useTranslation } from "react-i18next";
+import i18n from "../i18n";
 
 const SPORTS = [
-  { value: "Svi", label: "Svi" },
-  { value: "Fudbal", label: "⚽ Fudbal" },
-  { value: "Košarka", label: "🏀 Košarka" },
+  { value: "Svi", get label() { return i18n.t("common.all"); } },
+  { value: "Fudbal", get label() { return i18n.t("common.football"); } },
+  { value: "Košarka", get label() { return i18n.t("common.basketball"); } },
 ];
 
 function Matches() {
+  const { t } = useTranslation();
+
   // Sport može doći iz linka sa početne strane: /matches?sport=Fudbal
   const [searchParams] = useSearchParams();
   const sportParam = searchParams.get("sport");
@@ -144,7 +148,7 @@ const fetchMatches = async () => {
       <div className="max-w-7xl mx-auto p-6">
 
         <h1 className="text-4xl font-bold mb-8">
-          Sportski termini
+          {t("matches.sportsGames")}
         </h1>
 
         {/* Filteri */}
@@ -179,7 +183,7 @@ const fetchMatches = async () => {
                 type="text"
                 value={locationQuery}
                 onChange={(e) => setLocationQuery(e.target.value)}
-                placeholder="Pretraži po lokaciji..."
+                placeholder={t("matches.searchByLocation")}
                 className="w-full border p-3 pl-10 rounded-xl"
               />
             </div>
@@ -202,7 +206,7 @@ const fetchMatches = async () => {
                 onChange={() => setOnlyAvailable(!onlyAvailable)}
                 className="w-4 h-4"
               />
-              👥 Samo sa slobodnim mestima
+              {t("matches.onlyWithFreeSpots")}
             </label>
 
             <label className="flex items-center gap-2 font-medium cursor-pointer">
@@ -212,7 +216,7 @@ const fetchMatches = async () => {
                 onChange={() => setShowPast(!showPast)}
                 className="w-4 h-4"
               />
-              🕓 Prikaži i odigrane termine
+              {t("matches.alsoShowPlayedGames")}
             </label>
 
             <div className="flex items-center gap-2">
@@ -225,7 +229,7 @@ const fetchMatches = async () => {
                     : "bg-gray-200 hover:bg-gray-300"
                 }`}
               >
-                {locating ? "Tražim lokaciju..." : "📍 Blizu mene"}
+                {locating ? t("common.findingLocation") : t("common.nearMe")}
               </button>
 
               {myPosition && (
@@ -236,7 +240,7 @@ const fetchMatches = async () => {
                 >
                   {[2, 5, 10, 25, 50].map((km) => (
                     <option key={km} value={km}>
-                      do {km} km
+                      {t("common.withinKm", { km })}
                     </option>
                   ))}
                 </select>
@@ -248,7 +252,7 @@ const fetchMatches = async () => {
                 onClick={resetFilters}
                 className="text-green-700 hover:underline font-medium"
               >
-                Poništi filtere
+                {t("matches.clearFilters")}
               </button>
             )}
 
@@ -257,8 +261,8 @@ const fetchMatches = async () => {
         </div>
 
         <p className="text-gray-600 mb-4">
-          Pronađeno termina: {filteredMatches.length}
-          {myPosition && " (prikazani su samo termini označeni na mapi)"}
+          {t("matches.gamesFound", { length: filteredMatches.length })}
+          {myPosition && t("matches.showingOnlyGamesMarkedOn")}
         </p>
 
         {/* Kartice */}
@@ -289,7 +293,7 @@ creatorName={match.creator_name}
             ))
           ) : (
             <div className="col-span-full text-center text-gray-600 text-xl">
-              Nema termina za izabrane filtere.
+              {t("matches.noGamesMatchTheSelected")}
             </div>
           )}
 

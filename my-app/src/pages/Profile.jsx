@@ -4,8 +4,11 @@ import { useNavigate, Link } from "react-router-dom";
 import { authHeader, logout } from "../utils/auth";
 import { API_URL } from "../config";
 import AccountSettings from "../components/AccountSettings";
+import { useTranslation } from "react-i18next";
 
 function Profile() {
+  const { t } = useTranslation();
+
   const navigate = useNavigate();
 
   const user = JSON.parse(localStorage.getItem("user"));
@@ -29,7 +32,7 @@ function Profile() {
 
   const uploadAvatar = async () => {
     if (!selectedFile) {
-      alert("Izaberite sliku.");
+      alert(t("profile.selectAnImage"));
       return;
     }
 
@@ -48,7 +51,7 @@ function Profile() {
 
       const data = await res.json();
 
-      alert(data.message || "Profilna slika uspešno sačuvana.");
+      alert(data.message || t("profile.profilePictureSaved"));
 
       if (data.success) {
         window.location.reload();
@@ -66,7 +69,7 @@ function Profile() {
   if (!profile) {
     return (
       <div className="text-center mt-20 text-xl">
-        Učitavanje...
+       {t("common.loading")}
       </div>
     );
   }
@@ -84,7 +87,7 @@ function Profile() {
                 ? `${API_URL}${profile.user.avatar}`
                 : "/default-avatar.png"
             }
-            alt="Profil"
+            alt={t("profile.profile")}
             className="w-32 h-32 rounded-full object-cover border-4 border-green-600"
           />
 
@@ -99,13 +102,13 @@ function Profile() {
             onClick={uploadAvatar}
             className="mt-3 bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-xl font-semibold"
           >
-            📷 Sačuvaj profilnu sliku
+           {t("profile.saveProfilePicture")}
           </button>
 
         </div>
 
         <h1 className="text-3xl font-bold text-center mb-8">
-          Moj profil
+         {t("common.myProfile")}
         </h1>
 
         <div className="space-y-5">
@@ -127,7 +130,7 @@ function Profile() {
           <div className="flex items-center gap-4">
             <CalendarDays className="text-green-600" />
             <span>
-              Kreiranih termina:
+             {t("profile.gamesCreated")}
               <b> {profile.stats.created}</b>
             </span>
           </div>
@@ -135,7 +138,7 @@ function Profile() {
           <div className="flex items-center gap-4">
             <Users className="text-green-600" />
             <span>
-              Prijavljenih termina:
+             {t("profile.gamesJoined")}
               <b> {profile.stats.joined}</b>
             </span>
           </div>
@@ -155,14 +158,14 @@ function Profile() {
             to="/my-matches"
             className="block w-full text-center bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold"
           >
-            📅 Moji termini
+           {t("profile.myGames")}
           </Link>
 
           <button
             onClick={handleLogout}
             className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-semibold"
           >
-            Odjavi se
+           {t("common.signOut")}
           </button>
 
         </div>

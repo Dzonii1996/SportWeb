@@ -19,11 +19,13 @@ const inviteRoutes = require("./routes/inviteRoutes");
 const venueRoutes = require("./routes/venueRoutes");
 const reservationRoutes = require("./routes/reservationRoutes");
 const tournamentRoutes = require("./routes/tournamentRoutes");
+const language = require("./middleware/language");
 const createTables = require("./database/createtable");
 const { sendDueReminders } = require("./utils/reminders");
 const { generateNextOccurrences } = require("./utils/series");
 app.use(cors());
 app.use(express.json());
+app.use(language);
 
 
 app.use(
