@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 import { authHeader } from "../utils/auth";
 import { API_URL } from "../config";
 import { formatDistance } from "../utils/geo";
+import { sportEmoji } from "../utils/sports";
 import { formatRSD, pricePerPlayer } from "../utils/price";
 import { matchStart, inConfirmWindow } from "../utils/matchDate";
 import { useTranslation } from "react-i18next";
@@ -260,7 +261,7 @@ function MatchCard({
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             <span className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl">
-              {sport === "Košarka" ? "🏀" : "⚽"}
+              {sportEmoji(sport)}
             </span>
 
             <div>

@@ -17,7 +17,7 @@ const {
   describeSlot,
   reservationStart,
 } = require("./reservationController");
-const { SPORTS, parsePrice, parseCoords } = require("../utils/fields");
+const { SPORTS, SPORT_ACCUSATIVE, parsePrice, parseCoords } = require("../utils/fields");
 
 const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 30;
@@ -112,7 +112,7 @@ const resolveVenue = async (venueId, sport, currentVenueId = null) => {
   }
 
   if (sport && !venue.sports.includes(sport)) {
-    return { error: `Teren "${venue.name}" nije za ${sport === "Košarka" ? "košarku" : "fudbal"}.` };
+    return { error: `Teren "${venue.name}" nije za ${SPORT_ACCUSATIVE[sport]}.` };
   }
 
   return { venue };

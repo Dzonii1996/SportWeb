@@ -216,7 +216,7 @@ describe("pravljenje turnira", () => {
 
   test.each([
     ["kratak naziv", { name: "x" }, /Naziv/],
-    ["nepoznat sport", { sport: "Tenis" }, /sport/],
+    ["nepoznat sport", { sport: "Hokej" }, /sport/],
     ["nepoznat format", { format: "kviz" }, /format/],
     ["datum u prošlosti", { start_date: dateIn(-1) }, /prošlosti/],
     ["premalo ekipa", { max_teams: 1 }, /ekipa/],
@@ -244,7 +244,7 @@ describe("pravljenje turnira", () => {
     expect(await names("")).toEqual(["Fudbalski", "Košarkaški"]);
     expect(await names("?sport=Košarka")).toEqual(["Košarkaški"]);
     expect(await names("?status=registration")).toEqual(["Fudbalski"]);
-    expect((await api.get("/api/tournaments?sport=Tenis")).status).toBe(400);
+    expect((await api.get("/api/tournaments?sport=Hokej")).status).toBe(400);
   });
 
   test("samo organizator menja turnir, i samo dok traju prijave", async () => {

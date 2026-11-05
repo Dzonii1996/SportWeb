@@ -1,4 +1,4 @@
-// Pozadine za hero na početnoj strani: fudbalski i košarkaški teren u SVG-u.
+// Pozadine za hero na početnoj strani: fudbalski, košarkaški, teniski i odbojkaški teren u SVG-u.
 // "slice" popunjava ceo prostor, pa se teren seče na užim ekranima.
 
 const LINE = { fill: "none", stroke: "rgba(255,255,255,0.75)", strokeWidth: 4 };
@@ -111,6 +111,101 @@ export function BasketballCourt() {
       <path d="M1140 100 L 1050 100 A 260 260 0 0 0 1050 600 L 1140 600" {...LINE} />
       <line x1="1100" y1="315" x2="1100" y2="385" stroke="white" strokeWidth="6" />
       <circle cx="1082" cy="350" r="14" fill="none" stroke="#f97316" strokeWidth="5" />
+    </svg>
+  );
+}
+
+// Tvrda podloga, prave proporcije: 23,77 x 10,97 m, 42 piksela po metru
+export function TennisCourt() {
+  return (
+    <svg
+      viewBox="0 0 1200 700"
+      preserveAspectRatio="xMidYMid slice"
+      className="absolute inset-0 w-full h-full"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="tennis-surround" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#166534" />
+          <stop offset="1" stopColor="#15803d" />
+        </linearGradient>
+        <linearGradient id="tennis-court" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#1d4ed8" />
+          <stop offset="1" stopColor="#2563eb" />
+        </linearGradient>
+      </defs>
+
+      <rect width="1200" height="700" fill="url(#tennis-surround)" />
+      <rect x="100" y="120" width="1000" height="460" fill="url(#tennis-court)" />
+
+      {/* Linije za dubl i singl */}
+      <rect x="100" y="120" width="1000" height="460" {...LINE} />
+      <line x1="100" y1="178" x2="1100" y2="178" {...LINE} />
+      <line x1="100" y1="522" x2="1100" y2="522" {...LINE} />
+
+      {/* Servis polja */}
+      <line x1="331" y1="178" x2="331" y2="522" {...LINE} />
+      <line x1="869" y1="178" x2="869" y2="522" {...LINE} />
+      <line x1="331" y1="350" x2="869" y2="350" {...LINE} />
+
+      {/* Oznake sredine na osnovnim linijama */}
+      <line x1="100" y1="350" x2="118" y2="350" {...LINE} />
+      <line x1="1082" y1="350" x2="1100" y2="350" {...LINE} />
+
+      {/* Mreža sa stubovima */}
+      <line x1="600" y1="96" x2="600" y2="604" stroke="rgba(255,255,255,0.35)" strokeWidth="14" />
+      <line x1="600" y1="96" x2="600" y2="604" stroke="white" strokeWidth="4" />
+      <circle cx="600" cy="96" r="9" fill="white" />
+      <circle cx="600" cy="604" r="9" fill="white" />
+    </svg>
+  );
+}
+
+// Dvoranski teren, prave proporcije: 18 x 9 m, 50 piksela po metru
+export function VolleyballCourt() {
+  return (
+    <svg
+      viewBox="0 0 1200 700"
+      preserveAspectRatio="xMidYMid slice"
+      className="absolute inset-0 w-full h-full"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="volley-free-zone" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#0e7490" />
+          <stop offset="1" stopColor="#0891b2" />
+        </linearGradient>
+        <linearGradient id="volley-court" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#c2410c" />
+          <stop offset="1" stopColor="#ea580c" />
+        </linearGradient>
+      </defs>
+
+      <rect width="1200" height="700" fill="url(#volley-free-zone)" />
+      <rect x="150" y="125" width="900" height="450" fill="url(#volley-court)" />
+
+      {/* Spoljne linije */}
+      <rect x="150" y="125" width="900" height="450" {...LINE} />
+
+      {/* Linije napada, 3 m od mreže, sa isprekidanim produžetkom van terena */}
+      <line x1="450" y1="125" x2="450" y2="575" {...LINE} />
+      <line x1="750" y1="125" x2="750" y2="575" {...LINE} />
+      <line x1="450" y1="75" x2="450" y2="125" {...LINE} strokeDasharray="12 12" />
+      <line x1="450" y1="575" x2="450" y2="625" {...LINE} strokeDasharray="12 12" />
+      <line x1="750" y1="75" x2="750" y2="125" {...LINE} strokeDasharray="12 12" />
+      <line x1="750" y1="575" x2="750" y2="625" {...LINE} strokeDasharray="12 12" />
+
+      {/* Zone servisa iza osnovnih linija */}
+      <line x1="125" y1="125" x2="150" y2="125" {...LINE} />
+      <line x1="125" y1="575" x2="150" y2="575" {...LINE} />
+      <line x1="1050" y1="125" x2="1075" y2="125" {...LINE} />
+      <line x1="1050" y1="575" x2="1075" y2="575" {...LINE} />
+
+      {/* Mreža sa stubovima */}
+      <line x1="600" y1="90" x2="600" y2="610" stroke="rgba(255,255,255,0.35)" strokeWidth="14" />
+      <line x1="600" y1="90" x2="600" y2="610" stroke="white" strokeWidth="4" />
+      <circle cx="600" cy="90" r="9" fill="white" />
+      <circle cx="600" cy="610" r="9" fill="white" />
     </svg>
   );
 }

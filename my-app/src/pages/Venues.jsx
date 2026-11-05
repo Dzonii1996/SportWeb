@@ -5,15 +5,12 @@ import VenueCard from "../components/VenueCard";
 import { VenuesMap } from "../components/LocationMap";
 import { API_URL } from "../config";
 import { distanceKm, getMyPosition } from "../utils/geo";
+import { sportFilters } from "../utils/sports";
 import { useAdminStatus } from "../utils/venues";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n";
 
-const SPORTS = [
-  { value: "", get label() { return i18n.t("common.all"); } },
-  { value: "Fudbal", get label() { return i18n.t("common.football"); } },
-  { value: "Košarka", get label() { return i18n.t("common.basketball"); } },
-];
+const SPORTS = sportFilters("");
 
 const PLACES = [
   { value: "", get label() { return i18n.t("venues.all"); } },

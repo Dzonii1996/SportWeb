@@ -11,9 +11,10 @@ import {
 } from "lucide-react";
 import { API_URL } from "../config";
 import { isPastMatch, matchStart } from "../utils/matchDate";
-import { FootballPitch, BasketballCourt } from "../components/CourtBackgrounds";
+import { FootballPitch, BasketballCourt, TennisCourt, VolleyballCourt } from "../components/CourtBackgrounds";
 import { useTranslation } from "react-i18next";
 import i18n, { locale, sportLabel } from "../i18n";
+import { sportEmoji } from "../utils/sports";
 
 // Slajdovi u hero delu: pozadina, tekst i dugme za svaki sport
 const HERO_SLIDES = [
@@ -35,6 +36,24 @@ const HERO_SLIDES = [
     accent: "text-amber-300",
     Background: BasketballCourt,
   },
+  {
+    sport: "Tenis",
+    emoji: "🎾",
+    get play() { return i18n.t("home.playTennis"); },
+    get tagline() { return i18n.t("home.tennisTagline"); },
+    get cta() { return i18n.t("home.findATennisGame"); },
+    accent: "text-lime-300",
+    Background: TennisCourt,
+  },
+  {
+    sport: "Odbojka",
+    emoji: "🏐",
+    get play() { return i18n.t("home.playVolleyball"); },
+    get tagline() { return i18n.t("home.volleyballTagline"); },
+    get cta() { return i18n.t("home.findAVolleyballGame"); },
+    accent: "text-orange-300",
+    Background: VolleyballCourt,
+  },
 ];
 
 const SLIDE_MS = 6000;
@@ -42,6 +61,8 @@ const SLIDE_MS = 6000;
 const SPORTS = [
   { value: "Fudbal", emoji: "⚽", get text() { return i18n.t("home.smallSidedFootballFutsalOr2"); } },
   { value: "Košarka", emoji: "🏀", get text() { return i18n.t("home.3On3BasketballOr2"); } },
+  { value: "Tenis", emoji: "🎾", get text() { return i18n.t("home.tennisText"); } },
+  { value: "Odbojka", emoji: "🏐", get text() { return i18n.t("home.volleyballText"); } },
 ];
 
 const STEPS = [
@@ -70,7 +91,6 @@ const formatDate = (match) =>
     month: "short",
   });
 
-const sportEmoji = (sport) => (sport === "Košarka" ? "🏀" : "⚽");
 
 // Kompaktna kartica predstojećeg termina
 function UpcomingCard({ match }) {
@@ -198,7 +218,7 @@ function Home() {
   const nextForSport = upcoming.find((m) => m.sport === slide.sport);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 font-display">
 
       {/* Hero: pozadina se smenjuje između terena, ili prati izabrani sport */}
       <section className="relative overflow-hidden text-white bg-green-800">
@@ -221,7 +241,7 @@ function Home() {
 
           <div>
             {/* Izbor sporta: menja pozadinu i zaustavlja smenjivanje */}
-            <div className="flex gap-2 mb-6" role="tablist" aria-label="Sport">
+            <div className="flex flex-wrap gap-2 mb-6" role="tablist" aria-label="Sport">
               {HERO_SLIDES.map((s, i) => (
                 <button
                   key={s.sport}
@@ -461,7 +481,7 @@ function Home() {
 
       <footer className="max-w-7xl mx-auto px-4 sm:px-6 py-10 mt-16 border-t text-sm text-gray-500 flex flex-col sm:flex-row justify-between gap-2">
         <span>
-          © {new Date().getFullYear()} Sport<span className="text-green-600 font-semibold">Web</span>
+          © {new Date().getFullYear()} Sport<span className="text-green-600 font-semibold"> KM</span>
         </span>
         <span>{t("home.recreationalSportWithoutTheGroup")}</span>
       </footer>

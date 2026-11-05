@@ -62,6 +62,8 @@ module.exports = {
   "Izabrani teren ne postoji.": "The selected venue doesn't exist.",
   'Teren "{name}" nije za košarku.': 'The venue "{name}" is not for basketball.',
   'Teren "{name}" nije za fudbal.': 'The venue "{name}" is not for football.',
+  'Teren "{name}" nije za tenis.': 'The venue "{name}" is not for tennis.',
+  'Teren "{name}" nije za odbojku.': 'The venue "{name}" is not for volleyball.',
   "Rezervacija ne postoji ili je otkazana.": "The booking doesn't exist or was cancelled.",
   "Za ovu rezervaciju je već napravljen termin.": "A game has already been created for this booking.",
   "Izaberi teren sa spiska da bi ga rezervisao.": "Pick a venue from the list to book it.",
@@ -167,7 +169,7 @@ module.exports = {
   "{label} može imati najviše {n} znakova.": "{label} can have at most {n} characters.",
   "Adresa mora imati između 2 i 200 znakova.": "The address must be between 2 and 200 characters.",
   "Označi teren na mapi.": "Mark the venue on the map.",
-  "Izaberi bar jedan sport (Fudbal ili Košarka).": "Pick at least one sport (Football or Basketball).",
+  "Izaberi bar jedan sport.": "Pick at least one sport.",
   "Nepoznata podloga.": "Unknown surface.",
   "Cena po satu mora biti ceo broj dinara (do 1.000.000).": "The hourly price must be a whole number of dinars (up to 1,000,000).",
   "Telefon može sadržati samo cifre, razmake i znakove + - / ( ).": "The phone can only contain digits, spaces and the characters + - / ( ).",
@@ -249,6 +251,7 @@ module.exports = {
   "Turnir je otkazan.": "The tournament was cancelled.",
   "Rezultat mora biti ceo broj od 0 do 999.": "The score must be a whole number from 0 to 999.",
   "U košarci nema nerešenog rezultata. Upiši rezultat posle produžetka.": "Basketball has no draws. Enter the result after overtime.",
+  "U ovom sportu nema nerešenog rezultata. Upiši osvojene setove.": "This sport has no draws. Enter the sets won.",
   "U kupu mora biti pobednik: upiši penale (različit broj za ekipe).": "A cup match needs a winner: enter penalties (a different number for each team).",
 
   // Tekstovi notifikacija

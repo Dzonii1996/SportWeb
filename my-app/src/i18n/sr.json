@@ -148,11 +148,14 @@
     "whoHasPaid": "Ko je platio"
   },
   "matchRatings": {
-    "fairPlay": "👍 Fer plej",
-    "unsporting": "👎 Nesportski",
-    "noShow": "🚫 Nije došao",
+    "fairPlay": "Fer",
+    "unsporting": "Nesportski",
+    "noShow": "Nije došao",
+    "everyonePlayedFair": "👍 Svi ostali su bili fer",
+    "ratedCount": "Ocenjeno: {{rated}} od {{total}}",
+    "team": "Tim {{team}}",
     "rateYourTeammates": "⭐ Oceni saigrače",
-    "ratingsAppearOnProfilesAs": "Ocene su vidljive na profilu kao fer plej i nedolasci. Možeš ih menjati do {{value}}."
+    "ratingsAppearOnProfilesAs": "Ocene su vidljive na profilu kao fer plej i nedolasci. Možeš ih menjati do {{value}}"
   },
   "matchResult": {
     "yourTeamWon": "🏆 Tvoj tim je pobedio!",
@@ -321,13 +324,22 @@
     "recreationalSportWithoutTheGroup": "Rekreativni sport, bez dopisivanja.",
     "playFootball": "fudbal",
     "playBasketball": "basket",
+    "playTennis": "tenis",
+    "playVolleyball": "odbojku",
+    "tennisTagline": "Singl ili dubl, partner za meč u tvom gradu",
+    "findATennisGame": "Pronađi teniski termin",
+    "tennisText": "Singl, dubl i partner za meč",
+    "volleyballTagline": "Sala ili pesak, ekipa za odbojku u tvom gradu",
+    "findAVolleyballGame": "Pronađi odbojkaški termin",
+    "volleyballText": "Sala, pesak i puna ekipa",
     "gamesCount_one": "{{count}} termin",
     "gamesCount_few": "{{count}} termina",
     "gamesCount_other": "{{count}} termina"
   },
   "leaderboard": {
-    "aWinIs3Points": "Pobeda 3 boda, nerešeno 1. Računaju se termini sa upisanim rezultatom i podeljenim timovima.",
-    "noPlayedGamesWithA": "Još nema odigranih utakmica sa rezultatom.",
+    "aWinIs3Points": "Svaki sport ima svoju listu. Pobeda 3 boda, nerešeno 1. Računaju se termini sa upisanim rezultatom i podeljenim timovima.",
+    "sport": "Sport",
+    "noPlayedGamesWithA": "U ovom sportu još nema odigranih utakmica sa rezultatom.",
     "afterTheGameTheOrganizer": "Posle termina organizator podeli timove i upiše rezultat.",
     "player": "Igrač",
     "winsDrawsLosses": "Pobede / Nerešeno / Porazi",
@@ -417,7 +429,7 @@
     "gamesJoined": "Prijavljenih termina",
     "gamesPlayed": "Odigranih termina",
     "fairPlay": "Fer plej",
-    "ratings": " ({{value}} ocena)",
+    "ratings": "{{value}} ocena",
     "noShows": "Nedolazaka",
     "recordWDL": "Učinak (P / N / I)",
     "wins": "· {{winRate}}% pobeda",
@@ -478,6 +490,7 @@
     "ownerDidNotAccept": "❌ vlasnik nije prihvatio",
     "bookingCancelled": "🚫 rezervacija otkazana",
     "pointDiff": "Koš-razlika",
+    "setDiff": "Set-razlika",
     "goalDiff": "Gol-razlika",
     "table": "Tabela",
     "team": "Ekipa",
@@ -637,7 +650,7 @@
   "venues": {
     "all": "Sve",
     "venuesAndHalls": "Tereni i sale",
-    "whereFootballAndBasketballAre": "Gde se igra fudbal i košarka: adrese, podloga, cene i zakazani termini.",
+    "whereFootballAndBasketballAre": "Gde se igra fudbal, košarka, tenis i odbojka: adrese, podloga, cene i zakazani termini.",
     "suggestions": "Predlozi",
     "rating4": "⭐ Ocena 4+",
     "venuesFound": "Pronađeno terena: {{length}}",
@@ -660,7 +673,9 @@
   },
   "sports": {
     "Fudbal": "Fudbal",
-    "Košarka": "Košarka"
+    "Košarka": "Košarka",
+    "Tenis": "Tenis",
+    "Odbojka": "Odbojka"
   },
   "surfaces": {
     "Veštačka trava": "Veštačka trava",
@@ -670,6 +685,8 @@
     "Asfalt": "Asfalt",
     "Tartan": "Tartan",
     "Guma": "Guma",
+    "Šljaka": "Šljaka",
+    "Pesak": "Pesak",
     "Ostalo": "Ostalo"
   }
 }

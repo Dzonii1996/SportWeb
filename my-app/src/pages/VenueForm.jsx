@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { LocationPicker } from "../components/LocationMap";
 import { API_URL } from "../config";
 import { authHeader } from "../utils/auth";
+import { SPORTS, sportOption } from "../utils/sports";
 import {
   SURFACES,
   MAX_IMAGES,
@@ -224,8 +225,8 @@ function VenueForm() {
           <div className="grid sm:grid-cols-2 gap-5">
             <fieldset>
               <legend className="font-medium mb-2">{t("venueForm.sports")}</legend>
-              <div className="flex gap-4">
-                {["Fudbal", "Košarka"].map((sport) => (
+              <div className="flex flex-wrap gap-x-4 gap-y-2">
+                {SPORTS.map(({ value: sport }) => (
                   <label key={sport} className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -233,7 +234,7 @@ function VenueForm() {
                       onChange={() => toggleSport(sport)}
                       className="w-4 h-4"
                     />
-                    {sport === "Fudbal" ? t("common.football") : t("common.basketball")}
+                    {sportOption(sport)}
                   </label>
                 ))}
               </div>

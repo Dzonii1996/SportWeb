@@ -1,6 +1,11 @@
 // Zajednička provera polja za termine i terene
 
-const SPORTS = ["Fudbal", "Košarka"];
+const SPORTS = ["Fudbal", "Košarka", "Tenis", "Odbojka"];
+
+const SPORT_EMOJI = { Fudbal: "⚽", Košarka: "🏀", Tenis: "🎾", Odbojka: "🏐" };
+
+// "Teren nije za ..."
+const SPORT_ACCUSATIVE = { Fudbal: "fudbal", Košarka: "košarku", Tenis: "tenis", Odbojka: "odbojku" };
 
 // Cena terena u dinarima nije obavezna. Vraća { error } ili { price } (null kad nije poslata).
 const MAX_PRICE = 1000000;
@@ -47,6 +52,8 @@ const parseCoords = ({ latitude, longitude }) => {
 
 module.exports = {
   SPORTS,
+  SPORT_EMOJI,
+  SPORT_ACCUSATIVE,
   MAX_PRICE,
   parsePrice,
   parseCoords,

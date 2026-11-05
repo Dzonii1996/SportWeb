@@ -146,9 +146,12 @@
     "whoHasPaid": "Who has paid"
   },
   "matchRatings": {
-    "fairPlay": "👍 Fair play",
-    "unsporting": "👎 Unsporting",
-    "noShow": "🚫 No-show",
+    "fairPlay": "Fair",
+    "unsporting": "Unsporting",
+    "noShow": "No-show",
+    "everyonePlayedFair": "👍 Everyone else played fair",
+    "ratedCount": "Rated {{rated}} of {{total}}",
+    "team": "Team {{team}}",
     "rateYourTeammates": "⭐ Rate your teammates",
     "ratingsAppearOnProfilesAs": "Ratings appear on profiles as fair play and no-shows. You can change them until {{value}}."
   },
@@ -318,12 +321,21 @@
     "recreationalSportWithoutTheGroup": "Recreational sport, without the group chats.",
     "playFootball": "football",
     "playBasketball": "basketball",
+    "playTennis": "tennis",
+    "playVolleyball": "volleyball",
+    "tennisTagline": "Singles or doubles, a match partner in your city",
+    "findATennisGame": "Find a tennis game",
+    "tennisText": "Singles, doubles and a match partner",
+    "volleyballTagline": "Indoor or beach, a volleyball team in your city",
+    "findAVolleyballGame": "Find a volleyball game",
+    "volleyballText": "Indoor, beach and a full team",
     "gamesCount_one": "{{count}} game",
     "gamesCount_other": "{{count}} games"
   },
   "leaderboard": {
-    "aWinIs3Points": "A win is 3 points, a draw 1. Games with a recorded result and split teams count.",
-    "noPlayedGamesWithA": "No played games with a result yet.",
+    "aWinIs3Points": "Each sport has its own table. A win is 3 points, a draw 1. Games with a recorded result and split teams count.",
+    "sport": "Sport",
+    "noPlayedGamesWithA": "No played games with a result in this sport yet.",
     "afterTheGameTheOrganizer": "After the game, the organizer splits the teams and enters the result.",
     "player": "Player",
     "winsDrawsLosses": "Wins / Draws / Losses",
@@ -413,7 +425,7 @@
     "gamesJoined": "Games joined",
     "gamesPlayed": "Games played",
     "fairPlay": "Fair play",
-    "ratings": " ({{value}} ratings)",
+    "ratings": "{{value}} ratings",
     "noShows": "No-shows",
     "recordWDL": "Record (W / D / L)",
     "wins": "· {{winRate}}% wins",
@@ -474,6 +486,7 @@
     "ownerDidNotAccept": "❌ owner did not accept",
     "bookingCancelled": "🚫 booking cancelled",
     "pointDiff": "Point diff.",
+    "setDiff": "Set diff.",
     "goalDiff": "Goal diff.",
     "table": "Table",
     "team": "Team",
@@ -633,7 +646,7 @@
   "venues": {
     "all": "All",
     "venuesAndHalls": "Venues and halls",
-    "whereFootballAndBasketballAre": "Where football and basketball are played: addresses, surface, prices and scheduled games.",
+    "whereFootballAndBasketballAre": "Where football, basketball, tennis and volleyball are played: addresses, surface, prices and scheduled games.",
     "suggestions": "Suggestions",
     "rating4": "⭐ Rating 4+",
     "venuesFound": "Venues found: {{length}}",
@@ -656,7 +669,9 @@
   },
   "sports": {
     "Fudbal": "Football",
-    "Košarka": "Basketball"
+    "Košarka": "Basketball",
+    "Tenis": "Tennis",
+    "Odbojka": "Volleyball"
   },
   "surfaces": {
     "Veštačka trava": "Artificial turf",
@@ -666,6 +681,8 @@
     "Asfalt": "Asphalt",
     "Tartan": "Tartan",
     "Guma": "Rubber",
+    "Šljaka": "Clay",
+    "Pesak": "Sand",
     "Ostalo": "Other"
   }
 }

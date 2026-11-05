@@ -1,4 +1,5 @@
 const pool = require("../database/db");
+const { SPORTS } = require("../utils/fields");
 const { describeMatch, notifyUsers } = require("../utils/notify");
 
 const RESULT_DAYS = 7;
@@ -161,9 +162,18 @@ const getResultStats = async (user_id) => {
   };
 };
 
-// Rang lista: bodovi kao u fudbalu (pobeda 3, nerešeno 1)
+// Rang lista: pobeda 3 boda, nerešeno 1. ?sport=Tenis daje listu za jedan sport.
 const getLeaderboard = async (req, res) => {
   try {
+    const sport = req.query.sport || null;
+
+    if (sport !== null && !SPORTS.includes(sport)) {
+      return res.status(400).json({
+        success: false,
+        message: "Nepoznat sport.",
+      });
+    }
+
     const result = await pool.query(
       `WITH outcomes AS (
          SELECT
@@ -176,6 +186,7 @@ const getLeaderboard = async (req, res) => {
          FROM match_players mp
          JOIN matches m ON m.id = mp.match_id
          WHERE mp.team IS NOT NULL AND m.score_a IS NOT NULL
+           AND ($1::text IS NULL OR m.sport = $1)
        )
        SELECT
          users.id,
@@ -191,7 +202,8 @@ const getLeaderboard = async (req, res) => {
        JOIN users ON users.id = outcomes.user_id
        GROUP BY users.id
        ORDER BY points DESC, wins DESC, played ASC, users.name
-       LIMIT 50`
+       LIMIT 50`,
+      [sport]
     );
 
     res.json({

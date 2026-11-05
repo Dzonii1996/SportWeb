@@ -13,6 +13,8 @@ const SURFACES = [
   "Asfalt",
   "Tartan",
   "Guma",
+  "Šljaka",
+  "Pesak",
   "Ostalo",
 ];
 const STATUSES = ["approved", "pending", "rejected"];
@@ -82,7 +84,7 @@ const validateVenue = (body) => {
   const sports = Array.isArray(body.sports) ? [...new Set(body.sports)] : [];
 
   if (sports.length === 0 || !sports.every((s) => SPORTS.includes(s))) {
-    return { error: "Izaberi bar jedan sport (Fudbal ili Košarka)." };
+    return { error: "Izaberi bar jedan sport." };
   }
 
   const surface = body.surface ? String(body.surface) : null;

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Share2, Link2, Check } from "lucide-react";
 import { API_URL } from "../config";
 import { matchStart } from "../utils/matchDate";
+import { sportEmoji } from "../utils/sports";
 import { useTranslation } from "react-i18next";
 import { locale, sportLabel } from "../i18n";
 
@@ -22,7 +23,7 @@ function ShareMatch({ match, freeSpots }) {
     locale(),
     { weekday: "long", day: "numeric", month: "numeric" }
   );
-  const emoji = match.sport === "Košarka" ? "🏀" : "⚽";
+  const emoji = sportEmoji(match.sport);
   const spots =
     freeSpots > 0
       ? t("shareMatch.moreNeeded", { freeSpots, value: freeSpots === 1 ? t("shareMatch.player") : t("shareMatch.players") })

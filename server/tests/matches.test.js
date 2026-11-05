@@ -41,7 +41,7 @@ describe("kreiranje termina", () => {
     ["31. februar", { match_date: "2027-02-31" }, "Neispravan datum ili vreme."],
     ["vreme 25:00", { match_time: "25:00" }, "Neispravan datum ili vreme."],
     ["100 igrača", { max_players: 100 }, "Broj igrača mora biti između 2 i 30."],
-    ["nepoznat sport", { sport: "Tenis" }, "Nepoznat sport."],
+    ["nepoznat sport", { sport: "Hokej" }, "Nepoznat sport."],
     ["lokacija od razmaka", { location: "   " }, "Lokacija mora imati između 2 i 100 znakova."],
     ["samo jedna koordinata", { latitude: 42.88 }, "Neispravna lokacija na mapi."],
     ["koordinata van opsega", { latitude: 95, longitude: 20 }, "Neispravna lokacija na mapi."],

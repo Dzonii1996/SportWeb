@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { API_URL } from "../config";
 import { authHeader } from "./auth";
 import i18n from "../i18n";
+import { sportEmoji } from "./sports";
 
 // Iste vrednosti kao na serveru (controllers/venueController.js)
 export const SURFACES = [
@@ -12,13 +13,15 @@ export const SURFACES = [
   "Asfalt",
   "Tartan",
   "Guma",
+  "Šljaka",
+  "Pesak",
   "Ostalo",
 ];
 
 export const MAX_IMAGES = 6;
 
 export const sportIcons = (sports = []) =>
-  sports.map((s) => (s === "Košarka" ? "🏀" : "⚽")).join(" ");
+  sports.map(sportEmoji).join(" ");
 
 export const indoorLabel = (indoor) => (indoor ? i18n.t("venues.indoorsHall") : i18n.t("common.outdoors"));
 

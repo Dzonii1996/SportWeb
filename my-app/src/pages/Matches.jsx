@@ -13,14 +13,10 @@ import {
   normalizeText,
 } from "../utils/matchDate";
 import { distanceKm, getMyPosition, hasCoords } from "../utils/geo";
+import { sportFilters } from "../utils/sports";
 import { useTranslation } from "react-i18next";
-import i18n from "../i18n";
 
-const SPORTS = [
-  { value: "Svi", get label() { return i18n.t("common.all"); } },
-  { value: "Fudbal", get label() { return i18n.t("common.football"); } },
-  { value: "Košarka", get label() { return i18n.t("common.basketball"); } },
-];
+const SPORTS = sportFilters("Svi");
 
 function Matches() {
   const { t } = useTranslation();

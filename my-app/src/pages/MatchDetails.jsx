@@ -11,6 +11,7 @@ import InvitePlayers, { InviteBanner } from "../components/InvitePlayers";
 import { hasPrice } from "../utils/price";
 import { LocationView } from "../components/LocationMap";
 import { hasCoords } from "../utils/geo";
+import { sportEmoji } from "../utils/sports";
 import { API_URL } from "../config";
 import { authHeader } from "../utils/auth";
 import { isPastMatch, matchStart, inConfirmWindow } from "../utils/matchDate";
@@ -183,8 +184,8 @@ function MatchDetails() {
   const confirmedCount = players.filter((p) => p.confirmed).length;
   // Koga mogu da ocenim posle termina: kreator i igrači, bez mene
   const rateablePeople = [
-    { id: match.user_id, name: match.creator_name },
     ...players,
+    { id: match.user_id, name: match.creator_name, avatar: match.creator_avatar },
   ].filter(
     (p, index, all) =>
       p.id !== user?.id && all.findIndex((x) => x.id === p.id) === index
@@ -317,7 +318,7 @@ function MatchDetails() {
 
         <div className="grid gap-6 lg:grid-cols-2">
 
-          <div className="space-y-6">
+          <div className="space-y-6 min-w-0">
 
             <div className={CARD}>
               {/* Zaglavlje u istom stilu kao kartica termina */}
@@ -333,7 +334,7 @@ function MatchDetails() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-4">
                     <span className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-3xl">
-                      {match.sport === "Košarka" ? "🏀" : "⚽"}
+                      {sportEmoji(match.sport)}
                     </span>
 
                     <div>

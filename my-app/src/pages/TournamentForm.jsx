@@ -6,6 +6,7 @@ import { authHeader } from "../utils/auth";
 import { localDateKey, todayKey, maxDateKey } from "../utils/matchDate";
 import { useAdminStatus, useVenues } from "../utils/venues";
 import { FORMATS } from "../utils/tournaments";
+import { SPORTS, sportOption } from "../utils/sports";
 import { useTranslation } from "react-i18next";
 
 const input = "w-full border p-3 rounded-xl";
@@ -151,8 +152,9 @@ function TournamentForm() {
           />
 
           <select className={input} value={form.sport} onChange={changeSport} aria-label={tr("tournamentForm.sport")}>
-            <option value="Fudbal">{tr("common.football")}</option>
-            <option value="Košarka">{tr("common.basketball")}</option>
+            {SPORTS.map((s) => (
+              <option key={s.value} value={s.value}>{sportOption(s.value)}</option>
+            ))}
           </select>
 
           <fieldset>

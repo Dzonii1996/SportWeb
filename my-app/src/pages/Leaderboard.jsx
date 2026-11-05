@@ -1,25 +1,40 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Trophy } from "lucide-react";
 import { API_URL } from "../config";
 import { useTranslation } from "react-i18next";
+import { SPORTS, sportOption } from "../utils/sports";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 
-// Rang lista: bodovi kao u fudbalu (pobeda 3, nerešeno 1)
+// Rang lista za svaki sport posebno (pobeda 3 boda, nerešeno 1).
+// Izabrani sport je u adresi: /rang-lista?sport=Tenis
 function Leaderboard() {
   const { t } = useTranslation();
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const sportParam = searchParams.get("sport");
+  const sport = SPORTS.some((s) => s.value === sportParam) ? sportParam : SPORTS[0].value;
 
   const [players, setPlayers] = useState(null);
 
   const me = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
-    fetch(`${API_URL}/api/users/leaderboard`)
+    // Odgovor za prethodno izabrani sport ne sme da pregazi noviji
+    let current = true;
+
+    setPlayers(null);
+
+    fetch(`${API_URL}/api/users/leaderboard?sport=${encodeURIComponent(sport)}`)
       .then((res) => res.json())
-      .then((data) => setPlayers(data.players || []))
-      .catch(() => setPlayers([]));
-  }, []);
+      .then((data) => current && setPlayers(data.players || []))
+      .catch(() => current && setPlayers([]));
+
+    return () => {
+      current = false;
+    };
+  }, [sport]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -35,6 +50,22 @@ function Leaderboard() {
         <p className="text-gray-500 mb-6">
           {t("leaderboard.aWinIs3Points")}
         </p>
+
+        <div className="flex flex-wrap gap-2 mb-6" role="tablist" aria-label={t("leaderboard.sport")}>
+          {SPORTS.map((s) => (
+            <button
+              key={s.value}
+              role="tab"
+              aria-selected={s.value === sport}
+              onClick={() => setSearchParams({ sport: s.value })}
+              className={`px-4 py-2 rounded-full font-semibold transition ${
+                s.value === sport ? "bg-green-600 text-white" : "bg-gray-200 hover:bg-gray-300"
+              }`}
+            >
+              {sportOption(s.value)}
+            </button>
+          ))}
+        </div>
 
         {players === null ? (
           <p className="text-gray-500">{t("common.loading")}</p>

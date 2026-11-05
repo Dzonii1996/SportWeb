@@ -35,7 +35,12 @@ const RESERVATION_LABELS = {
 function Standings({ rows, sport }) {
   const { t } = useTranslation();
 
-  const diffLabel = sport === "Košarka" ? t("tournamentDetails.pointDiff") : t("tournamentDetails.goalDiff");
+  const diffLabel = {
+    Fudbal: t("tournamentDetails.goalDiff"),
+    Košarka: t("tournamentDetails.pointDiff"),
+  }[sport] ?? t("tournamentDetails.setDiff");
+  // Nerešeno postoji samo u fudbalu
+  const hasDraws = sport === "Fudbal";
 
   return (
     <div className={card}>
@@ -49,7 +54,7 @@ function Standings({ rows, sport }) {
               <th className="py-2 pr-2">{t("tournamentDetails.team")}</th>
               <th className="py-2 px-2 text-center" title={t("common.played2")}>O</th>
               <th className="py-2 px-2 text-center" title={t("tournamentDetails.wins")}>P</th>
-              {sport !== "Košarka" && <th className="py-2 px-2 text-center" title={t("tournamentDetails.draws")}>N</th>}
+              {hasDraws && <th className="py-2 px-2 text-center" title={t("tournamentDetails.draws")}>N</th>}
               <th className="py-2 px-2 text-center" title={t("tournamentDetails.losses")}>I</th>
               <th className="py-2 px-2 text-center" title={diffLabel}>+/−</th>
               <th className="py-2 pl-2 text-center">{t("tournamentDetails.pts")}</th>
@@ -62,7 +67,7 @@ function Standings({ rows, sport }) {
                 <td className="py-2 pr-2 font-semibold">{row.name}</td>
                 <td className="py-2 px-2 text-center">{row.played}</td>
                 <td className="py-2 px-2 text-center">{row.wins}</td>
-                {sport !== "Košarka" && <td className="py-2 px-2 text-center">{row.draws}</td>}
+                {hasDraws && <td className="py-2 px-2 text-center">{row.draws}</td>}
                 <td className="py-2 px-2 text-center">{row.losses}</td>
                 <td className="py-2 px-2 text-center">{row.diff > 0 ? `+${row.diff}` : row.diff}</td>
                 <td className="py-2 pl-2 text-center font-bold">{row.points}</td>

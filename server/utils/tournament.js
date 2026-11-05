@@ -104,6 +104,11 @@ const judgeResult = ({ sport, format, scoreA, scoreB, penaltiesA, penaltiesB }) 
     return { error: "U košarci nema nerešenog rezultata. Upiši rezultat posle produžetka." };
   }
 
+  // Tenis i odbojka: rezultat su osvojeni setovi
+  if (sport !== "Fudbal") {
+    return { error: "U ovom sportu nema nerešenog rezultata. Upiši osvojene setove." };
+  }
+
   if (format === "league") {
     return { winner: null, penalties: null };
   }
@@ -115,10 +120,12 @@ const judgeResult = ({ sport, format, scoreA, scoreB, penaltiesA, penaltiesB }) 
   return { winner: penaltiesA > penaltiesB ? "a" : "b", penalties: [penaltiesA, penaltiesB] };
 };
 
-// Bodovi: fudbal 3/1/0, košarka 2 za pobedu i 1 za poraz
+// Bodovi: fudbal 3/1/0, košarka 2 za pobedu i 1 za poraz, tenis i odbojka 2 za pobedu
 const POINTS = {
   Fudbal: { win: 3, draw: 1, loss: 0 },
   Košarka: { win: 2, draw: 0, loss: 1 },
+  Tenis: { win: 2, draw: 0, loss: 0 },
+  Odbojka: { win: 2, draw: 0, loss: 0 },
 };
 
 const emptyRow = (team) => ({
@@ -171,7 +178,7 @@ const tally = (teams, games, sport) => {
   return [...rows.values()];
 };
 
-// Tabela lige: bodovi, gol/koš-razlika, međusobni susreti, više datih, pa naziv
+// Tabela lige: bodovi, razlika (golovi, koševi ili setovi), međusobni susreti, više datih, pa naziv
 const computeStandings = (teams, games, sport) => {
   const rows = tally(teams, games, sport);
   const groups = new Map();

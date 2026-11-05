@@ -231,7 +231,7 @@ describe("predlozi", () => {
     ["bez tačke na mapi", { latitude: "", longitude: "" }, /mapi/],
     ["neispravne koordinate", { latitude: 200 }, /lokacija/],
     ["bez sporta", { sports: [] }, /sport/],
-    ["nepoznat sport", { sports: ["Tenis"] }, /sport/],
+    ["nepoznat sport", { sports: ["Hokej"] }, /sport/],
     ["nepoznata podloga", { surface: "Led" }, /podloga/],
     ["negativna cena", { price_per_hour: -1 }, /Cena po satu/],
     ["telefon sa slovima", { phone: "zovi me" }, /Telefon/],
@@ -285,7 +285,7 @@ describe("vidljivost i filteri", () => {
     expect(await names("?sport=Košarka")).toEqual(["Hala", "Koš napolju"]);
     expect(await names("?indoor=true")).toEqual(["Hala"]);
     expect(await names("?sport=Fudbal&indoor=false")).toEqual(["Fudbal napolju"]);
-    expect((await api.get("/api/venues?sport=Tenis")).status).toBe(400);
+    expect((await api.get("/api/venues?sport=Hokej")).status).toBe(400);
   });
 
   test("stranica terena prikazuje predstojeće javne termine na njemu", async () => {

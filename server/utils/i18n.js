@@ -33,6 +33,8 @@ patterns.sort((a, b) => b.literal - a.literal);
 const VALUES = {
   Fudbal: "Football",
   Košarka: "Basketball",
+  Tenis: "Tennis",
+  Odbojka: "Volleyball",
   "Radno vreme": "Opening hours",
   Telefon: "Phone",
   Opis: "Description",
@@ -53,7 +55,7 @@ const DATE = "(\\d{1,2})\\. ?(\\d{1,2})\\. ?(\\d{4})\\.";
 
 const DATE_ONLY = new RegExp(`^${DATE}$`);
 // "Fudbal, Grabovac, 10. 11. 2026. u 18:00" (describeMatch)
-const MATCH = new RegExp(`^(Fudbal|Košarka), ([\\s\\S]+), ${DATE} u (\\d{2}:\\d{2})$`);
+const MATCH = new RegExp(`^(Fudbal|Košarka|Tenis|Odbojka), ([\\s\\S]+), ${DATE} u (\\d{2}:\\d{2})$`);
 // "pet, 20. 11. 2026. od 18 do 20h" (describeSlot)
 const SLOT = new RegExp(`^(\\S+), ${DATE} od (\\d+) do (\\d+)h$`);
 

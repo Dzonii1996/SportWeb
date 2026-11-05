@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { DEFAULT_CENTER, getMyPosition } from "../utils/geo";
+import { sportEmoji } from "../utils/sports";
 import { useTranslation } from "react-i18next";
 
 // Sopstvena ikonica, jer se podrazumevane Leaflet slike ne učitavaju kroz webpack
@@ -18,7 +19,7 @@ const venueIcon = (sports) =>
   L.divIcon({
     className: "",
     html: `<div style="transform:translate(-50%,-50%);background:#fff;border:2px solid #16a34a;border-radius:9999px;padding:2px 6px;font-size:16px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.3)">${sports
-      .map((s) => (s === "Košarka" ? "🏀" : "⚽"))
+      .map(sportEmoji)
       .join("")}</div>`,
     iconSize: [0, 0],
   });

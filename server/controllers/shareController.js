@@ -1,6 +1,7 @@
 const pool = require("../database/db");
 const { describeMatch } = require("../utils/notify");
 const { translate } = require("../utils/i18n");
+const { SPORT_EMOJI } = require("../utils/fields");
 
 // Adresa frontenda na koju link vodi. Za produkciju postavi FRONTEND_URL u .env
 const frontendUrl = () =>
@@ -80,7 +81,7 @@ const shareMatch = async (req, res) => {
     }
 
     const free = Math.max(0, match.max_players - Number(match.players));
-    const emoji = match.sport === "Košarka" ? "🏀" : "⚽";
+    const emoji = SPORT_EMOJI[match.sport] ?? "🏅";
 
     res.type("html").send(
       page({

@@ -11,8 +11,19 @@ import PrivateMatchField from "../components/PrivateMatchField";
 import VenuePicker from "../components/VenuePicker";
 import ReserveVenueField from "../components/ReserveVenueField";
 import { useVenues } from "../utils/venues";
+import { SPORTS, defaultPlayers, sportOption } from "../utils/sports";
 import { hourLabel, formatReservationDate } from "../utils/reservations";
 import { useTranslation } from "react-i18next";
+
+// Promena sporta menja i broj igrača, ako ga korisnik nije sam menjao
+const withSport = (data, sport) => ({
+  ...data,
+  sport,
+  max_players:
+    Number(data.max_players) === defaultPlayers(data.sport)
+      ? defaultPlayers(sport)
+      : data.max_players,
+});
 
 function CreateMatch() {
   const { t } = useTranslation();
@@ -62,8 +73,7 @@ function CreateMatch() {
     setVenueId(String(venue.id));
     setPosition([venue.latitude, venue.longitude]);
     setFormData((data) => ({
-      ...data,
-      sport: venue.sports.includes(data.sport) ? data.sport : venue.sports[0],
+      ...withSport(data, venue.sports.includes(data.sport) ? data.sport : venue.sports[0]),
       location: venue.name,
       // Iz rezervacije: cena za sve rezervisane sate
       field_price:
@@ -104,7 +114,7 @@ function CreateMatch() {
       setVenueId("");
     }
 
-    handleChange(e);
+    setFormData((data) => withSport(data, e.target.value));
   };
 
   const handleSubmit = async (e) => {
@@ -157,8 +167,9 @@ function CreateMatch() {
             onChange={handleSportChange}
             className="w-full border p-3 rounded-xl"
           >
-            <option value="Fudbal">{t("common.football")}</option>
-            <option value="Košarka">{t("common.basketball")}</option>
+            {SPORTS.map((s) => (
+              <option key={s.value} value={s.value}>{sportOption(s.value)}</option>
+            ))}
           </select>
 
           {/* Iz rezervacije: teren, datum i vreme su zaključani */}

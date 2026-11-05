@@ -156,32 +156,35 @@ function PublicProfile() {
               </div>
 
               {/* Fer plej iz ocena saigrača */}
-              <div className="grid grid-cols-3 gap-4 mt-4">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-4">
 
-                <div className="bg-gray-50 rounded-xl p-4 text-center">
+                <div className="bg-gray-50 rounded-xl p-2 sm:p-4 text-center">
                   <p className="text-2xl font-bold">
                     {profile.stats.played}
                   </p>
-                  <p className="text-gray-600 text-sm">
+                  <p className="text-gray-600 text-xs sm:text-sm">
                    {t("publicProfile.gamesPlayed")}
                   </p>
                 </div>
 
-                <div className="bg-yellow-50 rounded-xl p-4 text-center">
+                <div className="bg-yellow-50 rounded-xl p-2 sm:p-4 text-center">
                   <p className="text-2xl font-bold text-yellow-700">
                     {profile.stats.fairPlay === null
                       ? "—"
                       : `${profile.stats.fairPlay}%`}
                   </p>
-                  <p className="text-gray-600 text-sm">
+                  <p className="text-gray-600 text-xs sm:text-sm">
                    {t("publicProfile.fairPlay")}
-                    {profile.stats.fair + profile.stats.unfair > 0 &&
-                      t("publicProfile.ratings", { value: profile.stats.fair + profile.stats.unfair })}
                   </p>
+                  {profile.stats.fair + profile.stats.unfair > 0 && (
+                    <p className="text-gray-500 text-xs">
+                      {t("publicProfile.ratings", { value: profile.stats.fair + profile.stats.unfair })}
+                    </p>
+                  )}
                 </div>
 
                 <div
-                  className={`rounded-xl p-4 text-center ${
+                  className={`rounded-xl p-2 sm:p-4 text-center ${
                     profile.stats.noShows > 0 ? "bg-red-50" : "bg-gray-50"
                   }`}
                 >
@@ -192,7 +195,7 @@ function PublicProfile() {
                   >
                     {profile.stats.noShows}
                   </p>
-                  <p className="text-gray-600 text-sm">
+                  <p className="text-gray-600 text-xs sm:text-sm">
                    {t("publicProfile.noShows")}
                   </p>
                 </div>

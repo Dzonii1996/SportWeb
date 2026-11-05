@@ -2,6 +2,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { Menu, X, Plus, ChevronDown, User, CalendarCheck, CalendarClock, LogOut } from "lucide-react";
 import { logout } from "../utils/auth";
+import Logo from "../components/Logo";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import NotificationBell from "../components/NotificationBell";
 import { useTranslation } from "react-i18next";
@@ -97,17 +98,15 @@ useEffect(() => {
   const initial = user?.name?.charAt(0).toUpperCase();
 
   return (
-    <nav className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-gray-200">
+    <nav className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-gray-200 font-display">
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
 
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0">
-          <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-green-500 to-emerald-700 text-white flex items-center justify-center text-lg shadow-sm">
-            ⚽
-          </span>
+          <Logo className="w-11 h-11" />
           <span className="text-xl font-extrabold tracking-tight text-gray-900">
-            Sport<span className="text-green-600">Web</span>
+            Sport<span className="text-green-600"> KM</span>
           </span>
         </Link>
 

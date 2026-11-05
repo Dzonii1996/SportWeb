@@ -5,14 +5,11 @@ import { API_URL } from "../config";
 import { formatRSD } from "../utils/price";
 import { useAdminStatus } from "../utils/venues";
 import { FORMATS, STATUS, formatDate, sportIcon } from "../utils/tournaments";
+import { sportFilters } from "../utils/sports";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n";
 
-const SPORTS = [
-  { value: "", label: "Svi" },
-  { get value() { return i18n.t("tournaments.all"); }, get label() { return i18n.t("common.football"); } },
-  { value: "Košarka", get label() { return i18n.t("common.basketball"); } },
-];
+const SPORTS = sportFilters("");
 
 const STATUSES = [
   { value: "", get label() { return i18n.t("common.allTournaments"); } },

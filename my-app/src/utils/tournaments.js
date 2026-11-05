@@ -14,7 +14,7 @@ export const STATUS = {
   cancelled: { get label() { return i18n.t("tournaments.cancelled"); }, className: "bg-red-100 text-red-700" },
 };
 
-export const sportIcon = (sport) => (sport === "Košarka" ? "🏀" : "⚽");
+export { sportEmoji as sportIcon } from "./sports";
 
 // "Finale", "Polufinale", "Četvrtfinale", "1. kolo"
 export const roundLabel = (format, round, totalRounds) => {
