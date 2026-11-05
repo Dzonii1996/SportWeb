@@ -6,6 +6,7 @@ import { authHeader } from "../utils/auth";
 import { localDateKey, todayKey, maxDateKey } from "../utils/matchDate";
 import { useAdminStatus, useVenues } from "../utils/venues";
 import { FORMATS } from "../utils/tournaments";
+import i18n from "../i18n";
 import { SPORTS, sportOption } from "../utils/sports";
 import { useTranslation } from "react-i18next";
 
@@ -53,9 +54,9 @@ function TournamentForm() {
         const t = data.tournament;
 
         if (!data.success || !data.can_manage) {
-          setError(tr("tournamentForm.onlyTheOrganizerCanEdit"));
+          setError(i18n.t("tournamentForm.onlyTheOrganizerCanEdit"));
         } else if (t.status !== "registration") {
-          setError(tr("tournamentForm.aTournamentCanOnlyBe"));
+          setError(i18n.t("tournamentForm.aTournamentCanOnlyBe"));
         } else {
           setForm({
             name: t.name,
@@ -136,8 +137,8 @@ function TournamentForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex justify-center py-10 px-4">
-      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-2xl">
+    <div className="min-h-screen bg-gray-100 flex justify-center py-4 sm:py-10 px-4">
+      <div className="bg-white p-5 sm:p-8 rounded-2xl shadow-lg w-full max-w-2xl h-fit">
         <h1 className="text-3xl font-bold mb-6">{editing ? tr("tournamentForm.editTournament") : tr("common.createATournament")}</h1>
 
         <form onSubmit={handleSubmit} className="space-y-5">

@@ -12,7 +12,7 @@ import {
   useAdminStatus,
 } from "../utils/venues";
 import { useTranslation } from "react-i18next";
-import { surfaceLabel } from "../i18n";
+import i18n, { surfaceLabel } from "../i18n";
 
 const EMPTY = {
   name: "",
@@ -52,7 +52,7 @@ function VenueForm() {
       .then((res) => res.json())
       .then((data) => {
         if (!data.success || !data.can_edit) {
-          setError(t("venueForm.onlyTheAdminOrThe"));
+          setError(i18n.t("venueForm.onlyTheAdminOrThe"));
         } else {
           const v = data.venue;
 
@@ -189,8 +189,8 @@ function VenueForm() {
   const title = editing ? t("common.editVenue") : isAdmin ? t("common.addAVenue") : t("common.suggestAVenue");
 
   return (
-    <div className="min-h-screen bg-gray-100 flex justify-center py-10 px-4">
-      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-2xl">
+    <div className="min-h-screen bg-gray-100 flex justify-center py-4 sm:py-10 px-4">
+      <div className="bg-white p-5 sm:p-8 rounded-2xl shadow-lg w-full max-w-2xl h-fit">
         <h1 className="text-3xl font-bold mb-2">{title}</h1>
 
         {!editing && !isAdmin && (

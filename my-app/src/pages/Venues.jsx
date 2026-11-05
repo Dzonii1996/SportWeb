@@ -19,7 +19,7 @@ const PLACES = [
 ];
 
 const pill = (active) =>
-  `px-4 py-2 rounded-full font-semibold transition ${
+  `pill ${
     active ? "bg-green-600 text-white" : "bg-gray-200 hover:bg-gray-300"
   }`;
 
@@ -96,12 +96,12 @@ function Venues() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6">
 
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-8">
           <div>
-            <h1 className="text-4xl font-bold">{t("venues.venuesAndHalls")}</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-2xl sm:text-4xl font-bold">{t("venues.venuesAndHalls")}</h1>
+            <p className="hidden sm:block text-gray-600 mt-1">
               {t("venues.whereFootballAndBasketballAre")}
             </p>
           </div>
@@ -110,7 +110,7 @@ function Venues() {
             {isAdmin && (
               <Link
                 to="/tereni/admin"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full font-semibold border border-gray-300 bg-white hover:bg-gray-50"
+                className="pill inline-flex items-center gap-1.5 border border-gray-300 bg-white hover:bg-gray-50"
               >
                 <ShieldCheck size={18} />
                 {t("venues.suggestions")}
@@ -125,7 +125,7 @@ function Venues() {
             {loggedIn && (
               <Link
                 to="/tereni/predlozi"
-                className="inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full font-semibold shadow-sm"
+                className="pill inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white shadow-sm"
               >
                 <Plus size={18} />
                 {isAdmin ? t("common.addAVenue") : t("common.suggestAVenue")}
@@ -135,8 +135,8 @@ function Venues() {
         </div>
 
         {/* Filteri */}
-        <div className="bg-white shadow rounded-2xl p-6 mb-6 flex flex-wrap items-center gap-x-6 gap-y-3">
-          <div className="flex flex-wrap gap-2">
+        <div className="bg-white shadow rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-6 gap-y-3">
+          <div className="pill-row">
             {SPORTS.map((s) => (
               <button key={s.value} onClick={() => setSport(s.value)} className={pill(sport === s.value)}>
                 {s.label}
@@ -144,19 +144,17 @@ function Venues() {
             ))}
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="pill-row items-center">
             {PLACES.map((p) => (
               <button key={p.value} onClick={() => setIndoor(p.value)} className={pill(indoor === p.value)}>
                 {p.label}
               </button>
             ))}
-          </div>
 
-          <button onClick={() => setGoodOnly(!goodOnly)} className={pill(goodOnly)}>
-            {t("venues.rating4")}
-          </button>
+            <button onClick={() => setGoodOnly(!goodOnly)} className={pill(goodOnly)}>
+              {t("venues.rating4")}
+            </button>
 
-          <div className="flex items-center gap-2">
             <button onClick={toggleNearMe} disabled={locating} className={pill(Boolean(myPosition))}>
               {locating ? t("common.findingLocation") : t("common.nearMe")}
             </button>
@@ -165,7 +163,7 @@ function Venues() {
               <select
                 value={radiusKm}
                 onChange={(e) => setRadiusKm(Number(e.target.value))}
-                className="border p-2 rounded-xl"
+                className="border p-2 rounded-xl shrink-0"
               >
                 {[2, 5, 10, 25, 50].map((km) => (
                   <option key={km} value={km}>
@@ -177,7 +175,7 @@ function Venues() {
           </div>
         </div>
 
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <VenuesMap venues={shown} myPosition={myPosition} />
         </div>
 
@@ -198,7 +196,7 @@ function Venues() {
           </select>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {shown.map((venue) => (
             <VenueCard key={venue.id} venue={venue} distance={distanceOf(venue)} />
           ))}

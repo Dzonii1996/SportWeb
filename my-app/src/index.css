@@ -1,6 +1,23 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  /* Red dugmića: na telefonu se prevlači, na većem ekranu prelazi u novi red */
+  .pill-row {
+    @apply flex gap-2 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:overflow-visible;
+    scrollbar-width: none;
+  }
+
+  .pill-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pill {
+    @apply shrink-0 whitespace-nowrap rounded-full font-semibold transition text-sm px-3.5 py-1.5 sm:text-base sm:px-4 sm:py-2;
+  }
+}
+
 /* Traka napretka za slajder na početnoj strani */
 @keyframes hero-progress {
   from { width: 0%; }

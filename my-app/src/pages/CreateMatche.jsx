@@ -151,11 +151,11 @@ function CreateMatch() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex justify-center py-10">
+    <div className="min-h-screen bg-gray-100 flex justify-center py-4 sm:py-10 px-4">
 
-      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-lg">
+      <div className="bg-white p-5 sm:p-8 rounded-2xl shadow-lg w-full max-w-lg h-fit">
 
-        <h1 className="text-3xl font-bold mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">
           {t("createMatch.createANewGame")}
         </h1>
 

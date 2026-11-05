@@ -305,7 +305,7 @@ function MatchDetails() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4">
+    <div className="min-h-screen bg-gray-100 py-4 sm:py-8 px-4">
       <div className="max-w-6xl mx-auto">
 
         <Link

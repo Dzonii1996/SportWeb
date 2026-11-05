@@ -188,7 +188,7 @@ export function VenuesMap({ venues, myPosition = null }) {
       center={points[0] || DEFAULT_CENTER}
       zoom={13}
       scrollWheelZoom={false}
-      className="h-80 md:h-96 w-full rounded-2xl z-0"
+      className="h-56 sm:h-80 md:h-96 w-full rounded-2xl z-0"
     >
       <Tiles />
       <FitBounds points={points} />

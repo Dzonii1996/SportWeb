@@ -385,6 +385,7 @@
   "matches": {
     "sportsGames": "Sports games",
     "searchByLocation": "Search by location...",
+    "moreFilters": "More filters",
     "onlyWithFreeSpots": "👥 Only with free spots",
     "alsoShowPlayedGames": "🕓 Also show played games",
     "clearFilters": "Clear filters",

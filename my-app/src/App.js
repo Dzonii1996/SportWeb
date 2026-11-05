@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import Login  from "./pages/Login";
 import Register  from "./pages/Registration";
 import Navbar from "./pages/NavBar";
+import BottomNav from "./components/BottomNav";
 import MatchCard from "./components/MatchCard";
 import Matches from "./pages/Matches";
 import CreateMatch from "./pages/CreateMatche";
@@ -84,6 +85,7 @@ function App() {
   }
 />
       </Routes>
+      <BottomNav />
 
 
       

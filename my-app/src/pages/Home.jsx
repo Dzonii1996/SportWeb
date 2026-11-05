@@ -237,18 +237,18 @@ function Home() {
         {/* Zatamnjenje, da tekst bude čitljiv preko linija terena */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-black/10" />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 md:py-24 grid lg:grid-cols-2 gap-12 items-center">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-16 md:py-24 grid lg:grid-cols-2 gap-12 items-center">
 
-          <div>
+          <div className="min-w-0">
             {/* Izbor sporta: menja pozadinu i zaustavlja smenjivanje */}
-            <div className="flex flex-wrap gap-2 mb-6" role="tablist" aria-label="Sport">
+            <div className="pill-row mb-6" role="tablist" aria-label="Sport">
               {HERO_SLIDES.map((s, i) => (
                 <button
                   key={s.sport}
                   role="tab"
                   aria-selected={i === active}
                   onClick={() => selectSlide(i)}
-                  className={`relative overflow-hidden px-4 py-1.5 rounded-full text-sm font-semibold border transition ${
+                  className={`relative overflow-hidden shrink-0 whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-semibold border transition ${
                     i === active
                       ? "bg-white text-gray-900 border-white"
                       : "bg-white/10 border-white/30 hover:bg-white/20"
@@ -353,7 +353,7 @@ function Home() {
       </section>
 
       {/* Uskoro */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-16">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16">
         <div className="flex items-end justify-between gap-4 mb-6">
           <div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
@@ -400,12 +400,12 @@ function Home() {
       </section>
 
       {/* Sportovi */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-16">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16">
         <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-6">
           {t("home.pickASport")}
         </h2>
 
-        <div className="grid sm:grid-cols-2 gap-5">
+        <div className="grid grid-cols-2 gap-3 sm:gap-5">
           {SPORTS.map((s) => {
             const count = upcoming.filter((m) => m.sport === s.value).length;
 
@@ -413,15 +413,15 @@ function Home() {
               <Link
                 key={s.value}
                 to={`/matches?sport=${encodeURIComponent(s.value)}`}
-                className="group flex items-center gap-5 bg-white rounded-2xl border border-gray-200 p-6 hover:border-green-500 hover:shadow-lg transition"
+                className="group flex flex-col sm:flex-row items-center gap-2 sm:gap-5 text-center sm:text-left bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 hover:border-green-500 hover:shadow-lg transition"
               >
-                <span className="w-16 h-16 rounded-2xl bg-green-50 flex items-center justify-center text-4xl group-hover:scale-110 transition">
+                <span className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-green-50 flex items-center justify-center text-3xl sm:text-4xl group-hover:scale-110 transition">
                   {s.emoji}
                 </span>
 
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-gray-900">{sportLabel(s.value)}</h3>
-                  <p className="text-gray-500 text-sm">{s.text}</p>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900">{sportLabel(s.value)}</h3>
+                  <p className="hidden sm:block text-gray-500 text-sm">{s.text}</p>
                 </div>
 
                 <span className="text-sm font-semibold text-green-700 whitespace-nowrap">
@@ -434,7 +434,7 @@ function Home() {
       </section>
 
       {/* Kako radi */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-16">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16">
         <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-6">
           {t("home.howItWorks")}
         </h2>
@@ -458,7 +458,7 @@ function Home() {
 
       {/* Poziv na akciju */}
       {!loggedIn && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-16">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16">
           <div className="bg-gray-900 text-white rounded-3xl p-8 sm:p-12 flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
               <h2 className="text-2xl sm:text-3xl font-extrabold">

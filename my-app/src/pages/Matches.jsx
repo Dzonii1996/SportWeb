@@ -2,7 +2,7 @@
 
 
 import { useState, useEffect } from "react";
-import { Search } from "lucide-react";
+import { ChevronDown, Search, SlidersHorizontal } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import MatchCard from "../components/MatchCard";
 import axios from "axios";
@@ -36,6 +36,8 @@ function Matches() {
   const [myPosition, setMyPosition] = useState(null);
   const [radiusKm, setRadiusKm] = useState(10);
   const [locating, setLocating] = useState(false);
+  // Na telefonu su dodatni filteri sklopljeni
+  const [moreOpen, setMoreOpen] = useState(false);
 
 
  const [matches, setMatches] = useState([]);
@@ -129,6 +131,9 @@ const fetchMatches = async () => {
     showPast ||
     myPosition !== null;
 
+  // Koliko je dodatnih filtera uključeno (broj na sklopljenom dugmetu)
+  const extraFilters = [selectedDate !== "", onlyAvailable, showPast, myPosition !== null].filter(Boolean).length;
+
   const resetFilters = () => {
     setSelectedSport("Svi");
     setSelectedDate("");
@@ -141,24 +146,24 @@ const fetchMatches = async () => {
   return (
     <div className="min-h-screen bg-gray-100">
 
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6">
 
-        <h1 className="text-4xl font-bold mb-8">
+        <h1 className="text-2xl sm:text-4xl font-bold mb-4 sm:mb-8">
           {t("matches.sportsGames")}
         </h1>
 
         {/* Filteri */}
 
-        <div className="bg-white shadow rounded-2xl p-6 mb-8 space-y-4">
+        <div className="bg-white shadow rounded-2xl p-4 sm:p-6 mb-4 sm:mb-8 space-y-3 sm:space-y-4">
 
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-2 gap-3 sm:gap-4">
 
-            <div className="flex flex-wrap gap-3">
+            <div className="pill-row">
               {SPORTS.map((sport) => (
                 <button
                   key={sport.value}
                   onClick={() => setSelectedSport(sport.value)}
-                  className={`px-5 py-2 rounded-full font-semibold transition ${
+                  className={`pill ${
                     selectedSport === sport.value
                       ? "bg-green-600 text-white"
                       : "bg-gray-200 hover:bg-gray-300"
@@ -186,13 +191,34 @@ const fetchMatches = async () => {
 
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <button
+            onClick={() => setMoreOpen(!moreOpen)}
+            aria-expanded={moreOpen}
+            className="sm:hidden w-full flex items-center gap-2 font-semibold text-gray-700"
+          >
+            <SlidersHorizontal size={18} aria-hidden="true" />
+            {t("matches.moreFilters")}
+
+            {extraFilters > 0 && (
+              <span className="bg-green-600 text-white text-xs px-2 py-0.5 rounded-full">
+                {extraFilters}
+              </span>
+            )}
+
+            <ChevronDown
+              size={18}
+              aria-hidden="true"
+              className={`ml-auto transition ${moreOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          <div className={`${moreOpen ? "flex" : "hidden"} sm:flex flex-wrap items-center gap-x-6 gap-y-3`}>
 
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="border p-3 rounded-xl"
+              className="border p-3 rounded-xl w-full sm:w-auto"
             />
 
             <label className="flex items-center gap-2 font-medium cursor-pointer">
@@ -219,7 +245,7 @@ const fetchMatches = async () => {
               <button
                 onClick={toggleNearMe}
                 disabled={locating}
-                className={`px-4 py-2 rounded-full font-semibold transition ${
+                className={`pill ${
                   myPosition
                     ? "bg-green-600 text-white"
                     : "bg-gray-200 hover:bg-gray-300"
@@ -263,7 +289,7 @@ const fetchMatches = async () => {
 
         {/* Kartice */}
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
 
           {filteredMatches.length > 0 ? (
             filteredMatches.map((match) => (

@@ -54,7 +54,7 @@ function PublicProfile() {
   const user = profile.user;
 
   return (
-    <div className="min-h-screen bg-gray-100 py-10 px-4">
+    <div className="min-h-screen bg-gray-100 py-4 sm:py-10 px-4">
 
       <div className="max-w-2xl mx-auto">
 
