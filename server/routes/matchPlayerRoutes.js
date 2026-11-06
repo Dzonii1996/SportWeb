@@ -19,6 +19,6 @@ router.post("/:id/confirm", protect, confirmAttendance);
 router.get("/:id/players", optionalAuth, requireVisible, getPlayers);
 router.post("/:id/teams", protect, splitTeams);
 router.put("/:id/result", protect, setResult);
-router.put("/:id/players/:userId/paid", protect, setPaid);
+router.put("/:id/players/:playerId/paid", protect, setPaid);
 
 module.exports = router;

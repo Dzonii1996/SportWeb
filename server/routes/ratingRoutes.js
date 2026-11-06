@@ -8,6 +8,6 @@ const {
 const { protect } = require("../middleware/authMiddleware");
 
 router.get("/:id/ratings", protect, getMyRatings);
-router.put("/:id/ratings/:userId", protect, rateParticipant);
+router.put("/:id/ratings/:playerId", protect, rateParticipant);
 
 module.exports = router;

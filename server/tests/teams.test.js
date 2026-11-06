@@ -8,7 +8,7 @@ const {
   addPlayers,
   notificationsOf,
 } = require("./helpers");
-const { assignTeams } = require("../controllers/teamController");
+const { assignTeams } = require("../services/teamService");
 
 beforeEach(resetDb);
 afterAll(() => pool.end());

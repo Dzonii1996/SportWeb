@@ -55,7 +55,7 @@ describe("translate", () => {
 });
 
 describe("svaka poruka iz koda ima prevod", () => {
-  const sources = ["controllers", "utils", "middleware"].flatMap((dir) =>
+  const sources = ["controllers", "services", "utils", "middleware"].flatMap((dir) =>
     fs
       .readdirSync(path.join(__dirname, "..", dir))
       .filter((file) => file !== "messages.en.js" && file !== "i18n.js")

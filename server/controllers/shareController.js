@@ -1,4 +1,4 @@
-const pool = require("../database/db");
+const { findSharedMatch } = require("../services/shareService");
 const { describeMatch } = require("../utils/notify");
 const { translate } = require("../utils/i18n");
 const { SPORT_EMOJI } = require("../utils/fields");
@@ -45,29 +45,7 @@ const page = ({ title, description, url, language }) => {
 // a čovek se odmah prebacuje na stranicu termina u aplikaciji
 const shareMatch = async (req, res) => {
   try {
-    const id = Number(req.params.id);
-
-    const result = Number.isInteger(id)
-      ? await pool.query(
-          `SELECT
-             matches.*,
-             users.name AS creator_name,
-             (SELECT COUNT(*) FROM match_players WHERE match_id = matches.id) AS players
-           FROM matches
-           JOIN users ON users.id = matches.user_id
-           WHERE matches.id = $1`,
-          [id]
-        )
-      : { rows: [] };
-
-    const found = result.rows[0];
-    const key = typeof req.query.key === "string" ? req.query.key : null;
-
-    // Privatni termin bez ispravnog ključa izgleda kao da ne postoji
-    const match =
-      found && (!found.is_private || (found.share_token && key === found.share_token))
-        ? found
-        : null;
+    const match = await findSharedMatch(req.params.id, req.query.key);
 
     if (!match) {
       return res.status(404).type("html").send(
