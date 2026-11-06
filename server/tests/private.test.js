@@ -114,11 +114,11 @@ describe("ko vidi privatni termin", () => {
     expect(res.body.match.share_token).toBeUndefined();
   });
 
-  test("javna lista 'Moji termini' ne otkriva ključ privatnih termina", async () => {
+  test("lista 'Moji termini' ne otkriva ključ privatnih termina", async () => {
     const owner = await createUser();
     await privateMatch(owner);
 
-    const res = await api.get(`/api/users/${owner.id}/matches`);
+    const res = await api.get(`/api/users/${owner.id}/matches`).set(auth(owner));
 
     expect(res.body.created).toHaveLength(1);
     expect(res.body.created[0].share_token).toBeUndefined();

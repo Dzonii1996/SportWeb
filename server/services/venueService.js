@@ -149,6 +149,17 @@ const findManagedVenue = async (id, userId) => {
   return venue;
 };
 
+// Provera pre prijema fajla: ko nema pravo, ne sme ni da pošalje sliku na disk
+const requireImageAccess = async (id, userId) => {
+  const venue = await findVenue(id);
+
+  if (!venue) throw notFound();
+
+  if (!(await canEditImages(venue, userId))) {
+    throw new HttpError(403, "Nemate dozvolu.");
+  }
+};
+
 const removeFiles = (paths) => {
   paths.forEach((p) => {
     fs.unlink(path.join(__dirname, "..", p), () => {});
@@ -565,6 +576,7 @@ module.exports = {
   SURFACES,
   isOwner,
   findManagedVenue,
+  requireImageAccess,
   MAX_IMAGES,
   getVenues,
   getAdminStatus,

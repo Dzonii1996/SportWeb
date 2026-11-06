@@ -4,7 +4,7 @@ const { getPlayerStats, getResultStats } = require("./playerStatsService");
 const bcrypt = require("bcrypt");
 const { validatePassword, signToken } = require("../utils/password");
 
-const getMyMatches = async ({ user_id }) => {
+const getMyMatches = async ({ id: user_id }) => {
   const created = await pool.query(`
     SELECT
         matches.*,
@@ -41,7 +41,7 @@ const getMyMatches = async ({ user_id }) => {
     ORDER BY match_date
   `, [user_id]);
 
-  // Ruta je javna (po ID-ju korisnika), pa ključ privatnih termina ne šaljemo
+  // Ključ privatnih termina se ne šalje u listi
   const withoutToken = (rows) => rows.map(({ share_token, ...m }) => m);
 
   return {

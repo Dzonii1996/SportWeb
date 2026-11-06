@@ -49,6 +49,18 @@ function EditMatch() {
       .then((res) => res.json())
       .then((data) => {
         const match = data.match;
+        const me = JSON.parse(localStorage.getItem("user") || "null");
+
+        // Izmena je samo za organizatora; server to i sam proverava
+        if (!match) {
+          navigate("/matches", { replace: true });
+          return;
+        }
+
+        if (Number(match.user_id) !== Number(me?.id)) {
+          navigate(`/matches/${id}`, { replace: true });
+          return;
+        }
 
         if (match) {
           setLocation(match.location);
@@ -76,7 +88,7 @@ function EditMatch() {
 
         setLoaded(true);
       });
-  }, [id]);
+  }, [id, navigate]);
 
   // Izbor terena popunjava lokaciju, tačku na mapi i cenu (po satu)
   const selectVenue = (venue) => {

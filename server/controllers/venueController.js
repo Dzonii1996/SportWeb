@@ -13,9 +13,21 @@ const requireManager = async (req, res, next) => {
   }
 };
 
+// Middleware pre uploada: fajl se prima tek kad je jasno da korisnik sme
+const requireImageEditor = async (req, res, next) => {
+  try {
+    await venues.requireImageAccess(req.params.id, req.user.id);
+    next();
+
+  } catch (error) {
+    sendError(res, error);
+  }
+};
+
 module.exports = {
   MAX_IMAGES: venues.MAX_IMAGES,
   requireManager,
+  requireImageEditor,
   getVenues: route(venues.getVenues),
   getAdminStatus: route(venues.getAdminStatus),
   getAdminList: route(venues.getAdminList),

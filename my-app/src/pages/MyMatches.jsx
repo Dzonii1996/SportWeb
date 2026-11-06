@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import MatchCard from "../components/MatchCard";
 import { API_URL } from "../config";
+import { authHeader } from "../utils/auth";
 import { isPastMatch } from "../utils/matchDate";
 import { useTranslation } from "react-i18next";
 
@@ -15,11 +16,11 @@ function MyMatches() {
 
     if (!user) return;
 
-    fetch(`${API_URL}/api/users/${user.id}/matches`)
+    fetch(`${API_URL}/api/users/${user.id}/matches`, { headers: authHeader() })
       .then((res) => res.json())
       .then((data) => {
-        setCreatedMatches(data.created);
-        setJoinedMatches(data.joined);
+        setCreatedMatches(data.created || []);
+        setJoinedMatches(data.joined || []);
       })
       .catch((err) => console.error(err));
   }, []);

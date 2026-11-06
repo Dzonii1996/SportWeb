@@ -7,6 +7,24 @@ const sessionExpired = (res) =>
     message: "Sesija je istekla. Prijavite se ponovo.",
   });
 
+// Da li token i dalje važi: nalog postoji, a token nije stariji od promene lozinke.
+// iat je u sekundama; poredimo na nivou sekunde, da token izdat
+// odmah posle promene lozinke (u istoj sekundi) i dalje važi.
+const isTokenValid = async (decoded) => {
+  // Epoch sekunde računa baza, u istoj vremenskoj zoni u kojoj je NOW() upisan
+  const user = await pool.query(
+    `SELECT FLOOR(EXTRACT(EPOCH FROM password_changed_at::timestamptz))::bigint AS changed_at
+     FROM users WHERE id = $1`,
+    [decoded.id]
+  );
+
+  if (user.rows.length === 0) return false;
+
+  const changedAt = user.rows[0].changed_at;
+
+  return changedAt === null || decoded.iat >= Number(changedAt);
+};
+
 // Proverava JWT iz "Authorization: Bearer <token>" i postavlja req.user.
 // Token izdat pre poslednje promene lozinke više ne važi.
 const protect = async (req, res, next) => {
@@ -29,23 +47,7 @@ const protect = async (req, res, next) => {
   }
 
   try {
-    // Epoch sekunde računa baza, u istoj vremenskoj zoni u kojoj je NOW() upisan
-    const user = await pool.query(
-      `SELECT FLOOR(EXTRACT(EPOCH FROM password_changed_at::timestamptz))::bigint AS changed_at
-       FROM users WHERE id = $1`,
-      [decoded.id]
-    );
-
-    // Obrisan nalog
-    if (user.rows.length === 0) {
-      return sessionExpired(res);
-    }
-
-    // iat je u sekundama; poredimo na nivou sekunde, da token izdat
-    // odmah posle promene lozinke (u istoj sekundi) i dalje važi
-    const changedAt = user.rows[0].changed_at;
-
-    if (changedAt !== null && decoded.iat < Number(changedAt)) {
+    if (!(await isTokenValid(decoded))) {
       return sessionExpired(res);
     }
   } catch (error) {
@@ -66,8 +68,8 @@ const protect = async (req, res, next) => {
 };
 
 // Za javne rute: ako je poslat ispravan token postavlja req.user,
-// a bez tokena (ili sa neispravnim) pušta zahtev dalje kao anoniman
-const optionalAuth = (req, res, next) => {
+// a bez tokena (ili sa neispravnim ili opozvanim) pušta zahtev dalje kao anoniman
+const optionalAuth = async (req, res, next) => {
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
 
@@ -75,10 +77,12 @@ const optionalAuth = (req, res, next) => {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      req.user = {
-        id: decoded.id,
-        email: decoded.email,
-      };
+      if (await isTokenValid(decoded)) {
+        req.user = {
+          id: decoded.id,
+          email: decoded.email,
+        };
+      }
     } catch (error) {
       // Neispravan token na javnoj ruti: nastavljamo bez korisnika
     }

@@ -18,6 +18,7 @@ const {
   addImages,
   deleteImage,
   requireManager,
+  requireImageEditor,
 } = require("../controllers/venueController");
 const {
   claimVenue,
@@ -58,7 +59,7 @@ router.delete("/:id", protect, requireAdmin, deleteVenue);
 router.post("/:id/approve", protect, requireAdmin, approveVenue);
 router.post("/:id/reject", protect, requireAdmin, rejectVenue);
 
-router.post("/:id/images", protect, uploadMany("images", MAX_IMAGES), addImages);
+router.post("/:id/images", protect, requireImageEditor, uploadMany("images", MAX_IMAGES), addImages);
 router.delete("/:id/images/:imageId", protect, deleteImage);
 
 // Ocene: svako prijavljen ocenjuje odobren teren (jednom, može da izmeni)

@@ -71,10 +71,10 @@ function App() {
           path="/tereni/:id/izmeni"
           element={<ProtectedRoute><VenueForm /></ProtectedRoute>}
         />
-        <Route path="/my-matches" element={<MyMatches />} />
+        <Route path="/my-matches" element={<ProtectedRoute><MyMatches /></ProtectedRoute>} />
         <Route path="/matches/:id" element={<MatchDetails />} />
-        <Route path="/matches/:id/edit" element={<EditMatch />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route path="/matches/:id/edit" element={<ProtectedRoute><EditMatch /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/users/:id" element={<PublicProfile />} />
 <Route 
   path="/create-match"
