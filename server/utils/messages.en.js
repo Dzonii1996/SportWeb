@@ -72,6 +72,8 @@ module.exports = {
   "Neispravno trajanje.": "Invalid duration.",
   "Spisak opreme može imati najviše {value} znakova.": "The gear list can have at most {value} characters.",
   "Planinarenje nema timove.": "Hiking has no teams.",
+  "Čet vide samo učesnici termina.": "Only players in this game can see the chat.",
+  "Previše pokušaja. Pokušaj ponovo kasnije.": "Too many attempts. Try again later.",
   "Planinarenje nema rezultat.": "Hiking has no result.",
   "Rezervacija ne postoji ili je otkazana.": "The booking doesn't exist or was cancelled.",
   "Za ovu rezervaciju je već napravljen termin.": "A game has already been created for this booking.",

@@ -3,6 +3,12 @@ const path = require("path");
 require("dotenv").config();
 
 const app = express();
+
+// Iza proxy-ja (hosting) stvarna IP adresa je u zaglavlju; bez ovoga bi
+// ograničenje pokušaja sve korisnike videlo kao jednog
+if (process.env.TRUST_PROXY) {
+  app.set("trust proxy", Number(process.env.TRUST_PROXY));
+}
 const pool = require("./database/db");
 const corsPolicy = require("./middleware/corsPolicy");
 const authRoutes = require("./routes/authRoutes");

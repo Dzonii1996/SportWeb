@@ -694,12 +694,16 @@ function MatchDetails() {
           </div>
 
           <div>
-            {user ? (
+            {user && (joined || isCreator || waitlistPosition > 0) ? (
               <MatchChat
                 matchId={id}
                 linkKey={accessKey}
                 canWrite={joined || isCreator}
               />
+            ) : user ? (
+              <div className={`${CARD} p-6 text-center text-gray-600`}>
+                {t("matchDetails.joinToSeeTheChat")}
+              </div>
             ) : (
               <div className={`${CARD} p-6 text-center`}>
                 <p className="mb-4">{t("matchDetails.signInToSeeThe")}</p>

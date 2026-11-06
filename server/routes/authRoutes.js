@@ -7,10 +7,16 @@ const {
   forgotPassword,
   resetPassword,
 } = require("../controllers/authController");
+const {
+  loginLimiter,
+  registerLimiter,
+  passwordLimiter,
+  resetLimiter,
+} = require("../middleware/rateLimit");
 
-router.post("/register", register);
-router.post("/login", login);
-router.post("/forgot-password", forgotPassword);
-router.post("/reset-password", resetPassword);
+router.post("/register", registerLimiter, register);
+router.post("/login", loginLimiter, login);
+router.post("/forgot-password", passwordLimiter, forgotPassword);
+router.post("/reset-password", resetLimiter, resetPassword);
 
 module.exports = router;

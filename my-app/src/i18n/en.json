@@ -401,6 +401,7 @@
     "joinedAfterTheSplit": "Joined after the split",
     "waitlist": "⏳ Waitlist",
     "signInToSeeThe": "Sign in to see the game chat.",
+    "joinToSeeTheChat": "💬 Only players can see the chat. Join the game to see it.",
     "signIn": "Sign in"
   },
   "matches": {

@@ -42,6 +42,29 @@ describe("čet termina", () => {
     ]);
   });
 
+  test("neučesnik ne vidi poruke", async () => {
+    const { match, a, outsider, send } = await setup();
+
+    await send(a, "Moj broj je 064...");
+
+    const res = await api.get(`/api/matches/${match.id}/messages`).set(auth(outsider));
+
+    expect(res.status).toBe(403);
+    expect(res.body.messages).toBeUndefined();
+  });
+
+  test("organizator i lista čekanja vide poruke, a lista čekanja ne piše", async () => {
+    const { match, owner, a, outsider, send } = await setup();
+    await send(a, "Ko nosi loptu?");
+    await pool.query("INSERT INTO match_waitlist(match_id, user_id) VALUES ($1, $2)", [match.id, outsider.id]);
+
+    const read = (user) => api.get(`/api/matches/${match.id}/messages`).set(auth(user));
+
+    expect((await read(owner)).status).toBe(200);
+    expect((await read(outsider)).body.messages).toHaveLength(1);
+    expect((await send(outsider)).status).toBe(403);
+  });
+
   test("neučesnik ne može da piše", async () => {
     const { outsider, send } = await setup();
 

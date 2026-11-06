@@ -18,6 +18,18 @@ const isParticipant = async (match_id, user_id) => {
   return result.rows.length > 0;
 };
 
+// Čet čitaju učesnici i oni na listi čekanja, a pišu samo učesnici
+const canReadChat = async (match_id, user_id) => {
+  if (await isParticipant(match_id, user_id)) return true;
+
+  const result = await pool.query(
+    "SELECT 1 FROM match_waitlist WHERE match_id = $1 AND user_id = $2",
+    [match_id, user_id]
+  );
+
+  return result.rows.length > 0;
+};
+
 const CHAT_PREFIX = "💬 Nove poruke u četu termina";
 
 // Obaveštava ostale učesnike o novoj poruci. Ko već ima nepročitanu
@@ -57,7 +69,11 @@ const notifyChat = async (match_id, sender_id) => {
   );
 };
 
-const getMessages = async ({ id, query }) => {
+const getMessages = async ({ id, userId, query }) => {
+  if (!(await canReadChat(id, userId))) {
+    throw new HttpError(403, "Čet vide samo učesnici termina.");
+  }
+
   // Ako je poslat "after", vraćamo samo novije poruke
   const after = Number(query.after) || 0;
 
