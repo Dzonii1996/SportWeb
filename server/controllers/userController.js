@@ -1,6 +1,5 @@
 const pool = require("../database/db");
-const { getPlayerStats } = require("./ratingController");
-const { getResultStats } = require("./resultController");
+const { getPlayerStats, getResultStats } = require("../services/playerStatsService");
 const bcrypt = require("bcrypt");
 const { validatePassword, signToken } = require("../utils/password");
 

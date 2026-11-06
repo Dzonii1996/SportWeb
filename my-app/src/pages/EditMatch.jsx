@@ -10,6 +10,9 @@ import FieldPriceInput from "../components/FieldPriceInput";
 import PrivateMatchField from "../components/PrivateMatchField";
 import VenuePicker from "../components/VenuePicker";
 import { useVenues } from "../utils/venues";
+import { HIKING } from "../utils/sports";
+import HikeFields from "../components/HikeFields";
+import { hikeToForm } from "../utils/hike";
 import { hourLabel } from "../utils/reservations";
 import { useTranslation } from "react-i18next";
 
@@ -30,6 +33,8 @@ function EditMatch() {
   const [isPrivate, setIsPrivate] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [sport, setSport] = useState("Fudbal");
+  const [hike, setHike] = useState(() => hikeToForm(null));
+  const isHike = sport === HIKING;
   // Teren iz kataloga ("" = ručni unos) i njegov naziv, ako više nije na listi
   const [venueId, setVenueId] = useState("");
   const [venueName, setVenueName] = useState(null);
@@ -59,6 +64,7 @@ function EditMatch() {
           setInSeries(Boolean(match.repeat_weekly));
           setIsPrivate(Boolean(match.is_private));
           setSport(match.sport);
+          setHike(hikeToForm(match.hike));
           setVenueId(match.venue_id ? String(match.venue_id) : "");
           setVenueName(match.venue_name);
           setReservation(
@@ -108,6 +114,7 @@ function EditMatch() {
           repeat_weekly: repeatWeekly,
           is_private: isPrivate,
           venue_id: venueId || null,
+          hike: isHike ? hike : undefined,
           latitude: position?.[0] ?? null,
           longitude: position?.[1] ?? null,
         }),
@@ -152,7 +159,7 @@ function EditMatch() {
           </div>
         )}
 
-        {!reservation && (
+        {!reservation && !isHike && (
           <VenuePicker
             venues={venues}
             sport={sport}
@@ -174,12 +181,14 @@ function EditMatch() {
               required
               minLength={2}
               maxLength={100}
-              placeholder={t("common.location")}
+              placeholder={isHike ? t("hike.meetingPoint") : t("common.location")}
             />
 
             <LocationPicker value={position} onChange={setPosition} />
           </>
         )}
+
+        {isHike && <HikeFields value={hike} onChange={setHike} />}
 
         <input
           type="date"
@@ -217,10 +226,12 @@ function EditMatch() {
           max="30"
         />
 
-        <FieldPriceInput
-          value={fieldPrice}
-          onChange={(e) => setFieldPrice(e.target.value)}
-        />
+        {!isHike && (
+          <FieldPriceInput
+            value={fieldPrice}
+            onChange={(e) => setFieldPrice(e.target.value)}
+          />
+        )}
 
         <RepeatWeeklyField
           checked={repeatWeekly}

@@ -1,5 +1,5 @@
 const pool = require("../database/db");
-const { promoteFromWaitlist } = require("./waitlistController");
+const { promoteFromWaitlist } = require("../services/waitlistService");
 const {
   describeMatch,
   notifyUsers,
@@ -16,8 +16,8 @@ const {
   bookSlot,
   describeSlot,
   reservationStart,
-} = require("./reservationController");
-const { SPORTS, SPORT_ACCUSATIVE, parsePrice, parseCoords } = require("../utils/fields");
+} = require("../services/reservationService");
+const { MATCH_SPORTS, SPORT_ACCUSATIVE, parseHike, parsePrice, parseCoords } = require("../utils/fields");
 
 const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 30;
@@ -25,7 +25,7 @@ const MAX_DAYS_AHEAD = 365;
 
 // Proverava podatke termina; vraća poruku greške ili null ako je sve u redu
 const validateMatch = ({ sport, location, match_date, match_time, max_players }) => {
-  if (sport !== undefined && !SPORTS.includes(sport)) {
+  if (sport !== undefined && !MATCH_SPORTS.includes(sport)) {
     return "Nepoznat sport.";
   }
 
@@ -240,11 +240,12 @@ const createMatch = async (req, res) => {
     const coords = parseCoords(body);
 
     const price = parsePrice(body);
+    const hike = parseHike(body);
 
-    if (validationError || coords.error || price.error) {
+    if (validationError || coords.error || price.error || hike.error) {
       return res.status(400).json({
         success: false,
-        message: validationError || coords.error || price.error,
+        message: validationError || coords.error || price.error || hike.error,
       });
     }
 
@@ -282,8 +283,8 @@ const createMatch = async (req, res) => {
 
    const result = await client.query(
   `INSERT INTO matches
-  (user_id, sport, location, match_date, match_time, max_players, latitude, longitude, field_price, is_private, share_token, venue_id, reservation_id)
-  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+  (user_id, sport, location, match_date, match_time, max_players, latitude, longitude, field_price, is_private, share_token, venue_id, reservation_id, hike)
+  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
   RETURNING *`,
   [
     user_id,
@@ -298,7 +299,8 @@ const createMatch = async (req, res) => {
     isPrivate,
     isPrivate ? newShareToken() : null,
     venue.venue?.id ?? null,
-    reservation?.id ?? null
+    reservation?.id ?? null,
+    hike.hike
   ]
 );
       match = result.rows[0];
@@ -596,11 +598,12 @@ const updateMatch = async (req, res) => {
     const coords = parseCoords(body);
 
     const price = parsePrice(body);
+    const hike = parseHike({ ...body, sport: match.rows[0].sport });
 
-    if (validationError || coords.error || price.error) {
+    if (validationError || coords.error || price.error || hike.error) {
       return res.status(400).json({
         success: false,
-        message: validationError || coords.error || price.error,
+        message: validationError || coords.error || price.error || hike.error,
       });
     }
 
@@ -651,6 +654,7 @@ const updateMatch = async (req, res) => {
         field_price: price.price,
         is_private: typeof req.body.is_private === "boolean" ? req.body.is_private : undefined,
         venue_id: venueId,
+        hike: hike.hike,
       },
       typeof req.body.repeat_weekly === "boolean"
         ? req.body.repeat_weekly
@@ -678,7 +682,8 @@ const updateMatch = async (req, res) => {
          field_price = $8,
          is_private = $9,
          share_token = $10,
-         venue_id = $11
+         venue_id = $11,
+         hike = $12
        WHERE id = $7
        RETURNING *`,
       [
@@ -693,6 +698,7 @@ const updateMatch = async (req, res) => {
         isPrivate,
         shareToken,
         venueId,
+        hike.hike,
       ]
     );
 

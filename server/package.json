@@ -5,7 +5,10 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "migrate": "node database/migrate.js up",
+    "migrate:down": "node database/migrate.js down",
+    "migrate:create": "node-pg-migrate create --migrations-dir migrations --migration-file-language sql --migration-filename-format utc"
   },
   "jest": {
     "testEnvironment": "node",
@@ -33,6 +36,7 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
+    "node-pg-migrate": "^7.9.1",
     "nodemailer": "7.0.3",
     "pg": "^8.22.0"
   },

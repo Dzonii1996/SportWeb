@@ -6,6 +6,7 @@ import {
   Trash2,
   MessageCircle,
   Wallet,
+  Mountain,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -14,6 +15,7 @@ import { authHeader } from "../utils/auth";
 import { API_URL } from "../config";
 import { formatDistance } from "../utils/geo";
 import { sportEmoji } from "../utils/sports";
+import { difficultyLabel } from "../utils/hike";
 import { formatRSD, pricePerPlayer } from "../utils/price";
 import { matchStart, inConfirmWindow } from "../utils/matchDate";
 import { useTranslation } from "react-i18next";
@@ -39,6 +41,7 @@ function MatchCard({
   scoreA = null,
   scoreB = null,
   isPrivate = false,
+  hike = null,
 }) {
   const { t } = useTranslation();
 
@@ -366,6 +369,16 @@ function MatchCard({
               </span>
             )}
           </div>
+
+          {hike && (
+            <div className="flex items-center gap-3">
+              <Mountain className="text-green-600 shrink-0" size={18} />
+              <span className="truncate">{hike.route}</span>
+              <span className="ml-auto text-xs bg-green-50 text-green-700 font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
+                {difficultyLabel(hike.difficulty)}
+              </span>
+            </div>
+          )}
 
           <div className="flex items-center gap-3">
             <Calendar className="text-green-600 shrink-0" size={18} />

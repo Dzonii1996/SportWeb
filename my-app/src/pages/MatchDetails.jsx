@@ -12,6 +12,7 @@ import { hasPrice } from "../utils/price";
 import { LocationView } from "../components/LocationMap";
 import { hasCoords } from "../utils/geo";
 import { sportEmoji } from "../utils/sports";
+import HikeInfo from "../components/HikeInfo";
 import { API_URL } from "../config";
 import { authHeader } from "../utils/auth";
 import { isPastMatch, matchStart, inConfirmWindow } from "../utils/matchDate";
@@ -433,6 +434,8 @@ function MatchDetails() {
                   )}
                 </div>
 
+                {match.hike && <HikeInfo hike={match.hike} />}
+
                 {match.reservation_status && (
                   <ReservationBadge
                     status={match.reservation_status}
@@ -554,7 +557,7 @@ function MatchDetails() {
               </div>
             </div>
 
-            {isPast && (
+            {isPast && !match.hike && (
               <MatchResult
                 match={match}
                 players={players}
@@ -585,7 +588,7 @@ function MatchDetails() {
 
                 {/* Kreator deli igrače na timove */}
                 {/* Timovi mogu da se podele i posle termina, dok rezultat nije upisan */}
-                {isCreator && players.length >= 2 && match.score_a === null && (
+                {isCreator && players.length >= 2 && match.score_a === null && !match.hike && (
                   <div className="flex gap-2">
                     <button
                       onClick={() => splitTeams("random")}

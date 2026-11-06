@@ -38,7 +38,7 @@ router.delete("/:id/teams/:teamId", protect, withdrawTeam);
 router.post("/:id/teams/:teamId/approve", protect, approveTeam);
 router.post("/:id/teams/:teamId/reject", protect, rejectTeam);
 router.put("/:id/teams/:teamId/paid", protect, setTeamPaid);
-router.delete("/:id/teams/:teamId/players/:userId", protect, removePlayer);
+router.delete("/:id/teams/:teamId/players/:playerId", protect, removePlayer);
 
 router.put("/:id/games/:gameId/result", protect, saveResult);
 router.put("/:id/games/:gameId/schedule", protect, scheduleGame);

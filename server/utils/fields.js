@@ -1,11 +1,22 @@
 // Zajednička provera polja za termine i terene
 
+// Sportovi sa terenima, turnirima i rang listom
 const SPORTS = ["Fudbal", "Košarka", "Tenis", "Odbojka"];
 
-const SPORT_EMOJI = { Fudbal: "⚽", Košarka: "🏀", Tenis: "🎾", Odbojka: "🏐" };
+// Planinarenje postoji samo kao termin: bez terena, timova i rezultata
+const HIKING = "Planinarenje";
+const MATCH_SPORTS = [...SPORTS, HIKING];
+
+const SPORT_EMOJI = { Fudbal: "⚽", Košarka: "🏀", Tenis: "🎾", Odbojka: "🏐", Planinarenje: "🥾" };
 
 // "Teren nije za ..."
-const SPORT_ACCUSATIVE = { Fudbal: "fudbal", Košarka: "košarku", Tenis: "tenis", Odbojka: "odbojku" };
+const SPORT_ACCUSATIVE = {
+  Fudbal: "fudbal",
+  Košarka: "košarku",
+  Tenis: "tenis",
+  Odbojka: "odbojku",
+  Planinarenje: "planinarenje",
+};
 
 // Cena terena u dinarima nije obavezna. Vraća { error } ili { price } (null kad nije poslata).
 const MAX_PRICE = 1000000;
@@ -50,8 +61,64 @@ const parseCoords = ({ latitude, longitude }) => {
   return { latitude: lat, longitude: lng };
 };
 
+const HIKE_DIFFICULTIES = ["easy", "medium", "hard"];
+const MAX_GEAR = 500;
+
+// Broj koji nije obavezan: prazno je null, a neispravno undefined
+const optionalNumber = (value, isValid) => {
+  if (value === undefined || value === null || value === "") return null;
+
+  const number = Number(value);
+
+  return Number.isFinite(number) && isValid(number) ? number : undefined;
+};
+
+// Podaci o stazi; obavezni samo za planinarenje. Vraća { error } ili { hike }
+// (null za ostale sportove).
+const parseHike = ({ sport, hike }) => {
+  if (sport !== HIKING) return { hike: null };
+
+  const route = typeof hike?.route === "string" ? hike.route.trim() : "";
+
+  if (route.length < 2 || route.length > 100) {
+    return { error: "Unesi naziv staze ili vrha (2 do 100 znakova)." };
+  }
+
+  if (!HIKE_DIFFICULTIES.includes(hike.difficulty)) {
+    return { error: "Izaberi težinu staze." };
+  }
+
+  const distance = optionalNumber(hike.distance_km, (n) => n > 0 && n <= 200);
+  const ascent = optionalNumber(hike.ascent_m, (n) => Number.isInteger(n) && n >= 0 && n <= 9000);
+  const duration = optionalNumber(hike.duration_hours, (n) => n > 0 && n <= 72);
+
+  if (distance === undefined) return { error: "Neispravna dužina staze." };
+  if (ascent === undefined) return { error: "Neispravan uspon." };
+  if (duration === undefined) return { error: "Neispravno trajanje." };
+
+  const gear = typeof hike.gear === "string" && hike.gear.trim() !== "" ? hike.gear.trim() : null;
+
+  if (gear && gear.length > MAX_GEAR) {
+    return { error: `Spisak opreme može imati najviše ${MAX_GEAR} znakova.` };
+  }
+
+  return {
+    hike: {
+      route,
+      difficulty: hike.difficulty,
+      distance_km: distance,
+      ascent_m: ascent,
+      duration_hours: duration,
+      gear,
+    },
+  };
+};
+
 module.exports = {
   SPORTS,
+  HIKING,
+  MATCH_SPORTS,
+  parseHike,
   SPORT_EMOJI,
   SPORT_ACCUSATIVE,
   MAX_PRICE,

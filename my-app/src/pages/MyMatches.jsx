@@ -50,6 +50,7 @@ function MyMatches() {
               isPast={isPastMatch(match.match_date, match.match_time)}
               repeatWeekly={match.repeat_weekly}
               fieldPrice={match.field_price}
+              hike={match.hike}
               scoreA={match.score_a}
               scoreB={match.score_b}
               isPrivate={match.is_private}
@@ -82,6 +83,7 @@ function MyMatches() {
               isPast={isPastMatch(match.match_date, match.match_time)}
               repeatWeekly={match.repeat_weekly}
               fieldPrice={match.field_price}
+              hike={match.hike}
               scoreA={match.score_a}
               scoreB={match.score_b}
               isPrivate={match.is_private}

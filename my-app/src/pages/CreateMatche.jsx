@@ -11,7 +11,9 @@ import PrivateMatchField from "../components/PrivateMatchField";
 import VenuePicker from "../components/VenuePicker";
 import ReserveVenueField from "../components/ReserveVenueField";
 import { useVenues } from "../utils/venues";
-import { SPORTS, defaultPlayers, sportOption } from "../utils/sports";
+import { HIKING, MATCH_SPORTS, defaultPlayers, sportOption } from "../utils/sports";
+import HikeFields from "../components/HikeFields";
+import { emptyHike } from "../utils/hike";
 import { hourLabel, formatReservationDate } from "../utils/reservations";
 import { useTranslation } from "react-i18next";
 
@@ -57,6 +59,8 @@ function CreateMatch() {
   // Rezervacija terena uz termin (samo za teren koji prima rezervacije)
   const [reserve, setReserve] = useState(true);
   const [reservationHours, setReservationHours] = useState(1);
+  const [hike, setHike] = useState(emptyHike);
+  const isHike = formData.sport === HIKING;
 
   const venues = useVenues();
   const selectedVenue = venues?.find((v) => String(v.id) === venueId);
@@ -128,6 +132,8 @@ function CreateMatch() {
           ...formData,
           repeat_weekly: repeatWeekly,
           is_private: isPrivate,
+          field_price: isHike ? "" : formData.field_price,
+          hike: isHike ? hike : undefined,
           venue_id: venueId || null,
           reservation_id: reservationId || null,
           reserve: !reservationId && bookable && reserve,
@@ -167,7 +173,7 @@ function CreateMatch() {
             onChange={handleSportChange}
             className="w-full border p-3 rounded-xl"
           >
-            {SPORTS.map((s) => (
+            {MATCH_SPORTS.map((s) => (
               <option key={s.value} value={s.value}>{sportOption(s.value)}</option>
             ))}
           </select>
@@ -182,7 +188,7 @@ function CreateMatch() {
                 {formData.match_time && `· ${formData.match_time}–${hourLabel(Number(formData.match_time.slice(0, 2)) + reservedHours)}`}
               </p>
             </div>
-          ) : (
+          ) : !isHike && (
             <VenuePicker
               venues={venues}
               sport={formData.sport}
@@ -197,7 +203,7 @@ function CreateMatch() {
               <input
                 type="text"
                 name="location"
-                placeholder={t("common.location")}
+                placeholder={isHike ? t("hike.meetingPoint") : t("common.location")}
                 value={formData.location}
                 onChange={handleChange}
                 required
@@ -209,6 +215,8 @@ function CreateMatch() {
               <LocationPicker value={position} onChange={setPosition} />
             </>
           )}
+
+          {isHike && <HikeFields value={hike} onChange={setHike} />}
 
           {!reservationId && (
             <>
@@ -256,11 +264,13 @@ function CreateMatch() {
             className="w-full border p-3 rounded-xl"
           />
 
-          <FieldPriceInput
-            name="field_price"
-            value={formData.field_price}
-            onChange={handleChange}
-          />
+          {!isHike && (
+            <FieldPriceInput
+              name="field_price"
+              value={formData.field_price}
+              onChange={handleChange}
+            />
+          )}
 
           <RepeatWeeklyField checked={repeatWeekly} onChange={setRepeatWeekly} />
 

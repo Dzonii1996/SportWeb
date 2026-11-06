@@ -1,5 +1,6 @@
 const pool = require("../database/db");
 const { describeMatch, notifyUsers } = require("../utils/notify");
+const { HIKING } = require("../utils/fields");
 
 const MODES = ["random", "balanced"];
 
@@ -59,6 +60,14 @@ const splitTeams = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Termin ne postoji.",
+      });
+    }
+
+    if (match.rows[0].sport === HIKING) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({
+        success: false,
+        message: "Planinarenje nema timove.",
       });
     }
 

@@ -1,4 +1,4 @@
-// Jednom pre svih testova: pravi test bazu (ako ne postoji) i sve tabele u njoj
+// Jednom pre svih testova: pravi test bazu (ako ne postoji) i pokreće migracije
 const { Client } = require("pg");
 
 module.exports = async () => {
@@ -26,9 +26,5 @@ module.exports = async () => {
 
   await admin.end();
 
-  const pool = require("../../database/db");
-  const createTables = require("../../database/createtable");
-
-  await createTables();
-  await pool.end();
+  await require("../../database/migrate")();
 };

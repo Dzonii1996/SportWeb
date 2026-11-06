@@ -145,6 +145,23 @@
     "yourShareNotYetMarked": "Your share: {{amount}}, not yet marked as paid.",
     "whoHasPaid": "Who has paid"
   },
+  "hike": {
+    "easy": "Easy",
+    "medium": "Moderate",
+    "hard": "Hard",
+    "aboutTheTrail": "⛰️ About the trail",
+    "routePlaceholder": "Trail or peak (e.g. Rogozna)",
+    "meetingPoint": "Meeting point",
+    "difficulty": "Difficulty",
+    "distanceKm": "Length (km)",
+    "ascentM": "Ascent (m)",
+    "durationH": "Duration (h)",
+    "gearPlaceholder": "What to bring: water, shoes, jacket... (optional)",
+    "km": "{{value}} km",
+    "ascent": "{{value}} m ascent",
+    "hours": "about {{value}} h",
+    "ownResponsibility": "Everyone takes part at their own risk. The organizer isn't a guide unless stated."
+  },
   "matchRatings": {
     "fairPlay": "Fair",
     "unsporting": "Unsporting",
@@ -329,6 +346,10 @@
     "volleyballTagline": "Indoor or beach, a volleyball team in your city",
     "findAVolleyballGame": "Find a volleyball game",
     "volleyballText": "Indoor, beach and a full team",
+    "goHiking": "Hit the trail.",
+    "hikingTagline": "Find company for a hike to nearby peaks",
+    "findAHike": "Find a hike",
+    "hikingText": "Trails, peaks and company for a hike",
     "gamesCount_one": "{{count}} game",
     "gamesCount_other": "{{count}} games"
   },
@@ -672,7 +693,8 @@
     "Fudbal": "Football",
     "Košarka": "Basketball",
     "Tenis": "Tennis",
-    "Odbojka": "Volleyball"
+    "Odbojka": "Volleyball",
+    "Planinarenje": "Hiking"
   },
   "surfaces": {
     "Veštačka trava": "Artificial turf",

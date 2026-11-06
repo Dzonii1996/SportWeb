@@ -1,18 +1,11 @@
 const pool = require("../database/db");
-const { SPORTS } = require("../utils/fields");
+const { outcome } = require("../services/playerStatsService");
+const { SPORTS, HIKING } = require("../utils/fields");
 const { describeMatch, notifyUsers } = require("../utils/notify");
 
 const RESULT_DAYS = 7;
 const MAX_SCORE = 999;
 
-// Ishod za tim: 'W' pobeda, 'D' nerešeno, 'L' poraz
-const outcome = (team, scoreA, scoreB) => {
-  if (scoreA === scoreB) return "D";
-
-  const won = team === "A" ? scoreA > scoreB : scoreB > scoreA;
-
-  return won ? "W" : "L";
-};
 
 const OUTCOME_TEXT = {
   W: "🏆 Pobeda!",
@@ -58,6 +51,13 @@ const setResult = async (req, res) => {
       return res.status(403).json({
         success: false,
         message: "Samo kreator upisuje rezultat.",
+      });
+    }
+
+    if (matchData.sport === HIKING) {
+      return res.status(400).json({
+        success: false,
+        message: "Planinarenje nema rezultat.",
       });
     }
 
@@ -129,38 +129,6 @@ const setResult = async (req, res) => {
   }
 };
 
-// Pobede/nerešeno/porazi igrača, iz termina sa rezultatom u kojima je bio u timu
-const getResultStats = async (user_id) => {
-  const result = await pool.query(
-    `SELECT mp.team, m.score_a, m.score_b
-     FROM match_players mp
-     JOIN matches m ON m.id = mp.match_id
-     WHERE mp.user_id = $1
-     AND mp.team IS NOT NULL
-     AND m.score_a IS NOT NULL
-     ORDER BY (m.match_date + m.match_time) DESC`,
-    [user_id]
-  );
-
-  const outcomes = result.rows.map((r) => outcome(r.team, r.score_a, r.score_b));
-  const count = (o) => outcomes.filter((x) => x === o).length;
-
-  // Niz pobeda zaredom, od poslednjeg termina unazad
-  let streak = 0;
-  while (outcomes[streak] === "W") streak += 1;
-
-  const wins = count("W");
-
-  return {
-    wins,
-    draws: count("D"),
-    losses: count("L"),
-    winRate: outcomes.length ? Math.round((wins / outcomes.length) * 100) : null,
-    streak,
-    // Poslednjih 5 ishoda, najnoviji prvi
-    form: outcomes.slice(0, 5),
-  };
-};
 
 // Rang lista: pobeda 3 boda, nerešeno 1. ?sport=Tenis daje listu za jedan sport.
 const getLeaderboard = async (req, res) => {
@@ -223,7 +191,5 @@ const getLeaderboard = async (req, res) => {
 
 module.exports = {
   setResult,
-  getResultStats,
   getLeaderboard,
-  outcome,
 };

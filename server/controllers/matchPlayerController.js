@@ -1,5 +1,5 @@
 const pool = require("../database/db");
-const { promoteFromWaitlist } = require("./waitlistController");
+const { promoteFromWaitlist } = require("../services/waitlistService");
 const { describeMatch, notifyUsers } = require("../utils/notify");
 
 const joinMatch = async (req, res) => {

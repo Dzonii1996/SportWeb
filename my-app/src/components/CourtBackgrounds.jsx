@@ -1,4 +1,4 @@
-// Pozadine za hero na početnoj strani: fudbalski, košarkaški, teniski i odbojkaški teren u SVG-u.
+// Pozadine za hero na početnoj strani: fudbalski, košarkaški, teniski i odbojkaški teren i planina u SVG-u.
 // "slice" popunjava ceo prostor, pa se teren seče na užim ekranima.
 
 const LINE = { fill: "none", stroke: "rgba(255,255,255,0.75)", strokeWidth: 4 };
@@ -206,6 +206,48 @@ export function VolleyballCourt() {
       <line x1="600" y1="90" x2="600" y2="610" stroke="white" strokeWidth="4" />
       <circle cx="600" cy="90" r="9" fill="white" />
       <circle cx="600" cy="610" r="9" fill="white" />
+    </svg>
+  );
+}
+
+// Planinski vrhovi u slojevima i obeležena staza do vrha
+export function MountainTrail() {
+  return (
+    <svg
+      viewBox="0 0 1200 700"
+      preserveAspectRatio="xMidYMid slice"
+      className="absolute inset-0 w-full h-full"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="hike-sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#0369a1" />
+          <stop offset="1" stopColor="#7dd3fc" />
+        </linearGradient>
+      </defs>
+
+      <rect width="1200" height="700" fill="url(#hike-sky)" />
+      <circle cx="930" cy="130" r="58" fill="#fde68a" />
+
+      {/* Daleki vrhovi */}
+      <path d="M0 430 180 240 330 380 520 170 700 360 860 220 1040 370 1200 260V700H0Z" fill="#64748b" />
+      <path d="M520 170 575 228 545 245 515 222 482 250 462 232Z" fill="#f8fafc" />
+      <path d="M860 220 902 256 878 270 856 252 830 272 812 262Z" fill="#f8fafc" />
+
+      {/* Bliži vrhovi i šuma */}
+      <path d="M0 520 220 360 400 490 640 300 860 480 1040 390 1200 500V700H0Z" fill="#166534" />
+      <path d="M0 610 260 500 520 590 800 480 1200 610V700H0Z" fill="#14532d" />
+
+      {/* Staza do vrha */}
+      <path
+        d="M170 700C260 620 430 640 520 570S640 470 700 450 620 380 640 300"
+        fill="none"
+        stroke="rgba(255,255,255,0.8)"
+        strokeWidth="5"
+        strokeDasharray="16 14"
+        strokeLinecap="round"
+      />
+      <path d="M640 300V248L684 262 640 276" fill="#ef4444" stroke="white" strokeWidth="3" />
     </svg>
   );
 }

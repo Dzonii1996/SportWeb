@@ -1,10 +1,10 @@
 const express = require("express");
-const cors = require("cors");
 const path = require("path");
 require("dotenv").config();
 
 const app = express();
 const pool = require("./database/db");
+const corsPolicy = require("./middleware/corsPolicy");
 const authRoutes = require("./routes/authRoutes");
 const matchRoutes = require("./routes/matchRoutes");
 const matchPlayerRoutes = require("./routes/matchPlayerRoutes");
@@ -20,10 +20,10 @@ const venueRoutes = require("./routes/venueRoutes");
 const reservationRoutes = require("./routes/reservationRoutes");
 const tournamentRoutes = require("./routes/tournamentRoutes");
 const language = require("./middleware/language");
-const createTables = require("./database/createtable");
+const runMigrations = require("./database/migrate");
 const { sendDueReminders } = require("./utils/reminders");
 const { generateNextOccurrences } = require("./utils/series");
-app.use(cors());
+app.use(corsPolicy);
 app.use(express.json());
 app.use(language);
 
@@ -66,7 +66,7 @@ if (require.main === module) {
     } else {
       console.log("Baza povezana!");
       console.log("Vreme baze:", res.rows[0].now);
-      createTables()
+      runMigrations()
         .then(() => {
           // Svakog minuta: novi termini iz serija, pa podsetnici pred termin
           const runScheduled = async () => {
@@ -82,7 +82,7 @@ if (require.main === module) {
           setInterval(runScheduled, 60 * 1000);
         })
         .catch((error) =>
-          console.log("Greška pri kreiranju tabela:", error.message)
+          console.log("Greška pri migraciji baze:", error.message)
         );
     }
   });

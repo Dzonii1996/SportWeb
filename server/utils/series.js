@@ -6,8 +6,8 @@ const { newShareToken } = require("./privacy");
 const createSeriesForMatch = async (db, match) => {
   const series = await db.query(
     `INSERT INTO match_series
-       (user_id, sport, location, match_time, max_players, latitude, longitude, last_date, field_price, is_private, venue_id)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+       (user_id, sport, location, match_time, max_players, latitude, longitude, last_date, field_price, is_private, venue_id, hike)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
      RETURNING id`,
     [
       match.user_id,
@@ -21,6 +21,7 @@ const createSeriesForMatch = async (db, match) => {
       match.field_price ?? null,
       Boolean(match.is_private),
       match.venue_id ?? null,
+      match.hike ?? null,
     ]
   );
 
@@ -67,7 +68,8 @@ const updateSeriesFromEdit = async (matchId, fields, repeatWeekly) => {
          active = COALESCE($9, active),
          field_price = $10,
          is_private = COALESCE($11, is_private),
-         venue_id = $12
+         venue_id = $12,
+         hike = $13
      WHERE id = $1`,
     [
       match.series_id,
@@ -82,6 +84,7 @@ const updateSeriesFromEdit = async (matchId, fields, repeatWeekly) => {
       fields.field_price ?? null,
       fields.is_private ?? null,
       fields.venue_id ?? null,
+      fields.hike ?? null,
     ]
   );
 };
@@ -130,8 +133,8 @@ const generateNextOccurrences = async () => {
       const inserted = await client.query(
         `INSERT INTO matches
            (user_id, sport, location, match_date, match_time, max_players,
-            latitude, longitude, series_id, field_price, is_private, share_token, venue_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            latitude, longitude, series_id, field_price, is_private, share_token, venue_id, hike)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
          RETURNING *`,
         [
           series.user_id,
@@ -147,6 +150,7 @@ const generateNextOccurrences = async () => {
           series.is_private,
           series.is_private ? newShareToken() : null,
           series.venue_id,
+          series.hike,
         ]
       );
       const match = inserted.rows[0];

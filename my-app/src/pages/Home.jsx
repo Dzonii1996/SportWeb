@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
   Search,
@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { API_URL } from "../config";
 import { isPastMatch, matchStart } from "../utils/matchDate";
-import { FootballPitch, BasketballCourt, TennisCourt, VolleyballCourt } from "../components/CourtBackgrounds";
+import { FootballPitch, BasketballCourt, TennisCourt, VolleyballCourt, MountainTrail } from "../components/CourtBackgrounds";
 import { useTranslation } from "react-i18next";
 import i18n, { locale, sportLabel } from "../i18n";
 import { sportEmoji } from "../utils/sports";
@@ -54,6 +54,15 @@ const HERO_SLIDES = [
     accent: "text-orange-300",
     Background: VolleyballCourt,
   },
+  {
+    sport: "Planinarenje",
+    emoji: "🥾",
+    get headline() { return i18n.t("home.goHiking"); },
+    get tagline() { return i18n.t("home.hikingTagline"); },
+    get cta() { return i18n.t("home.findAHike"); },
+    accent: "text-sky-200",
+    Background: MountainTrail,
+  },
 ];
 
 const SLIDE_MS = 6000;
@@ -63,6 +72,7 @@ const SPORTS = [
   { value: "Košarka", emoji: "🏀", get text() { return i18n.t("home.3On3BasketballOr2"); } },
   { value: "Tenis", emoji: "🎾", get text() { return i18n.t("home.tennisText"); } },
   { value: "Odbojka", emoji: "🏐", get text() { return i18n.t("home.volleyballText"); } },
+  { value: "Planinarenje", emoji: "🥾", get text() { return i18n.t("home.hikingText"); } },
 ];
 
 const STEPS = [
@@ -167,6 +177,7 @@ function Home() {
   // Slajder: sam se smenjuje dok korisnik ne izabere sport.
   // Ko u sistemu ima isključene animacije, nema automatskog smenjivanja.
   const [active, setActive] = useState(0);
+  const tabsRef = useRef(null);
   const [cycle, setCycle] = useState(0);
   const [autoplay, setAutoplay] = useState(
     () => !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
@@ -182,6 +193,14 @@ function Home() {
 
     return () => clearTimeout(timer);
   }, [autoplay, active, cycle]);
+
+  // Na telefonu red sa sportovima prati izabrani slajd
+  useEffect(() => {
+    const row = tabsRef.current;
+    const tab = row?.children[active];
+
+    if (tab) row.scrollLeft = tab.offsetLeft - row.offsetLeft - 16;
+  }, [active]);
 
   const selectSlide = (i) => {
     setActive(i);
@@ -241,7 +260,7 @@ function Home() {
 
           <div className="min-w-0">
             {/* Izbor sporta: menja pozadinu i zaustavlja smenjivanje */}
-            <div className="pill-row mb-6" role="tablist" aria-label="Sport">
+            <div ref={tabsRef} className="pill-row mb-6" role="tablist" aria-label="Sport">
               {HERO_SLIDES.map((s, i) => (
                 <button
                   key={s.sport}
@@ -277,7 +296,7 @@ function Home() {
               <br />
               {t("home.scheduleAGame")}
               <br />
-              <span className={slide.accent}>{t("home.play", { play: slide.play })}</span>
+              <span className={slide.accent}>{slide.headline ?? t("home.play", { play: slide.play })}</span>
             </h1>
 
             <p className="text-lg text-white/85 max-w-xl mt-6">
@@ -413,7 +432,7 @@ function Home() {
               <Link
                 key={s.value}
                 to={`/matches?sport=${encodeURIComponent(s.value)}`}
-                className="group flex flex-col sm:flex-row items-center gap-2 sm:gap-5 text-center sm:text-left bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 hover:border-green-500 hover:shadow-lg transition"
+                className="group last:col-span-2 flex flex-col sm:flex-row items-center gap-2 sm:gap-5 text-center sm:text-left bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 hover:border-green-500 hover:shadow-lg transition"
               >
                 <span className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-green-50 flex items-center justify-center text-3xl sm:text-4xl group-hover:scale-110 transition">
                   {s.emoji}

@@ -147,6 +147,23 @@
     "yourShareNotYetMarked": "Tvoj deo: {{amount}}, nije još označen kao plaćen.",
     "whoHasPaid": "Ko je platio"
   },
+  "hike": {
+    "easy": "Lako",
+    "medium": "Srednje",
+    "hard": "Teško",
+    "aboutTheTrail": "⛰️ O stazi",
+    "routePlaceholder": "Staza ili vrh (npr. Rogozna)",
+    "meetingPoint": "Mesto okupljanja",
+    "difficulty": "Težina",
+    "distanceKm": "Dužina (km)",
+    "ascentM": "Uspon (m)",
+    "durationH": "Trajanje (h)",
+    "gearPlaceholder": "Šta poneti: voda, obuća, jakna... (nije obavezno)",
+    "km": "{{value}} km",
+    "ascent": "uspon {{value}} m",
+    "hours": "oko {{value}} h",
+    "ownResponsibility": "Svako ide na sopstvenu odgovornost. Organizator nije vodič, osim ako to izričito piše."
+  },
   "matchRatings": {
     "fairPlay": "Fer",
     "unsporting": "Nesportski",
@@ -332,6 +349,10 @@
     "volleyballTagline": "Sala ili pesak, ekipa za odbojku u tvom gradu",
     "findAVolleyballGame": "Pronađi odbojkaški termin",
     "volleyballText": "Sala, pesak i puna ekipa",
+    "goHiking": "Kreni u planinu.",
+    "hikingTagline": "Pronađi društvo za pohod na obližnje vrhove",
+    "findAHike": "Pronađi planinarski termin",
+    "hikingText": "Staze, vrhovi i društvo za pohod",
     "gamesCount_one": "{{count}} termin",
     "gamesCount_few": "{{count}} termina",
     "gamesCount_other": "{{count}} termina"
@@ -676,7 +697,8 @@
     "Fudbal": "Fudbal",
     "Košarka": "Košarka",
     "Tenis": "Tenis",
-    "Odbojka": "Odbojka"
+    "Odbojka": "Odbojka",
+    "Planinarenje": "Planinarenje"
   },
   "surfaces": {
     "Veštačka trava": "Veštačka trava",

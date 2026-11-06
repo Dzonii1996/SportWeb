@@ -13,10 +13,10 @@ import {
   normalizeText,
 } from "../utils/matchDate";
 import { distanceKm, getMyPosition, hasCoords } from "../utils/geo";
-import { sportFilters } from "../utils/sports";
+import { MATCH_SPORTS, sportFilters } from "../utils/sports";
 import { useTranslation } from "react-i18next";
 
-const SPORTS = sportFilters("Svi");
+const SPORTS = sportFilters("Svi", MATCH_SPORTS);
 
 function Matches() {
   const { t } = useTranslation();
@@ -309,6 +309,7 @@ creatorName={match.creator_name}
   distance={distanceOf(match)}
   repeatWeekly={match.repeat_weekly}
   fieldPrice={match.field_price}
+  hike={match.hike}
   scoreA={match.score_a}
   scoreB={match.score_b}
               />

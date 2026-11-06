@@ -167,62 +167,8 @@ const rateParticipant = async (req, res) => {
   }
 };
 
-// Statistika za profil: odigrani termini, fer plej i nedolasci
-const getPlayerStats = async (user_id) => {
-  const result = await pool.query(
-    `SELECT
-       (
-         SELECT COUNT(*)
-         FROM matches m
-         WHERE (m.match_date + m.match_time) < NOW()
-         AND (
-           m.user_id = $1
-           OR EXISTS (
-             SELECT 1 FROM match_players mp
-             WHERE mp.match_id = m.id AND mp.user_id = $1
-           )
-         )
-       ) AS played,
-       (
-         SELECT COUNT(*) FROM match_ratings
-         WHERE rated_id = $1 AND vote = 'fair'
-       ) AS fair,
-       (
-         SELECT COUNT(*) FROM match_ratings
-         WHERE rated_id = $1 AND vote = 'unfair'
-       ) AS unfair,
-       (
-         -- Nedolazak se računa ako su ga označila bar dva učesnika ili kreator
-         SELECT COUNT(*) FROM (
-           SELECT r.match_id
-           FROM match_ratings r
-           JOIN matches m ON m.id = r.match_id
-           WHERE r.rated_id = $1 AND r.vote = 'no_show'
-           GROUP BY r.match_id, m.user_id
-           HAVING COUNT(*) >= 2 OR BOOL_OR(r.rater_id = m.user_id)
-         ) AS confirmed
-       ) AS no_shows`,
-    [user_id]
-  );
-
-  const row = result.rows[0];
-  const fair = Number(row.fair);
-  const unfair = Number(row.unfair);
-
-  return {
-    played: Number(row.played),
-    fair,
-    unfair,
-    // Procenat fer pleja, null dok nema nijedne ocene
-    fairPlay: fair + unfair > 0
-      ? Math.round((fair / (fair + unfair)) * 100)
-      : null,
-    noShows: Number(row.no_shows),
-  };
-};
 
 module.exports = {
   getMyRatings,
   rateParticipant,
-  getPlayerStats,
 };
