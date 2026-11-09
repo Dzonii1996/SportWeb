@@ -1,5 +1,6 @@
 const pool = require("../database/db");
 const { HttpError } = require("../utils/http");
+const { parsePage, pageInfo } = require("../utils/pagination");
 const { promoteFromWaitlist } = require("./waitlistService");
 const {
   describeMatch,
@@ -317,31 +318,161 @@ RETURNING *`,
   };
 };
 
-const getMatches = async () => {
- const result = await pool.query(`
-SELECT
-matches.*,
-users.name AS creator_name,
-users.avatar AS creator_avatar,
-COUNT(match_players.user_id) AS players,
-COALESCE(match_series.active, false) AS repeat_weekly
-FROM matches
-JOIN users
-ON users.id = matches.user_id
-LEFT JOIN match_players
-ON match_players.match_id = matches.id
-LEFT JOIN match_series
-ON match_series.id = matches.series_id
-WHERE NOT matches.is_private
-GROUP BY matches.id, users.name, users.avatar, match_series.active
-ORDER BY match_date`
-);
+// Pretraga bez obzira na kvačice i velika slova, kao u aplikaciji (đ = dj)
+const normalizeSearch = (text) =>
+  text
+    .toLowerCase()
+    .replace(/đ/g, "dj")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+const NORMALIZED_LOCATION =
+  "translate(replace(lower(matches.location), 'đ', 'dj'), 'čćžšáàâäéèêëíìîïóòôöúùûü', 'cczsaaaaeeeeiiiioooouuuu')";
+
+// Udaljenost u km od tačke ($lat, $lng), po haversine formuli
+const distanceSql = (lat, lng) => `
+  6371 * 2 * ASIN(SQRT(
+    POWER(SIN(RADIANS(matches.latitude - ${lat}) / 2), 2) +
+    COS(RADIANS(${lat})) * COS(RADIANS(matches.latitude)) *
+    POWER(SIN(RADIANS(matches.longitude - ${lng}) / 2), 2)
+  ))`;
+
+// Javna lista termina, po stranama (?page, ?limit). Filteri: sport, date (YYYY-MM-DD),
+// available=true (ima mesta), q (lokacija), past=true (i odigrani),
+// lat, lng i radius (km) za "blizu mene", kad su najbliži prvi.
+const getMatches = async ({ query = {} }) => {
+  const paging = parsePage(query);
+  const where = ["NOT matches.is_private"];
+  const outer = [];
+  const params = [];
+  const param = (value) => {
+    params.push(value);
+    return `$${params.length}`;
+  };
+
+  if (query.sport) {
+    if (!MATCH_SPORTS.includes(query.sport)) throw new HttpError(400, "Nepoznat sport.");
+    where.push(`matches.sport = ${param(query.sport)}`);
+  }
+
+  if (query.date) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(query.date) || Number.isNaN(Date.parse(query.date))) {
+      throw new HttpError(400, "Neispravan datum.");
+    }
+    where.push(`matches.match_date = ${param(query.date)}`);
+  }
+
+  if (query.past !== "true") {
+    where.push("(matches.match_date + matches.match_time) >= NOW()");
+  }
+
+  const q = typeof query.q === "string" ? normalizeSearch(query.q.trim()) : "";
+
+  if (q) {
+    where.push(`${NORMALIZED_LOCATION} LIKE ${param(`%${q.replace(/[\\%_]/g, "\\$&")}%`)}`);
+  }
+
+  if (query.available === "true") {
+    outer.push("players < max_players");
+  }
+
+  let distance = "NULL::float";
+  const near = query.lat !== undefined || query.lng !== undefined || query.radius !== undefined;
+
+  if (near) {
+    const lat = Number(query.lat);
+    const lng = Number(query.lng);
+    const radius = Number(query.radius ?? 10);
+
+    if (
+      !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180 ||
+      !Number.isFinite(radius) || radius <= 0 || radius > 200
+    ) {
+      throw new HttpError(400, "Neispravna lokacija za pretragu u blizini.");
+    }
+
+    where.push("matches.latitude IS NOT NULL AND matches.longitude IS NOT NULL");
+    distance = distanceSql(param(lat), param(lng));
+    outer.push(`distance_km <= ${param(radius)}`);
+  }
+
+  const limitParam = param(paging.limit);
+  const offsetParam = param(paging.offset);
+  const sql = `WITH list AS (
+       SELECT
+         matches.*,
+         users.name AS creator_name,
+         users.avatar AS creator_avatar,
+         (SELECT COUNT(*) FROM match_players WHERE match_players.match_id = matches.id) AS players,
+         COALESCE(match_series.active, false) AS repeat_weekly,
+         ${distance} AS distance_km
+       FROM matches
+       JOIN users ON users.id = matches.user_id
+       LEFT JOIN match_series ON match_series.id = matches.series_id
+       WHERE ${where.join(" AND ")}
+     )
+     SELECT *, COUNT(*) OVER() AS total_count
+     FROM list
+     ${outer.length ? `WHERE ${outer.join(" AND ")}` : ""}
+     ORDER BY ${near ? "distance_km, " : ""}match_date, match_time, id
+     LIMIT ${limitParam} OFFSET ${offsetParam}`;
+
+  const result = await pool.query(sql, params);
+  let total = Number(result.rows[0]?.total_count ?? 0);
+
+  // Strana posle poslednje je prazna, pa se ukupan broj čita sa prve
+  if (result.rows.length === 0 && paging.offset > 0) {
+    const first = await pool.query(sql, params.map((v, i) => (i === params.length - 1 ? 0 : v)));
+    total = Number(first.rows[0]?.total_count ?? 0);
+  }
 
   // Lista je javna: privatni termini nisu u njoj, a ključ se ne šalje
   return {
-    matches: result.rows.map(({ share_token, ...m }) => m),
+    matches: result.rows.map(({ share_token, total_count, ...match }) => match),
+    ...pageInfo(paging, total),
   };
 };
+
+// Pregled za početnu stranu: broj predstojećih termina, slobodnih mesta i lokacija,
+// broj po sportu, prva tri termina i sledeći termin za svaki sport
+const getSummary = async () => {
+  const upcoming = `
+    SELECT
+      matches.*,
+      users.name AS creator_name,
+      users.avatar AS creator_avatar,
+      (SELECT COUNT(*) FROM match_players WHERE match_players.match_id = matches.id) AS players
+    FROM matches
+    JOIN users ON users.id = matches.user_id
+    WHERE NOT matches.is_private AND (matches.match_date + matches.match_time) >= NOW()`;
+
+  const totals = await pool.query(
+    `SELECT
+       COUNT(*)::int AS games,
+       COALESCE(SUM(GREATEST(0, max_players - players)), 0)::int AS free_spots,
+       COUNT(DISTINCT LOWER(TRIM(location)))::int AS locations
+     FROM (${upcoming}) AS u`
+  );
+  const bySport = await pool.query(
+    `SELECT sport, COUNT(*)::int AS count FROM (${upcoming}) AS u GROUP BY sport`
+  );
+  const soonest = await pool.query(
+    `SELECT * FROM (${upcoming}) AS u ORDER BY match_date, match_time, id LIMIT 3`
+  );
+  const nextBySport = await pool.query(
+    `SELECT DISTINCT ON (sport) * FROM (${upcoming}) AS u ORDER BY sport, match_date, match_time, id`
+  );
+
+  const hideKey = ({ share_token, ...match }) => match;
+
+  return {
+    ...totals.rows[0],
+    by_sport: Object.fromEntries(bySport.rows.map((r) => [r.sport, r.count])),
+    upcoming: soonest.rows.map(hideKey),
+    next_by_sport: Object.fromEntries(nextBySport.rows.map((r) => [r.sport, hideKey(r)])),
+  };
+};
+
 const getMatch = async ({ id }) => {
   const result = await pool.query(
     `SELECT
@@ -645,6 +776,7 @@ const updateMatch = async ({ id, userId: user_id, body: input }) => {
 module.exports = {
     createMatch,
     getMatches,
+  getSummary,
     getMatch,
     deleteMatch,
     updateMatch

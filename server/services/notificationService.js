@@ -1,7 +1,16 @@
 const pool = require("../database/db");
+const { parsePage } = require("../utils/pagination");
 const { HttpError } = require("../utils/http");
 
-const getNotifications = async ({ userId: user_id }) => {
+const getNotifications = async ({ userId: user_id, query = {} }) => {
+  const { limit } = parsePage({ limit: query.limit });
+  const before = query.before === undefined || query.before === "" ? null : Number(query.before);
+
+  if (before !== null && !Number.isInteger(before)) {
+    throw new HttpError(400, "Neispravna strana.");
+  }
+
+  // Jedna više od tražene, da se zna da li ima još
   const result = await pool.query(
     `
     SELECT
@@ -14,14 +23,16 @@ const getNotifications = async ({ userId: user_id }) => {
       reservation_id,
       tournament_id
     FROM notifications
-    WHERE user_id = $1
-    ORDER BY created_at DESC
+    WHERE user_id = $1 AND ($2::int IS NULL OR id < $2)
+    ORDER BY id DESC
+    LIMIT $3
     `,
-    [user_id]
+    [user_id, before, limit + 1]
   );
 
   return {
-    notifications: result.rows,
+    notifications: result.rows.slice(0, limit),
+    has_more: result.rows.length > limit,
   };
 };
 

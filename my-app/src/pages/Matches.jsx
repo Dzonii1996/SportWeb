@@ -1,17 +1,14 @@
 
 
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { ChevronDown, Search, SlidersHorizontal } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import MatchCard from "../components/MatchCard";
 import axios from "axios";
 import { API_URL } from "../config";
-import {
-  localDateKey,
-  isPastMatch,
-  normalizeText,
-} from "../utils/matchDate";
+import { isPastMatch } from "../utils/matchDate";
+import LoadMore from "../components/LoadMore";
 import { distanceKm, getMyPosition, hasCoords } from "../utils/geo";
 import { MATCH_SPORTS, sportFilters } from "../utils/sports";
 import { useTranslation } from "react-i18next";
@@ -40,27 +37,74 @@ function Matches() {
   const [moreOpen, setMoreOpen] = useState(false);
 
 
- const [matches, setMatches] = useState([]);
+  // Termini se učitavaju po stranama; filtere primenjuje server
+  const [matches, setMatches] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loading, setLoading] = useState(true);
+  // Pretraga po lokaciji kreće kad korisnik zastane sa kucanjem
+  const [search, setSearch] = useState("");
+  const requestRef = useRef(0);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setSearch(locationQuery.trim()), 300);
 
-useEffect(() => {
-  fetchMatches();
-}, []);
+    return () => clearTimeout(timer);
+  }, [locationQuery]);
 
-const fetchMatches = async () => {
-  try {
-    const response = await axios.get(
-      `${API_URL}/api/matches`
-    );
+  const query = useMemo(() => {
+    const params = new URLSearchParams();
 
-    setMatches(response.data.matches);
+    if (selectedSport !== "Svi") params.set("sport", selectedSport);
+    if (selectedDate) params.set("date", selectedDate);
+    if (onlyAvailable) params.set("available", "true");
+    if (showPast) params.set("past", "true");
+    if (search) params.set("q", search);
 
-  } catch (error) {
-    console.error(error);
-  }
-};
+    if (myPosition) {
+      params.set("lat", myPosition[0]);
+      params.set("lng", myPosition[1]);
+      params.set("radius", radiusKm);
+    }
 
-  const search = normalizeText(locationQuery.trim());
+    return params.toString();
+  }, [selectedSport, selectedDate, onlyAvailable, showPast, search, myPosition, radiusKm]);
+
+  // Prva strana zamenjuje listu, sledeće se dodaju. Odgovor na stariji zahtev
+  // (npr. pre promene filtera) se odbacuje.
+  const loadPage = useCallback(async (pageNumber) => {
+    const request = ++requestRef.current;
+
+    setLoading(true);
+
+    try {
+      const { data } = await axios.get(`${API_URL}/api/matches?${query}&page=${pageNumber}`);
+
+      if (request !== requestRef.current) return;
+
+      setMatches((prev) => {
+        if (pageNumber === 1) return data.matches;
+
+        // Ako je u međuvremenu dodat termin, isti može doći i na sledećoj strani
+        const seen = new Set(prev.map((m) => m.id));
+
+        return [...prev, ...data.matches.filter((m) => !seen.has(m.id))];
+      });
+      setTotal(data.total);
+      setPage(pageNumber);
+      setHasMore(data.has_more);
+
+    } catch (error) {
+      console.error(error);
+    } finally {
+      if (request === requestRef.current) setLoading(false);
+    }
+  }, [query]);
+
+  useEffect(() => {
+    loadPage(1);
+  }, [loadPage]);
 
   const toggleNearMe = async () => {
     if (myPosition) {
@@ -84,44 +128,6 @@ const fetchMatches = async () => {
     myPosition && hasCoords(match)
       ? distanceKm(myPosition[0], myPosition[1], match.latitude, match.longitude)
       : null;
-
- const filteredMatches = matches.filter((match) => {
-  const sportFilter =
-    selectedSport === "Svi" || match.sport === selectedSport;
-
-  const dateFilter =
-    selectedDate === "" ||
-    localDateKey(match.match_date) === selectedDate;
-
-  const availableFilter =
-    !onlyAvailable ||
-    Number(match.players) < Number(match.max_players);
-
-  const locationFilter =
-    search === "" ||
-    normalizeText(match.location).includes(search);
-
-  const pastFilter =
-    showPast || !isPastMatch(match.match_date, match.match_time);
-
-  const distance = distanceOf(match);
-  const nearFilter =
-    !myPosition || (distance !== null && distance <= radiusKm);
-
-  return (
-    sportFilter &&
-    dateFilter &&
-    availableFilter &&
-    locationFilter &&
-    pastFilter &&
-    nearFilter
-  );
-});
-
-  // Uz "Blizu mene" najbliži termini idu prvi
-  if (myPosition) {
-    filteredMatches.sort((a, b) => distanceOf(a) - distanceOf(b));
-  }
 
   const hasFilters =
     selectedSport !== "Svi" ||
@@ -283,7 +289,7 @@ const fetchMatches = async () => {
         </div>
 
         <p className="text-gray-600 mb-4">
-          {t("matches.gamesFound", { length: filteredMatches.length })}
+          {loading && page === 1 ? t("common.loading") : t("matches.gamesFound", { length: total })}
           {myPosition && t("matches.showingOnlyGamesMarkedOn")}
         </p>
 
@@ -291,8 +297,8 @@ const fetchMatches = async () => {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
 
-          {filteredMatches.length > 0 ? (
-            filteredMatches.map((match) => (
+          {matches.length > 0 ? (
+            matches.map((match) => (
               <MatchCard
                 key={match.id}
   id={match.id}
@@ -314,13 +320,17 @@ creatorName={match.creator_name}
   scoreB={match.score_b}
               />
             ))
-          ) : (
+          ) : !loading && (
             <div className="col-span-full text-center text-gray-600 text-xl">
               {t("matches.noGamesMatchTheSelected")}
             </div>
           )}
 
         </div>
+
+        {hasMore && (
+          <LoadMore onClick={() => loadPage(page + 1)} loading={loading} className="mt-6" />
+        )}
 
       </div>
 

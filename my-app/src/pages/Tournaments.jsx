@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Calendar, MapPin, Plus, Users, Wallet } from "lucide-react";
 import { API_URL } from "../config";
+import LoadMore from "../components/LoadMore";
 import { formatRSD } from "../utils/price";
 import { useAdminStatus } from "../utils/venues";
 import { FORMATS, STATUS, formatDate, sportIcon } from "../utils/tournaments";
@@ -86,23 +87,36 @@ function Tournaments() {
 
   const [tournaments, setTournaments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [sport, setSport] = useState("");
   const [status, setStatus] = useState("");
 
-  useEffect(() => {
-    const params = new URLSearchParams();
+  // Prva strana zamenjuje listu, "Učitaj još" dodaje sledeću
+  const load = useCallback((pageNumber) => {
+    const params = new URLSearchParams({ page: pageNumber });
 
     if (sport) params.set("sport", sport);
     if (status) params.set("status", status);
 
     setLoading(true);
 
-    fetch(`${API_URL}/api/tournaments?${params}`)
+    return fetch(`${API_URL}/api/tournaments?${params}`)
       .then((res) => res.json())
-      .then((data) => setTournaments(data.tournaments || []))
+      .then((data) => {
+        setTournaments((prev) =>
+          pageNumber === 1 ? data.tournaments || [] : [...prev, ...(data.tournaments || [])]
+        );
+        setPage(pageNumber);
+        setHasMore(Boolean(data.has_more));
+      })
       .catch((error) => console.error(error))
       .finally(() => setLoading(false));
   }, [sport, status]);
+
+  useEffect(() => {
+    load(1);
+  }, [load]);
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -158,6 +172,8 @@ function Tournaments() {
             </p>
           )}
         </div>
+
+        {hasMore && <LoadMore onClick={() => load(page + 1)} loading={loading} className="mt-6" />}
       </div>
     </div>
   );

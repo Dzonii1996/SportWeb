@@ -22,6 +22,7 @@ const PUBLIC_ROUTES = [
   "authRoutes POST /forgot-password",
   "authRoutes POST /reset-password",
   "matchRoutes GET /",
+  "matchRoutes GET /summary",
   "matchRoutes GET /:id",
   "matchPlayerRoutes GET /:id/players",
   "waitlistRoutes GET /:id/waitlist",

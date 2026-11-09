@@ -16,6 +16,8 @@ function NotificationBell({ userId }) {
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const [notifications, setNotifications] = useState([]);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const boxRef = useRef(null);
 
@@ -48,10 +50,39 @@ function NotificationBell({ userId }) {
 
       if (data.success) {
         setNotifications(data.notifications);
+        setHasMore(Boolean(data.has_more));
       }
 
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  // Starije notifikacije, posle poslednje prikazane
+  const loadMore = async () => {
+    const last = notifications[notifications.length - 1];
+
+    if (!last) return;
+
+    setLoadingMore(true);
+
+    try {
+      const res = await fetch(
+        `${API_URL}/api/notifications/${userId}?before=${last.id}`,
+        { headers: authHeader() }
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        setNotifications((prev) => [...prev, ...data.notifications]);
+        setHasMore(Boolean(data.has_more));
+      }
+
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -209,6 +240,17 @@ function NotificationBell({ userId }) {
                   </p>
                 </button>
               ))
+            )}
+
+            {hasMore && (
+              <button
+                type="button"
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="block w-full py-3 text-center text-sm font-semibold text-green-700 hover:bg-gray-50 disabled:opacity-60"
+              >
+                {loadingMore ? t("common.loading") : t("common.loadMore")}
+              </button>
             )}
           </div>
 

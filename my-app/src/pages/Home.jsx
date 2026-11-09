@@ -171,7 +171,8 @@ function UpcomingCard({ match }) {
 function Home() {
   const { t } = useTranslation();
 
-  const [matches, setMatches] = useState(null);
+  // Pregled termina sa servera: brojevi, prva tri i sledeći po sportu
+  const [summary, setSummary] = useState(null);
   const loggedIn = Boolean(localStorage.getItem("user"));
 
   // Slajder: sam se smenjuje dok korisnik ne izabere sport.
@@ -210,31 +211,16 @@ function Home() {
   const slide = HERO_SLIDES[active];
 
   useEffect(() => {
-    fetch(`${API_URL}/api/matches`)
+    fetch(`${API_URL}/api/matches/summary`)
       .then((res) => res.json())
-      .then((data) => setMatches(data.matches || []))
-      .catch(() => setMatches([]));
+      .then((data) => setSummary(data.success ? data : {}))
+      .catch(() => setSummary({}));
   }, []);
 
-  // Samo termini koji tek dolaze, najbliži prvi
-  const upcoming = (matches || [])
-    .filter((m) => !isPastMatch(m.match_date, m.match_time))
-    .sort(
-      (a, b) =>
-        matchStart(a.match_date, a.match_time) -
-        matchStart(b.match_date, b.match_time)
-    );
+  // Termini koji tek dolaze, najbliži prvi (prva tri)
+  const upcoming = summary?.upcoming || [];
 
-  const freeSpots = upcoming.reduce(
-    (sum, m) => sum + Math.max(0, m.max_players - Number(m.players || 0)),
-    0
-  );
-
-  const locations = new Set(
-    upcoming.map((m) => m.location.trim().toLowerCase())
-  ).size;
-
-  const nextForSport = upcoming.find((m) => m.sport === slide.sport);
+  const nextForSport = summary?.next_by_sport?.[slide.sport];
 
   return (
     <div className="min-h-screen bg-gray-50 font-display">
@@ -356,14 +342,14 @@ function Home() {
       <section className="max-w-5xl mx-auto px-4 sm:px-6 -mt-10 relative">
         <div className="grid grid-cols-3 bg-white rounded-2xl shadow-xl border divide-x">
           {[
-            { icon: Calendar, value: upcoming.length, label: t("home.upcomingGames") },
-            { icon: Users, value: freeSpots, label: t("home.freeSpots") },
-            { icon: MapPin, value: locations, label: t("home.locations") },
+            { icon: Calendar, value: summary?.games ?? 0, label: t("home.upcomingGames") },
+            { icon: Users, value: summary?.free_spots ?? 0, label: t("home.freeSpots") },
+            { icon: MapPin, value: summary?.locations ?? 0, label: t("home.locations") },
           ].map(({ icon: Icon, value, label }) => (
             <div key={label} className="p-4 sm:p-6 text-center">
               <Icon className="mx-auto text-green-600 mb-2" size={24} />
               <p className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-                {matches === null ? "–" : value}
+                {summary === null ? "–" : value}
               </p>
               <p className="text-xs sm:text-sm text-gray-500">{label}</p>
             </div>
@@ -392,7 +378,7 @@ function Home() {
           </Link>
         </div>
 
-        {matches === null ? (
+        {summary === null ? (
           <p className="text-gray-500">{t("common.loading")}</p>
         ) : upcoming.length === 0 ? (
           <div className="bg-white border-2 border-dashed rounded-2xl p-10 text-center">
@@ -426,7 +412,7 @@ function Home() {
 
         <div className="grid grid-cols-2 gap-3 sm:gap-5">
           {SPORTS.map((s) => {
-            const count = upcoming.filter((m) => m.sport === s.value).length;
+            const count = summary?.by_sport?.[s.value] ?? 0;
 
             return (
               <Link

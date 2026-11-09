@@ -1,6 +1,7 @@
 const pool = require("../database/db");
 const withTransaction = require("../database/transaction");
 const { HttpError } = require("../utils/http");
+const { parsePage, pageInfo } = require("../utils/pagination");
 const { isAdmin } = require("../utils/admin");
 const { notifyUsers } = require("../utils/notify");
 const { newShareToken } = require("../utils/privacy");
@@ -218,6 +219,7 @@ const updateTournament = async ({ id, userId, body }) => {
 // Javna lista, uz filtere ?sport=Fudbal i ?status=registration
 const getTournaments = async ({ query }) => {
   const { sport, status } = query;
+  const paging = parsePage(query);
   const where = [];
   const params = [];
 
@@ -239,17 +241,20 @@ const getTournaments = async ({ query }) => {
        u.name AS organizer_name,
        w.name AS winner_name,
        (SELECT COUNT(*) FROM tournament_teams x
-        WHERE x.tournament_id = t.id AND x.status = 'approved')::int AS teams_count
+        WHERE x.tournament_id = t.id AND x.status = 'approved')::int AS teams_count,
+       COUNT(*) OVER() AS total_count
      FROM tournaments t
      JOIN users u ON u.id = t.organizer_id
      LEFT JOIN tournament_teams w ON w.id = t.winner_team_id
      ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
-     ORDER BY (t.status IN ('finished', 'cancelled')), t.start_date, t.id`,
-    params
+     ORDER BY (t.status IN ('finished', 'cancelled')), t.start_date, t.id
+     LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+    [...params, paging.limit, paging.offset]
   );
 
   return {
-    tournaments: result.rows,
+    tournaments: result.rows.map(({ total_count, ...t }) => t),
+    ...pageInfo(paging, Number(result.rows[0]?.total_count ?? 0)),
   };
 };
 
