@@ -1,10 +1,10 @@
+const { msg, render } = require("../utils/i18n");
 const crypto = require("crypto");
 const pool = require("../database/db");
 const { HttpError } = require("../utils/http");
 const bcrypt = require("bcrypt");
 const { validatePassword, signToken } = require("../utils/password");
 const { sendMail } = require("../utils/mailer");
-const { translate } = require("../utils/i18n");
 
 const RESET_MINUTES = 60;
 
@@ -22,7 +22,7 @@ const register = async ({ body }) => {
   // Provera podataka
   if (!name || !email || !password) {
 
-    throw new HttpError(400, "Sva polja su obavezna.");
+    throw new HttpError(400, msg("auth.allFieldsAreRequired"));
 
   }
 
@@ -43,7 +43,7 @@ const register = async ({ body }) => {
 
   if (existingUser.rows.length > 0) {
 
-    throw new HttpError(400, "Email već postoji.");
+    throw new HttpError(400, msg("auth.thisEmailAlreadyExists"));
 
   }
 
@@ -74,7 +74,7 @@ const register = async ({ body }) => {
 
   return {
 
-    message: "Korisnik uspešno registrovan.",
+    message: msg("auth.userRegisteredSuccessfully"),
 
     user: newUser.rows[0]
 
@@ -92,7 +92,7 @@ const login = async ({ body }) => {
 
   if (result.rows.length === 0) {
 
-    throw new HttpError(400, "Korisnik ne postoji.");
+    throw new HttpError(400, msg("auth.userDoesntExist"));
 
   }
 
@@ -105,14 +105,14 @@ const login = async ({ body }) => {
 
   if (!passwordMatch) {
 
-    throw new HttpError(400, "Pogrešna lozinka.");
+    throw new HttpError(400, msg("auth.wrongPassword"));
 
   }
 
   const token = signToken(user);
 
   return {
-    message: "Uspešna prijava.",
+    message: msg("auth.signedInSuccessfully"),
     token,
     user:{
       id:user.id,
@@ -125,7 +125,7 @@ const login = async ({ body }) => {
 
 
 const FORGOT_MESSAGE =
-  "Ako nalog sa tim emailom postoji, poslali smo link za novu lozinku.";
+  msg("auth.ifAnAccountWithThat");
 
 // Šalje link za novu lozinku. Odgovor je uvek isti, da se ne bi moglo
 // proveriti koji emailovi imaju nalog.
@@ -157,13 +157,13 @@ const forgotPassword = async ({ body, language }) => {
 
       await sendMail({
         to: user.email,
-        subject: translate("SportWeb – nova lozinka", language),
-        text: translate(
-          `Zdravo ${user.name},\n\n` +
-          `neko je zatražio novu lozinku za tvoj SportWeb nalog. ` +
-          `Ako si to bio ti, otvori ovaj link u narednih ${RESET_MINUTES} minuta:\n\n` +
-          `${frontendUrl()}/reset-password?token=${token}\n\n` +
-          `Ako nisi ti tražio, slobodno ignoriši ovaj mejl. Lozinka ostaje ista.`,
+        subject: render(msg("auth.sportwebNewPassword"), language),
+        text: render(
+          msg("common.hiSomeoneRequestedANew", {
+            name: user.name,
+            minutes: RESET_MINUTES,
+            link: `${frontendUrl()}/reset-password?token=${token}`,
+          }),
           language
         ),
       });
@@ -199,7 +199,7 @@ const resetPassword = async ({ body }) => {
 
     if (reset.rows.length === 0) {
       await client.query("ROLLBACK");
-      throw new HttpError(400, "Link je istekao ili je već iskorišćen.", { expired: true });
+      throw new HttpError(400, msg("auth.theLinkHasExpiredOr"), { expired: true });
     }
 
     const { user_id } = reset.rows[0];
@@ -221,7 +221,7 @@ const resetPassword = async ({ body }) => {
     await client.query("COMMIT");
 
     return {
-      message: "Lozinka je promenjena. Prijavi se novom lozinkom.",
+      message: msg("auth.yourPasswordHasBeenChanged"),
     };
 
   } catch (error) {

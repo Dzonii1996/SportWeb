@@ -1,3 +1,4 @@
+const { msg } = require("./i18n");
 // Logika turnira bez baze: raspored, kup i tabela
 
 const shuffle = (list) => {
@@ -93,7 +94,7 @@ const judgeResult = ({ sport, format, scoreA, scoreB, penaltiesA, penaltiesB }) 
   const validScore = (n, max) => Number.isInteger(n) && n >= 0 && n <= max;
 
   if (!validScore(scoreA, 999) || !validScore(scoreB, 999)) {
-    return { error: "Rezultat mora biti ceo broj od 0 do 999." };
+    return { error: msg("common.theScoreMustBeA") };
   }
 
   if (scoreA !== scoreB) {
@@ -101,12 +102,12 @@ const judgeResult = ({ sport, format, scoreA, scoreB, penaltiesA, penaltiesB }) 
   }
 
   if (sport === "Košarka") {
-    return { error: "U košarci nema nerešenog rezultata. Upiši rezultat posle produžetka." };
+    return { error: msg("common.basketballHasNoDrawsEnter") };
   }
 
   // Tenis i odbojka: rezultat su osvojeni setovi
   if (sport !== "Fudbal") {
-    return { error: "U ovom sportu nema nerešenog rezultata. Upiši osvojene setove." };
+    return { error: msg("common.thisSportHasNoDraws") };
   }
 
   if (format === "league") {
@@ -114,7 +115,7 @@ const judgeResult = ({ sport, format, scoreA, scoreB, penaltiesA, penaltiesB }) 
   }
 
   if (!validScore(penaltiesA, 99) || !validScore(penaltiesB, 99) || penaltiesA === penaltiesB) {
-    return { error: "U kupu mora biti pobednik: upiši penale (različit broj za ekipe)." };
+    return { error: msg("common.aCupMatchNeedsA") };
   }
 
   return { winner: penaltiesA > penaltiesB ? "a" : "b", penalties: [penaltiesA, penaltiesB] };

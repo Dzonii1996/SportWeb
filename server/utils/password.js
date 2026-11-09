@@ -1,3 +1,4 @@
+const { msg } = require("./i18n");
 const jwt = require("jsonwebtoken");
 
 const MIN_PASSWORD_LENGTH = 6;
@@ -5,11 +6,11 @@ const MIN_PASSWORD_LENGTH = 6;
 // Isto pravilo za registraciju, promenu i reset lozinke
 const validatePassword = (password) => {
   if (typeof password !== "string" || password.length < MIN_PASSWORD_LENGTH) {
-    return `Lozinka mora imati bar ${MIN_PASSWORD_LENGTH} znakova.`;
+    return msg("common.thePasswordMustHaveAt", { n: MIN_PASSWORD_LENGTH });
   }
 
   if (password.length > 100) {
-    return "Lozinka je predugačka.";
+    return msg("common.thePasswordIsTooLong");
   }
 
   return null;

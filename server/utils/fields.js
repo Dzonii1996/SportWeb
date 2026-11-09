@@ -1,3 +1,4 @@
+const { msg } = require("./i18n");
 // Zajednička provera polja za termine i terene
 
 // Sportovi sa terenima, turnirima i rang listom
@@ -29,7 +30,7 @@ const parsePrice = ({ field_price }) => {
   const price = Number(field_price);
 
   if (!Number.isInteger(price) || price < 0 || price > MAX_PRICE) {
-    return { error: "Cena terena mora biti ceo broj dinara (do 1.000.000)." };
+    return { error: msg("common.theVenuePriceMustBe") };
   }
 
   return { price };
@@ -55,7 +56,7 @@ const parseCoords = ({ latitude, longitude }) => {
     Math.abs(lat) > 90 ||
     Math.abs(lng) > 180
   ) {
-    return { error: "Neispravna lokacija na mapi." };
+    return { error: msg("common.invalidLocationOnTheMap") };
   }
 
   return { latitude: lat, longitude: lng };
@@ -81,25 +82,25 @@ const parseHike = ({ sport, hike }) => {
   const route = typeof hike?.route === "string" ? hike.route.trim() : "";
 
   if (route.length < 2 || route.length > 100) {
-    return { error: "Unesi naziv staze ili vrha (2 do 100 znakova)." };
+    return { error: msg("common.enterTheTrailOrPeak") };
   }
 
   if (!HIKE_DIFFICULTIES.includes(hike.difficulty)) {
-    return { error: "Izaberi težinu staze." };
+    return { error: msg("common.pickTheTrailDifficulty") };
   }
 
   const distance = optionalNumber(hike.distance_km, (n) => n > 0 && n <= 200);
   const ascent = optionalNumber(hike.ascent_m, (n) => Number.isInteger(n) && n >= 0 && n <= 9000);
   const duration = optionalNumber(hike.duration_hours, (n) => n > 0 && n <= 72);
 
-  if (distance === undefined) return { error: "Neispravna dužina staze." };
-  if (ascent === undefined) return { error: "Neispravan uspon." };
-  if (duration === undefined) return { error: "Neispravno trajanje." };
+  if (distance === undefined) return { error: msg("common.invalidTrailLength") };
+  if (ascent === undefined) return { error: msg("common.invalidAscent") };
+  if (duration === undefined) return { error: msg("common.invalidDuration") };
 
   const gear = typeof hike.gear === "string" && hike.gear.trim() !== "" ? hike.gear.trim() : null;
 
   if (gear && gear.length > MAX_GEAR) {
-    return { error: `Spisak opreme može imati najviše ${MAX_GEAR} znakova.` };
+    return { error: msg("common.theGearListCanHave", { value: MAX_GEAR }) };
   }
 
   return {

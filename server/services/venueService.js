@@ -1,3 +1,4 @@
+const { msg } = require("../utils/i18n");
 const fs = require("fs");
 const path = require("path");
 const pool = require("../database/db");
@@ -33,7 +34,7 @@ const VENUE_COLUMNS = `
      AND (m.match_date + m.match_time) >= NOW())::int AS upcoming_matches
 `;
 
-const notFound = () => new HttpError(404, "Teren ne postoji.");
+const notFound = () => new HttpError(404, msg("common.thisVenueDoesntExist"));
 
 // Opcioni tekst: prazno je null, inače skraćen razmacima i najviše max znakova
 const optionalText = (value, max, label) => {
@@ -42,7 +43,7 @@ const optionalText = (value, max, label) => {
   }
 
   if (typeof value !== "string" || value.trim().length > max) {
-    return { error: `${label} može imati najviše ${max} znakova.` };
+    return { error: msg("venue.canHaveAtMostCharacters", { label, n: max }) };
   }
 
   return { value: value.trim() };
@@ -54,11 +55,11 @@ const validateVenue = (body) => {
   const address = typeof body.address === "string" ? body.address.trim() : "";
 
   if (name.length < 2 || name.length > 100) {
-    return { error: "Naziv mora imati između 2 i 100 znakova." };
+    return { error: msg("venue.nameMustBeBetween2") };
   }
 
   if (address.length < 2 || address.length > 200) {
-    return { error: "Adresa mora imati između 2 i 200 znakova." };
+    return { error: msg("venue.theAddressMustBeBetween") };
   }
 
   const coords = parseCoords(body);
@@ -66,19 +67,19 @@ const validateVenue = (body) => {
   if (coords.error) return { error: coords.error };
 
   if (coords.latitude === null) {
-    return { error: "Označi teren na mapi." };
+    return { error: msg("venue.markTheVenueOnThe") };
   }
 
   const sports = Array.isArray(body.sports) ? [...new Set(body.sports)] : [];
 
   if (sports.length === 0 || !sports.every((s) => SPORTS.includes(s))) {
-    return { error: "Izaberi bar jedan sport." };
+    return { error: msg("venue.pickAtLeastOneSport") };
   }
 
   const surface = body.surface ? String(body.surface) : null;
 
   if (surface !== null && !SURFACES.includes(surface)) {
-    return { error: "Nepoznata podloga." };
+    return { error: msg("venue.unknownSurface") };
   }
 
   let price = null;
@@ -87,7 +88,7 @@ const validateVenue = (body) => {
     price = Number(body.price_per_hour);
 
     if (!Number.isInteger(price) || price < 0 || price > MAX_PRICE) {
-      return { error: "Cena po satu mora biti ceo broj dinara (do 1.000.000)." };
+      return { error: msg("venue.theHourlyPriceMustBe") };
     }
   }
 
@@ -99,7 +100,7 @@ const validateVenue = (body) => {
   if (textError) return { error: textError };
 
   if (phone.value && !/^[0-9+\-/() ]+$/.test(phone.value)) {
-    return { error: "Telefon može sadržati samo cifre, razmake i znakove + - / ( )." };
+    return { error: msg("venue.thePhoneCanOnlyContain") };
   }
 
   return {
@@ -143,7 +144,7 @@ const findManagedVenue = async (id, userId) => {
   if (!venue) throw notFound();
 
   if (!isOwner(venue, userId) && !(await isAdmin(userId))) {
-    throw new HttpError(403, "Samo admin ili vlasnik terena može ovo da uradi.");
+    throw new HttpError(403, msg("venue.onlyTheAdminOrThe"));
   }
 
   return venue;
@@ -156,7 +157,7 @@ const requireImageAccess = async (id, userId) => {
   if (!venue) throw notFound();
 
   if (!(await canEditImages(venue, userId))) {
-    throw new HttpError(403, "Nemate dozvolu.");
+    throw new HttpError(403, msg("common.youDontHavePermission"));
   }
 };
 
@@ -175,7 +176,7 @@ const getVenues = async ({ query }) => {
 
   if (sport !== undefined && sport !== "") {
     if (!SPORTS.includes(sport)) {
-      throw new HttpError(400, "Nepoznat sport.");
+      throw new HttpError(400, msg("common.unknownSport"));
     }
 
     params.push(sport);
@@ -191,7 +192,7 @@ const getVenues = async ({ query }) => {
     const min = Number(minRating);
 
     if (!Number.isFinite(min) || min < 1 || min > 5) {
-      throw new HttpError(400, "Ocena mora biti između 1 i 5.");
+      throw new HttpError(400, msg("venue.theRatingMustBeBetween"));
     }
 
     params.push(min);
@@ -249,7 +250,7 @@ const getAdminList = async ({ query }) => {
   const status = query.status || "pending";
 
   if (!STATUSES.includes(status)) {
-    throw new HttpError(400, "Nepoznat status.");
+    throw new HttpError(400, msg("common.unknownStatus"));
   }
 
   const result = await pool.query(
@@ -380,7 +381,7 @@ const createVenue = async ({ userId, body }) => {
       await notifyUsers(
         pool,
         await adminIds(),
-        `🏟️ Nov predlog terena: ${venue.name} (${venue.address}). Čeka odobrenje.`,
+        msg("venue.newVenueSuggestionAwaitingApproval", { venue: venue.name, address: venue.address }),
         null,
         { venueId: venue.id }
       );
@@ -391,8 +392,8 @@ const createVenue = async ({ userId, body }) => {
 
   return {
     message: admin
-      ? "Teren je dodat."
-      : "Hvala! Predlog je poslat i čeka odobrenje admina.",
+      ? msg("venue.theVenueWasAdded")
+      : msg("venue.thanksYourSuggestionWasSent"),
     venue,
   };
 };
@@ -430,7 +431,7 @@ const updateVenue = async ({ id, body }) => {
   );
 
   return {
-    message: "Teren je izmenjen.",
+    message: msg("venue.theVenueWasUpdated"),
     venue: result.rows[0],
   };
 };
@@ -451,7 +452,7 @@ const deleteVenue = async ({ id }) => {
   removeFiles(images.rows.map((r) => r.path));
 
   return {
-    message: "Teren je obrisan.",
+    message: msg("venue.theVenueWasDeleted"),
   };
 };
 
@@ -479,10 +480,10 @@ const setStatus = (status) => async ({ id, userId, body }) => {
   if (suggester && Number(suggester) !== Number(userId) && venue.status !== status) {
     const message =
       status === "approved"
-        ? `✅ Tvoj predlog terena "${venue.name}" je odobren i sada je na listi terena. Hvala!`
-        : `❌ Tvoj predlog terena "${venue.name}" nije odobren.${
-            reason.value ? ` Razlog: ${reason.value}` : ""
-          }`;
+        ? msg("venue.yourVenueSuggestionWasApproved", { venue: venue.name })
+        : reason.value
+          ? msg("common.yourVenueSuggestionWasntApproved2", { venue: venue.name, reason: reason.value })
+          : msg("common.yourVenueSuggestionWasntApproved", { venue: venue.name });
 
     try {
       await notifyUsers(pool, [suggester], message, null, { venueId: venue.id });
@@ -492,7 +493,7 @@ const setStatus = (status) => async ({ id, userId, body }) => {
   }
 
   return {
-    message: status === "approved" ? "Teren je odobren." : "Predlog je odbijen.",
+    message: status === "approved" ? msg("venue.theVenueWasApproved") : msg("venue.theSuggestionWasRejected"),
     venue: result.rows[0],
   };
 };
@@ -512,11 +513,11 @@ const addImages = async ({ id, userId, files }) => {
     if (!(await canEditImages(venue, userId))) {
       removeFiles(uploaded);
 
-      throw new HttpError(403, "Nemate dozvolu.");
+      throw new HttpError(403, msg("common.youDontHavePermission"));
     }
 
     if (uploaded.length === 0) {
-      throw new HttpError(400, "Nije izabrana nijedna slika.");
+      throw new HttpError(400, msg("venue.noImagesSelected"));
     }
 
     const count = await pool.query(
@@ -526,7 +527,7 @@ const addImages = async ({ id, userId, files }) => {
 
     if (count.rows[0].count + uploaded.length > MAX_IMAGES) {
       removeFiles(uploaded);
-      throw new HttpError(400, `Teren može imati najviše ${MAX_IMAGES} slika.`);
+      throw new HttpError(400, msg("venue.aVenueCanHaveAt", { n: MAX_IMAGES }));
     }
 
     const result = await pool.query(
@@ -537,7 +538,7 @@ const addImages = async ({ id, userId, files }) => {
     );
 
     return {
-      message: "Slike su dodate.",
+      message: msg("venue.imagesAdded"),
       images: result.rows,
     };
 
@@ -553,7 +554,7 @@ const deleteImage = async ({ id, imageId, userId }) => {
   if (!venue) throw notFound();
 
   if (!(await canEditImages(venue, userId))) {
-    throw new HttpError(403, "Nemate dozvolu.");
+    throw new HttpError(403, msg("common.youDontHavePermission"));
   }
 
   const result = await pool.query(
@@ -562,13 +563,13 @@ const deleteImage = async ({ id, imageId, userId }) => {
   );
 
   if (result.rows.length === 0) {
-    throw new HttpError(404, "Slika ne postoji.");
+    throw new HttpError(404, msg("venue.theImageDoesntExist"));
   }
 
   removeFiles(result.rows.map((r) => r.path));
 
   return {
-    message: "Slika je obrisana.",
+    message: msg("venue.theImageWasDeleted"),
   };
 };
 

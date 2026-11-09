@@ -121,15 +121,15 @@ describe("raspored i tabela (bez baze)", () => {
     const base = { sport: "Fudbal", scoreA: 1, scoreB: 1 };
 
     expect(judgeResult({ ...base, format: "league" }).winner).toBeNull();
-    expect(judgeResult({ ...base, format: "knockout" }).error).toMatch(/penale/);
-    expect(judgeResult({ ...base, format: "knockout", penaltiesA: 3, penaltiesB: 3 }).error).toMatch(/penale/);
+    expect(String(judgeResult({ ...base, format: "knockout" }).error)).toMatch(/penale/);
+    expect(String(judgeResult({ ...base, format: "knockout", penaltiesA: 3, penaltiesB: 3 }).error)).toMatch(/penale/);
     expect(judgeResult({ ...base, format: "knockout", penaltiesA: 5, penaltiesB: 4 }).winner).toBe("a");
   });
 
   test("košarka nema nerešeno", () => {
     const judged = judgeResult({ sport: "Košarka", format: "league", scoreA: 70, scoreB: 70 });
 
-    expect(judged.error).toMatch(/nema nerešenog/);
+    expect(String(judged.error)).toMatch(/nema nerešenog/);
   });
 
   const teams = [{ id: 1, name: "A" }, { id: 2, name: "B" }, { id: 3, name: "C" }];

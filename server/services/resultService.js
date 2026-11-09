@@ -1,3 +1,4 @@
+const { msg } = require("../utils/i18n");
 const pool = require("../database/db");
 const { HttpError } = require("../utils/http");
 const { outcome } = require("./playerStatsService");
@@ -8,10 +9,10 @@ const RESULT_DAYS = 7;
 const MAX_SCORE = 999;
 
 
-const OUTCOME_TEXT = {
-  W: "🏆 Pobeda!",
-  D: "🤝 Nerešeno.",
-  L: "Poraz, ali sledeći put je vaš.",
+const OUTCOME_KEY = {
+  W: "common.winTeamATeamB",
+  D: "common.drawTeamATeamB",
+  L: "common.aLossButNextTime",
 };
 
 // Kreator upisuje (ili briše, sa null) rezultat posle termina
@@ -22,7 +23,7 @@ const setResult = async ({ id, userId, body }) => {
   const valid = (n) => Number.isInteger(n) && n >= 0 && n <= MAX_SCORE;
 
   if (!clearing && !(valid(score_a) && valid(score_b))) {
-    throw new HttpError(400, "Rezultat mora biti ceo broj od 0 do 999 za oba tima.");
+    throw new HttpError(400, msg("result.theScoreMustBeA"));
   }
 
   const match = await pool.query(
@@ -37,23 +38,23 @@ const setResult = async ({ id, userId, body }) => {
   const matchData = match.rows[0];
 
   if (!matchData) {
-    throw new HttpError(404, "Termin ne postoji.");
+    throw new HttpError(404, msg("common.thisGameDoesntExist"));
   }
 
   if (Number(matchData.user_id) !== Number(userId)) {
-    throw new HttpError(403, "Samo kreator upisuje rezultat.");
+    throw new HttpError(403, msg("result.onlyTheCreatorCanEnter"));
   }
 
   if (matchData.sport === HIKING) {
-    throw new HttpError(400, "Planinarenje nema rezultat.");
+    throw new HttpError(400, msg("result.hikingHasNoResult"));
   }
 
   if (!matchData.started) {
-    throw new HttpError(400, "Rezultat se upisuje posle početka termina.");
+    throw new HttpError(400, msg("result.theResultIsEnteredAfter"));
   }
 
   if (!matchData.open) {
-    throw new HttpError(400, `Rezultat može da se upiše najviše ${RESULT_DAYS} dana posle termina.`);
+    throw new HttpError(400, msg("result.theResultCanBeEntered", { n: RESULT_DAYS }));
   }
 
   await pool.query(
@@ -68,7 +69,7 @@ const setResult = async ({ id, userId, body }) => {
       [id]
     );
 
-    const score = `Tim A ${score_a} : ${score_b} Tim B`;
+    const params = { a: score_a, b: score_b, match: describeMatch(matchData) };
     const groups = { W: [], D: [], L: [], none: [] };
 
     for (const p of players.rows) {
@@ -80,7 +81,7 @@ const setResult = async ({ id, userId, body }) => {
       await notifyUsers(
         pool,
         groups[key],
-        `${OUTCOME_TEXT[key]} ${score} (${describeMatch(matchData)}).`,
+        msg(OUTCOME_KEY[key], params),
         id
       );
     }
@@ -88,13 +89,13 @@ const setResult = async ({ id, userId, body }) => {
     await notifyUsers(
       pool,
       groups.none,
-      `📋 Upisan je rezultat: ${score} (${describeMatch(matchData)}).`,
+      msg("common.resultEnteredTeamATeam", params),
       id
     );
   }
 
   return {
-    message: clearing ? "Rezultat je obrisan." : "Rezultat je sačuvan.",
+    message: clearing ? msg("result.theResultWasDeleted") : msg("common.theResultWasSaved"),
     score_a,
     score_b,
   };
@@ -106,7 +107,7 @@ const getLeaderboard = async ({ query }) => {
   const sport = query.sport || null;
 
   if (sport !== null && !SPORTS.includes(sport)) {
-    throw new HttpError(400, "Nepoznat sport.");
+    throw new HttpError(400, msg("common.unknownSport"));
   }
 
   const result = await pool.query(

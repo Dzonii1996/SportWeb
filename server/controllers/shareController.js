@@ -1,6 +1,6 @@
+const { msg, render } = require("../utils/i18n");
 const { findSharedMatch } = require("../services/shareService");
 const { describeMatch } = require("../utils/notify");
-const { translate } = require("../utils/i18n");
 const { SPORT_EMOJI } = require("../utils/fields");
 
 // Adresa frontenda na koju link vodi. Za produkciju postavi FRONTEND_URL u .env
@@ -50,9 +50,9 @@ const shareMatch = async (req, res) => {
     if (!match) {
       return res.status(404).type("html").send(
         page({
-          title: translate("Termin ne postoji", req.language),
+          title: render(msg("share.thisGameDoesntExist"), req.language),
           language: req.language,
-          description: translate("Ovaj termin je otkazan ili ne postoji.", req.language),
+          description: render(msg("share.thisGameWasCancelledOr"), req.language),
           url: `${frontendUrl()}/matches`,
         })
       );
@@ -63,13 +63,15 @@ const shareMatch = async (req, res) => {
 
     res.type("html").send(
       page({
-        title: translate(
-          `${emoji} ${match.sport} · ${free === 0 ? "popunjeno" : `slobodno još ${free}`}`,
+        title: render(
+          free === 0
+            ? msg("share.full", { emoji, sport: match.sport })
+            : msg("share.spotsLeft", { emoji, sport: match.sport, n: free }),
           req.language
         ),
         language: req.language,
-        description: translate(
-          `${describeMatch(match)} · organizuje ${match.creator_name}. Prijavi se na SportWeb-u.`,
+        description: render(
+          msg("share.organizedByJoinOnSportweb", { match: describeMatch(match), name: match.creator_name }),
           req.language
         ),
         url: `${frontendUrl()}/matches/${match.id}${
@@ -80,7 +82,7 @@ const shareMatch = async (req, res) => {
 
   } catch (error) {
     console.error(error);
-    res.status(500).send(translate("Greška servera.", req.language));
+    res.status(500).send(render(msg("common.serverError"), req.language));
   }
 };
 

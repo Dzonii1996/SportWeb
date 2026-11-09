@@ -1,3 +1,4 @@
+const { msg } = require("../utils/i18n");
 const pool = require("../database/db");
 const { HttpError } = require("../utils/http");
 const { getPlayerStats, getResultStats } = require("./playerStatsService");
@@ -61,7 +62,7 @@ const getProfile = async ({ id, userId }) => {
   );
 
   if (user.rows.length === 0) {
-    throw new HttpError(404, "Korisnik nije pronađen.");
+    throw new HttpError(404, msg("user.userNotFound"));
   }
 
   // Email vidi samo vlasnik profila
@@ -99,7 +100,7 @@ const getProfile = async ({ id, userId }) => {
 };
 const uploadAvatar = async ({ id, file }) => {
   if (!file) {
-    throw new HttpError(400, "Nije izabrana slika.");
+    throw new HttpError(400, msg("common.noImageSelected"));
   }
 
   const avatar = `/uploads/${file.filename}`;
@@ -119,7 +120,7 @@ const updateProfile = async ({ userId, body }) => {
   const name = typeof body.name === "string" ? body.name.trim() : "";
 
   if (name.length < 2 || name.length > 100) {
-    throw new HttpError(400, "Ime mora imati između 2 i 100 znakova.");
+    throw new HttpError(400, msg("user.nameMustBeBetween2"));
   }
 
   const result = await pool.query(
@@ -128,7 +129,7 @@ const updateProfile = async ({ userId, body }) => {
   );
 
   return {
-    message: "Profil je sačuvan.",
+    message: msg("user.profileSaved"),
     user: result.rows[0],
   };
 };
@@ -154,7 +155,7 @@ const changePassword = async ({ userId, body }) => {
     (await bcrypt.compare(currentPassword, user.rows[0].password));
 
   if (!matches) {
-    throw new HttpError(400, "Trenutna lozinka nije tačna.");
+    throw new HttpError(400, msg("user.theCurrentPasswordIsIncorrect"));
   }
 
   await pool.query(
@@ -165,7 +166,7 @@ const changePassword = async ({ userId, body }) => {
   );
 
   return {
-    message: "Lozinka je promenjena. Ostali uređaji su odjavljeni.",
+    message: msg("user.yourPasswordHasBeenChanged"),
     token: signToken(user.rows[0]),
   };
 };

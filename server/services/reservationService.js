@@ -1,3 +1,4 @@
+const { msg } = require("../utils/i18n");
 const pool = require("../database/db");
 const withTransaction = require("../database/transaction");
 const { HttpError } = require("../utils/http");
@@ -62,11 +63,11 @@ const updateSettings = async ({ body, venue }) => {
     !Number.isInteger(open) || !Number.isInteger(close) ||
     open < 0 || open > 23 || close < 1 || close > 24 || close <= open
   ) {
-    throw new HttpError(400, "Neispravno vreme rezervacija (od 0 do 24h, kraj posle početka).");
+    throw new HttpError(400, msg("reservation.invalidBookingHours0To"));
   }
 
   if (accepts && !venue.owner_id) {
-    throw new HttpError(400, "Teren mora imati vlasnika da bi primao rezervacije.");
+    throw new HttpError(400, msg("reservation.aVenueMustHaveAn"));
   }
 
   const result = await pool.query(
@@ -79,7 +80,7 @@ const updateSettings = async ({ body, venue }) => {
   );
 
   return {
-    message: "Podešavanja rezervacija su sačuvana.",
+    message: msg("reservation.bookingSettingsSaved"),
     settings: result.rows[0],
   };
 };
@@ -100,12 +101,12 @@ const getAvailability = async ({ id, query }) => {
   const venue = await findBookableVenue(pool, id);
 
   if (!venue) {
-    throw new HttpError(404, "Teren ne prima rezervacije.");
+    throw new HttpError(404, msg("reservation.thisVenueDoesntTakeBookings"));
   }
 
   const date = parseDate(query.date);
 
-  if (!date) throw new HttpError(400, "Neispravan datum.");
+  if (!date) throw new HttpError(400, msg("common.invalidDate"));
 
   const result = await pool.query(
     `SELECT start_hour, end_hour, status FROM venue_reservations
@@ -129,18 +130,18 @@ const getAvailability = async ({ id, query }) => {
 const bookSlot = async (client, { venueId, userId, date: dateKey, start, hours, note = null }) => {
   const date = parseDate(dateKey);
 
-  if (!date) return { status: 400, message: "Neispravan datum." };
+  if (!date) return { status: 400, message: msg("common.invalidDate") };
 
   if (!Number.isInteger(start) || start < 0 || start > 23) {
-    return { status: 400, message: "Neispravno vreme početka." };
+    return { status: 400, message: msg("reservation.invalidStartTime") };
   }
 
   if (!Number.isInteger(hours) || hours < 1 || hours > MAX_HOURS) {
-    return { status: 400, message: `Rezervacija traje od 1 do ${MAX_HOURS} sata.` };
+    return { status: 400, message: msg("reservation.aBookingLastsFrom1", { n: MAX_HOURS }) };
   }
 
   if (note && note.length > MAX_NOTE) {
-    return { status: 400, message: `Napomena može imati najviše ${MAX_NOTE} znakova.` };
+    return { status: 400, message: msg("reservation.aNoteCanHaveAt", { n: MAX_NOTE }) };
   }
 
   const [y, m, d] = date;
@@ -149,11 +150,11 @@ const bookSlot = async (client, { venueId, userId, date: dateKey, start, hours, 
   latest.setDate(latest.getDate() + MAX_DAYS_AHEAD);
 
   if (startsAt <= new Date()) {
-    return { status: 400, message: "Rezervacija ne može biti u prošlosti." };
+    return { status: 400, message: msg("reservation.aBookingCantBeIn") };
   }
 
   if (startsAt > latest) {
-    return { status: 400, message: `Rezervacija može biti najviše ${MAX_DAYS_AHEAD} dana unapred.` };
+    return { status: 400, message: msg("reservation.aBookingCanBeAt", { n: MAX_DAYS_AHEAD }) };
   }
 
   const end = start + hours;
@@ -161,12 +162,12 @@ const bookSlot = async (client, { venueId, userId, date: dateKey, start, hours, 
   // Zaključavamo teren, da dva istovremena zahteva ne dobiju isto vreme
   const venue = await findBookableVenue(client, venueId, true);
 
-  if (!venue) return { status: 404, message: "Teren ne prima rezervacije." };
+  if (!venue) return { status: 404, message: msg("reservation.thisVenueDoesntTakeBookings") };
 
   if (start < venue.reservation_open_hour || end > venue.reservation_close_hour) {
     return {
       status: 400,
-      message: `Rezervacije su moguće od ${venue.reservation_open_hour} do ${venue.reservation_close_hour}h.`,
+      message: msg("reservation.bookingsArePossibleFromTo", { from: venue.reservation_open_hour, to: venue.reservation_close_hour }),
     };
   }
 
@@ -178,7 +179,7 @@ const bookSlot = async (client, { venueId, userId, date: dateKey, start, hours, 
   );
 
   if (overlap.rows.length > 0) {
-    return { status: 409, message: "To vreme na terenu je već zauzeto. Izaberi drugi termin." };
+    return { status: 409, message: msg("reservation.thatTimeAtTheVenue") };
   }
 
   const byOwner = Number(venue.owner_id) === Number(userId);
@@ -198,7 +199,7 @@ const bookSlot = async (client, { venueId, userId, date: dateKey, start, hours, 
     await notifyUsers(
       client,
       [venue.owner_id],
-      `📅 Nov zahtev za rezervaciju: ${venue.name}, ${describeSlot(reservation)} (${user.rows[0].name}).`,
+      msg("reservation.newBookingRequest", { venue: venue.name, slot: describeSlot(reservation), name: user.rows[0].name }),
       null,
       { reservationId: reservation.id }
     );
@@ -226,8 +227,8 @@ const createReservation = async ({ id, userId, body }) => {
 
   return {
     message: result.byOwner
-      ? "Termin je upisan kao zauzet."
-      : "Zahtev je poslat. Dobićeš obaveštenje kad ga vlasnik potvrdi.",
+      ? msg("reservation.theSlotWasMarkedAs")
+      : msg("reservation.requestSentYoullGetA"),
     reservation: result.reservation,
   };
 };
@@ -294,7 +295,7 @@ const findReservation = async (id) => {
   return result.rows[0] || null;
 };
 
-const notFound = () => new HttpError(404, "Rezervacija ne postoji.");
+const notFound = () => new HttpError(404, msg("reservation.theBookingDoesntExist"));
 
 // Kad vlasnik odbije ili otkaže rezervaciju za koju postoji termin, javljamo i
 // igračima tog termina (organizator dobija posebnu poruku o rezervaciji)
@@ -317,7 +318,7 @@ const notifyMatchPlayers = async (reservation, message) => {
   }
 };
 
-const forbidden = () => new HttpError(403, "Nemate dozvolu.");
+const forbidden = () => new HttpError(403, msg("common.youDontHavePermission"));
 
 const ownerNote = (body) => {
   const raw = body?.reason;
@@ -334,7 +335,7 @@ const decide = (status) => async ({ reservationId, userId, body }) => {
   if (Number(reservation.owner_id) !== Number(userId)) throw forbidden();
 
   if (reservation.status !== "pending") {
-    throw new HttpError(400, "Odlučuje se samo o zahtevima na čekanju.");
+    throw new HttpError(400, msg("reservation.onlyPendingRequestsCanBe"));
   }
 
   const note = status === "rejected" ? ownerNote(body) : null;
@@ -349,7 +350,7 @@ const decide = (status) => async ({ reservationId, userId, body }) => {
   );
 
   if (result.rows.length === 0) {
-    throw new HttpError(400, "Odlučuje se samo o zahtevima na čekanju.");
+    throw new HttpError(400, msg("reservation.onlyPendingRequestsCanBe"));
   }
 
   const slot = `${reservation.venue_name}, ${describeSlot(reservation)}`;
@@ -357,8 +358,10 @@ const decide = (status) => async ({ reservationId, userId, body }) => {
   await notify(
     [reservation.user_id],
     status === "confirmed"
-      ? `✅ Rezervacija je potvrđena: ${slot}.`
-      : `❌ Rezervacija nije prihvaćena: ${slot}.${note ? ` Poruka vlasnika: ${note}` : ""}`,
+      ? msg("reservation.yourBookingWasConfirmed", { slot })
+      : note
+        ? msg("common.yourBookingWasntAcceptedOwners", { slot, note })
+        : msg("common.yourBookingWasntAccepted", { slot }),
     null,
     { reservationId: reservation.id }
   );
@@ -366,12 +369,12 @@ const decide = (status) => async ({ reservationId, userId, body }) => {
   if (status === "rejected") {
     await notifyMatchPlayers(
       reservation,
-      `⚠️ Vlasnik nije prihvatio rezervaciju terena za termin: ${slot}. Proveri sa organizatorom da li se igra.`
+      msg("reservation.theOwnerDidntAcceptThe", { slot })
     );
   }
 
   return {
-    message: status === "confirmed" ? "Rezervacija je potvrđena." : "Zahtev je odbijen.",
+    message: status === "confirmed" ? msg("reservation.theBookingWasConfirmed") : msg("common.theRequestWasRejected"),
     reservation: result.rows[0],
   };
 };
@@ -389,11 +392,11 @@ const cancelReservation = async ({ reservationId, userId, body }) => {
   if (!isUser && !isOwner) throw forbidden();
 
   if (!ACTIVE.includes(reservation.status)) {
-    throw new HttpError(400, "Rezervacija je već otkazana ili odbijena.");
+    throw new HttpError(400, msg("reservation.theBookingWasAlreadyCancelled"));
   }
 
   if (reservationStart(reservation) <= new Date()) {
-    throw new HttpError(400, "Rezervacija je već počela.");
+    throw new HttpError(400, msg("reservation.theBookingHasAlreadyStarted"));
   }
 
   const note = isOwner && !isUser ? ownerNote(body) : null;
@@ -407,7 +410,7 @@ const cancelReservation = async ({ reservationId, userId, body }) => {
   );
 
   if (result.rows.length === 0) {
-    throw new HttpError(400, "Rezervacija je već otkazana ili odbijena.");
+    throw new HttpError(400, msg("reservation.theBookingWasAlreadyCancelled"));
   }
 
   const slot = `${reservation.venue_name}, ${describeSlot(reservation)}`;
@@ -415,25 +418,27 @@ const cancelReservation = async ({ reservationId, userId, body }) => {
   if (isUser && !isOwner) {
     await notify(
       [reservation.owner_id],
-      `🚫 Rezervacija je otkazana: ${slot}.`,
+      msg("reservation.theBookingWasCancelled2", { slot }),
       null,
       { reservationId: reservation.id }
     );
   } else if (!isUser) {
     await notify(
       [reservation.user_id],
-      `🚫 Vlasnik je otkazao rezervaciju: ${slot}.${note ? ` Poruka: ${note}` : ""}`,
+      note
+        ? msg("common.theOwnerCancelledYourBooking2", { slot, note })
+        : msg("common.theOwnerCancelledYourBooking", { slot }),
       null,
       { reservationId: reservation.id }
     );
     await notifyMatchPlayers(
       reservation,
-      `⚠️ Vlasnik je otkazao rezervaciju terena za termin: ${slot}. Proveri sa organizatorom da li se igra.`
+      msg("reservation.theOwnerCancelledTheVenue", { slot })
     );
   }
 
   return {
-    message: "Rezervacija je otkazana.",
+    message: msg("reservation.theBookingWasCancelled"),
     reservation: result.rows[0],
   };
 };

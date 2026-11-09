@@ -1,3 +1,4 @@
+const { msg } = require("../utils/i18n");
 const pool = require("../database/db");
 const { HttpError } = require("../utils/http");
 const { describeMatch, notifyUsers } = require("../utils/notify");
@@ -74,7 +75,7 @@ const promoteFromWaitlist = async (matchId) => {
       await notifyUsers(
         client,
         [user_id],
-        `Oslobodilo se mesto! Sa liste čekanja ste prijavljeni na termin: ${describeMatch(matchData)}.`,
+        msg("waitlist.aSpotOpenedUpYouve", { match: describeMatch(matchData) }),
         matchId
       );
     }
@@ -128,14 +129,14 @@ const joinWaitlist = async ({ id, userId: user_id }) => {
 
     if (match.rows.length === 0) {
       await client.query("ROLLBACK");
-      throw new HttpError(404, "Termin ne postoji.");
+      throw new HttpError(404, msg("common.thisGameDoesntExist"));
     }
 
     const matchData = match.rows[0];
 
     if (matchData.is_past) {
       await client.query("ROLLBACK");
-      throw new HttpError(400, "Termin je već odigran.");
+      throw new HttpError(400, msg("common.thisGameHasAlreadyBeen"));
     }
 
     const players = await client.query(
@@ -149,12 +150,12 @@ const joinWaitlist = async ({ id, userId: user_id }) => {
 
     if (players.rows[0].joined) {
       await client.query("ROLLBACK");
-      throw new HttpError(400, "Već ste prijavljeni na ovaj termin.");
+      throw new HttpError(400, msg("common.youveAlreadyJoinedThisGame"));
     }
 
     if (Number(players.rows[0].count) < Number(matchData.max_players)) {
       await client.query("ROLLBACK");
-      throw new HttpError(400, "Termin ima slobodnih mesta, prijavite se direktno.");
+      throw new HttpError(400, msg("waitlist.thisGameHasFreeSpots"));
     }
 
     const inserted = await client.query(
@@ -167,11 +168,11 @@ const joinWaitlist = async ({ id, userId: user_id }) => {
     await client.query("COMMIT");
 
     if (inserted.rowCount === 0) {
-      throw new HttpError(400, "Već ste na listi čekanja.");
+      throw new HttpError(400, msg("waitlist.youreAlreadyOnTheWaitlist"));
     }
 
     return {
-      message: "Upisani ste na listu čekanja. Javićemo vam kad se oslobodi mesto.",
+      message: msg("waitlist.youreOnTheWaitlistWell"),
     };
 
   } catch (error) {
@@ -190,7 +191,7 @@ const leaveWaitlist = async ({ id, userId }) => {
   );
 
   return {
-    message: "Izašli ste sa liste čekanja.",
+    message: msg("waitlist.youveLeftTheWaitlist"),
   };
 };
 

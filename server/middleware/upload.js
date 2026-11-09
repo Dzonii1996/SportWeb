@@ -1,3 +1,4 @@
+const { msg } = require("../utils/i18n");
 const fs = require("fs");
 const multer = require("multer");
 
@@ -26,7 +27,7 @@ const fileFilter = (req, file, cb) => {
   if (ALLOWED_TYPES[file.mimetype]) {
     cb(null, true);
   } else {
-    cb(new Error("Dozvoljene su samo slike (JPG, PNG, WEBP)."));
+    cb(new Error(msg("common.onlyImagesAreAllowedJpg")));
   }
 };
 
@@ -42,9 +43,9 @@ const upload = multer({
 // Greške multer-a vraćamo kao JSON umesto opšte greške servera
 const sendUploadError = (res, err, maxFiles = 1) => {
   const messages = {
-    LIMIT_FILE_SIZE: `Slika može imati najviše ${MAX_SIZE_MB} MB.`,
-    LIMIT_FILE_COUNT: `Odjednom možeš poslati najviše ${maxFiles} slika.`,
-    LIMIT_UNEXPECTED_FILE: `Odjednom možeš poslati najviše ${maxFiles} slika.`,
+    LIMIT_FILE_SIZE: msg("common.anImageCanBeAt", { n: MAX_SIZE_MB }),
+    LIMIT_FILE_COUNT: msg("common.youCanSendAtMost", { n: maxFiles }),
+    LIMIT_UNEXPECTED_FILE: msg("common.youCanSendAtMost", { n: maxFiles }),
   };
 
   res.status(400).json({

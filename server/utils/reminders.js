@@ -1,3 +1,4 @@
+const { msg } = require("./i18n");
 const pool = require("../database/db");
 const { describeMatch, notifyUsers, matchAudience } = require("./notify");
 
@@ -10,15 +11,15 @@ const REMINDERS = [
     kind: "24h",
     before: "24 hours",
     until: "1 hour",
-    message: (m) => `⏰ Podsetnik: sutra igraš! ${describeMatch(m)}. Potvrdi da dolaziš.`,
+    message: (m) => msg("common.reminderYourePlayingTomorrowConfirm", { match: describeMatch(m) }),
     creatorMessage: (m) =>
-      `⏰ Sutra je tvoj termin: ${describeMatch(m)}. Igrači sada potvrđuju dolazak.`,
+      msg("common.yourGameIsTomorrowPlayers", { match: describeMatch(m) }),
   },
   {
     kind: "1h",
     before: "1 hour",
     until: "0 seconds",
-    message: (m) => `⏰ Za manje od sat vremena počinje termin: ${describeMatch(m)}.`,
+    message: (m) => msg("common.theGameStartsInLess", { match: describeMatch(m) }),
   },
 ];
 

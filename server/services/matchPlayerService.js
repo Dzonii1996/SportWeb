@@ -1,3 +1,4 @@
+const { msg } = require("../utils/i18n");
 const pool = require("../database/db");
 const { HttpError } = require("../utils/http");
 const { promoteFromWaitlist } = require("./waitlistService");
@@ -30,14 +31,14 @@ const joinMatch = async ({ id, userId: user_id }) => {
 
     if (match.rows.length === 0) {
       await client.query("ROLLBACK");
-      throw new HttpError(404, "Termin ne postoji.");
+      throw new HttpError(404, msg("common.thisGameDoesntExist"));
     }
 
     const matchData = match.rows[0];
 
     if (matchData.is_past) {
       await client.query("ROLLBACK");
-      throw new HttpError(400, "Termin je već odigran.");
+      throw new HttpError(400, msg("common.thisGameHasAlreadyBeen"));
     }
 
     // Provera da li je korisnik već prijavljen
@@ -50,7 +51,7 @@ const joinMatch = async ({ id, userId: user_id }) => {
 
     if (exists.rows.length > 0) {
       await client.query("ROLLBACK");
-      throw new HttpError(400, "Već ste prijavljeni na ovaj termin.");
+      throw new HttpError(400, msg("common.youveAlreadyJoinedThisGame"));
     }
 
     // Broj prijavljenih
@@ -66,7 +67,7 @@ const joinMatch = async ({ id, userId: user_id }) => {
       Number(matchData.max_players)
     ) {
       await client.query("ROLLBACK");
-      throw new HttpError(400, "Termin je popunjen.");
+      throw new HttpError(400, msg("players.thisGameIsFull"));
     }
 
     // Prijava korisnika
@@ -98,7 +99,7 @@ const joinMatch = async ({ id, userId: user_id }) => {
       await notifyUsers(
         client,
         [matchData.creator_id],
-        `${playerName} se prijavio na vaš termin (${matchData.sport}).`,
+        msg("players.joinedYourGame", { name: playerName, sport: matchData.sport }),
         id
       );
     }
@@ -106,7 +107,7 @@ const joinMatch = async ({ id, userId: user_id }) => {
     await client.query("COMMIT");
 
     return {
-      message: "Uspešno ste se prijavili.",
+      message: msg("players.youveJoinedTheGame"),
     };
 
   } catch (error) {
@@ -137,7 +138,7 @@ const notifyCreatorAboutLeave = async (match_id, user_id) => {
   await notifyUsers(
     pool,
     [match.user_id],
-    `🚫 ${match.player_name} ne dolazi na tvoj termin: ${describeMatch(match)}.`,
+    msg("players.isntComingToYourGame", { name: match.player_name, match: describeMatch(match) }),
     match_id
   );
 };
@@ -157,11 +158,11 @@ const confirmAttendance = async ({ id, userId }) => {
   );
 
   if (result.rows.length === 0) {
-    throw new HttpError(400, "Potvrda je moguća samo za termin na koji si prijavljen i koji još nije počeo.");
+    throw new HttpError(400, msg("players.youCanOnlyConfirmA"));
   }
 
   return {
-    message: "Super, vidimo se na terenu!",
+    message: msg("players.greatSeeYouOnThe"),
   };
 };
 
@@ -190,7 +191,7 @@ const leaveMatch = async ({ id, userId: user_id }) => {
   }
 
   return {
-    message: "Uspešno ste napustili termin.",
+    message: msg("players.youveLeftTheGame"),
   };
 };
 const getMatchPlayers = async ({ id }) => {
@@ -236,7 +237,7 @@ const getPlayers = async ({ id }) => {
 };
 const uploadAvatar = async ({ id, file }) => {
   if (!file) {
-    throw new HttpError(400, "Nije izabrana slika.");
+    throw new HttpError(400, msg("common.noImageSelected"));
   }
 
   const avatar = `/uploads/${file.filename}`;
@@ -257,7 +258,7 @@ const setPaid = async ({ id, playerId, userId, body }) => {
   const { paid } = body;
 
   if (typeof paid !== "boolean") {
-    throw new HttpError(400, "Neispravan zahtev.");
+    throw new HttpError(400, msg("common.invalidRequest"));
   }
 
   const match = await pool.query(
@@ -266,11 +267,11 @@ const setPaid = async ({ id, playerId, userId, body }) => {
   );
 
   if (match.rows.length === 0) {
-    throw new HttpError(404, "Termin ne postoji.");
+    throw new HttpError(404, msg("common.thisGameDoesntExist"));
   }
 
   if (Number(match.rows[0].user_id) !== Number(userId)) {
-    throw new HttpError(403, "Samo kreator vodi evidenciju plaćanja.");
+    throw new HttpError(403, msg("players.onlyTheCreatorKeepsTrack"));
   }
 
   const updated = await pool.query(
@@ -280,7 +281,7 @@ const setPaid = async ({ id, playerId, userId, body }) => {
   );
 
   if (updated.rowCount === 0) {
-    throw new HttpError(400, "Korisnik nije prijavljen na termin.");
+    throw new HttpError(400, msg("players.thisUserHasntJoinedThe"));
   }
 
   return {

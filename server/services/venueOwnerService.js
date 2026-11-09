@@ -1,3 +1,4 @@
+const { msg } = require("../utils/i18n");
 const pool = require("../database/db");
 const { HttpError } = require("../utils/http");
 const { adminIds } = require("../utils/admin");
@@ -23,18 +24,18 @@ const claimVenue = async ({ id, userId, body }) => {
   const venue = result.rows[0];
 
   if (!venue) {
-    throw new HttpError(404, "Teren ne postoji.");
+    throw new HttpError(404, msg("common.thisVenueDoesntExist"));
   }
 
   if (venue.owner_id) {
-    throw new HttpError(400, "Teren već ima vlasnika.");
+    throw new HttpError(400, msg("owner.thisVenueAlreadyHasAn"));
   }
 
   const raw = body?.message;
   const message = typeof raw === "string" && raw.trim() !== "" ? raw.trim() : null;
 
   if (message && message.length > MAX_MESSAGE) {
-    throw new HttpError(400, `Poruka može imati najviše ${MAX_MESSAGE} znakova.`);
+    throw new HttpError(400, msg("owner.aMessageCanHaveAt", { n: MAX_MESSAGE }));
   }
 
   const pending = await pool.query(
@@ -43,7 +44,7 @@ const claimVenue = async ({ id, userId, body }) => {
   );
 
   if (pending.rows.length > 0) {
-    throw new HttpError(400, "Zahtev je već poslat i čeka odobrenje.");
+    throw new HttpError(400, msg("owner.theRequestWasAlreadySent"));
   }
 
   await pool.query(
@@ -53,13 +54,13 @@ const claimVenue = async ({ id, userId, body }) => {
 
   await notify(
     await adminIds(),
-    `🔑 Zahtev za vlasništvo terena "${venue.name}". Čeka odobrenje.`,
+    msg("owner.ownershipRequestForTheVenue", { venue: venue.name }),
     null,
     { venueId: venue.id }
   );
 
   return {
-    message: "Zahtev je poslat. Admin će te kontaktirati ili odobriti zahtev.",
+    message: msg("owner.requestSentTheAdminWill"),
   };
 };
 
@@ -105,12 +106,12 @@ const approveClaim = async ({ claimId }) => {
 
     if (!claim) {
       await client.query("ROLLBACK");
-      throw new HttpError(404, "Zahtev ne postoji.");
+      throw new HttpError(404, msg("owner.theRequestDoesntExist"));
     }
 
     if (claim.owner_id) {
       await client.query("ROLLBACK");
-      throw new HttpError(400, "Teren već ima vlasnika. Prvo ukloni postojećeg.");
+      throw new HttpError(400, msg("owner.thisVenueAlreadyHasAn2"));
     }
 
     await client.query("UPDATE venues SET owner_id = $1, updated_at = NOW() WHERE id = $2", [
@@ -131,14 +132,14 @@ const approveClaim = async ({ claimId }) => {
     await notifyUsers(
       client,
       [claim.user_id],
-      `🔑 Sada si vlasnik terena "${claim.venue_name}". Možeš da menjaš podatke i primaš rezervacije.`,
+      msg("owner.youNowOwnTheVenue", { venue: claim.venue_name }),
       null,
       { venueId: claim.venue_id }
     );
     await notifyUsers(
       client,
       others.rows.map((r) => r.user_id),
-      `Zahtev za vlasništvo terena "${claim.venue_name}" nije odobren.`,
+      msg("owner.theOwnershipRequestForThe", { venue: claim.venue_name }),
       null,
       { venueId: claim.venue_id }
     );
@@ -146,7 +147,7 @@ const approveClaim = async ({ claimId }) => {
     await client.query("COMMIT");
 
     return {
-      message: "Zahtev je odobren.",
+      message: msg("owner.theRequestWasApproved"),
     };
 
   } catch (error) {
@@ -161,7 +162,7 @@ const rejectClaim = async ({ claimId }) => {
   const claim = await findPendingClaim(pool, claimId);
 
   if (!claim) {
-    throw new HttpError(404, "Zahtev ne postoji.");
+    throw new HttpError(404, msg("owner.theRequestDoesntExist"));
   }
 
   await pool.query(
@@ -171,13 +172,13 @@ const rejectClaim = async ({ claimId }) => {
 
   await notify(
     [claim.user_id],
-    `Zahtev za vlasništvo terena "${claim.venue_name}" nije odobren.`,
+    msg("owner.theOwnershipRequestForThe", { venue: claim.venue_name }),
     null,
     { venueId: claim.venue_id }
   );
 
   return {
-    message: "Zahtev je odbijen.",
+    message: msg("common.theRequestWasRejected"),
   };
 };
 
@@ -188,7 +189,7 @@ const removeOwner = async ({ id: venueId }) => {
   const venue = current.rows[0];
 
   if (!venue?.owner_id) {
-    throw new HttpError(400, "Teren nema vlasnika.");
+    throw new HttpError(400, msg("owner.thisVenueHasNoOwner"));
   }
 
   await pool.query(
@@ -210,7 +211,7 @@ const removeOwner = async ({ id: venueId }) => {
   for (const r of rejected.rows) {
     await notify(
       [r.user_id],
-      `❌ Zahtev za rezervaciju terena "${venue.name}" je otkazan: teren trenutno ne prima rezervacije.`,
+      msg("owner.theBookingRequestForThe", { venue: venue.name }),
       null,
       { reservationId: r.id }
     );
@@ -218,13 +219,13 @@ const removeOwner = async ({ id: venueId }) => {
 
   await notify(
     [venue.owner_id],
-    `Više nisi vlasnik terena "${venue.name}" na SportWeb-u.`,
+    msg("owner.youNoLongerOwnThe", { venue: venue.name }),
     null,
     { venueId: id }
   );
 
   return {
-    message: "Vlasnik je uklonjen.",
+    message: msg("owner.theOwnerWasRemoved"),
   };
 };
 

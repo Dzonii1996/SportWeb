@@ -1,3 +1,4 @@
+const { msg } = require("../utils/i18n");
 const pool = require("../database/db");
 const { HttpError } = require("../utils/http");
 const { describeMatch, notifyUsers } = require("../utils/notify");
@@ -41,7 +42,7 @@ const splitTeams = async ({ id, userId, body }) => {
     const { mode } = body;
 
     if (!MODES.includes(mode)) {
-      throw new HttpError(400, "Nepoznat način podele.");
+      throw new HttpError(400, msg("team.unknownWayOfSplittingTeams"));
     }
 
     await client.query("BEGIN");
@@ -54,17 +55,17 @@ const splitTeams = async ({ id, userId, body }) => {
 
     if (match.rows.length === 0) {
       await client.query("ROLLBACK");
-      throw new HttpError(404, "Termin ne postoji.");
+      throw new HttpError(404, msg("common.thisGameDoesntExist"));
     }
 
     if (match.rows[0].sport === HIKING) {
       await client.query("ROLLBACK");
-      throw new HttpError(400, "Planinarenje nema timove.");
+      throw new HttpError(400, msg("team.hikingHasNoTeams"));
     }
 
     if (Number(match.rows[0].user_id) !== Number(userId)) {
       await client.query("ROLLBACK");
-      throw new HttpError(403, "Samo kreator može da podeli timove.");
+      throw new HttpError(403, msg("team.onlyTheCreatorCanSplit"));
     }
 
     const players = await client.query(
@@ -82,7 +83,7 @@ const splitTeams = async ({ id, userId, body }) => {
 
     if (players.rows.length < 2) {
       await client.query("ROLLBACK");
-      throw new HttpError(400, "Za podelu su potrebna bar dva igrača.");
+      throw new HttpError(400, msg("team.atLeastTwoPlayersAre"));
     }
 
     const teams = assignTeams(players.rows, mode);
@@ -97,7 +98,7 @@ const splitTeams = async ({ id, userId, body }) => {
     await notifyUsers(
       client,
       teams.map((t) => t.id).filter((u) => Number(u) !== Number(userId)),
-      `👕 Timovi su podeljeni za termin: ${describeMatch(match.rows[0])}.`,
+      msg("team.teamsHaveBeenSplitFor", { match: describeMatch(match.rows[0]) }),
       id
     );
 

@@ -1,3 +1,4 @@
+const { msg } = require("../utils/i18n");
 const { HttpError, route } = require("../utils/http");
 const tournaments = require("../services/tournamentService");
 
@@ -8,8 +9,8 @@ const mapError = (error) => {
   return new HttpError(
     400,
     error.constraint === "tournament_teams_name_unique"
-      ? "Ekipa sa tim nazivom već postoji na turniru."
-      : "Već si u jednoj ekipi na ovom turniru."
+      ? msg("tournament.aTeamWithThatName")
+      : msg("tournament.youreAlreadyOnATeam")
   );
 };
 

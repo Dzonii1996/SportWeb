@@ -1,3 +1,4 @@
+const { msg } = require("../utils/i18n");
 const pool = require("../database/db");
 const { HttpError } = require("../utils/http");
 const { isAdmin } = require("../utils/admin");
@@ -16,7 +17,7 @@ const findApprovedVenue = async (id) => {
   return result.rows[0] || null;
 };
 
-const notFound = () => new HttpError(404, "Teren ne postoji.");
+const notFound = () => new HttpError(404, msg("common.thisVenueDoesntExist"));
 
 // Ocene terena, najnovije prve. Uz svaku: da li je autor igrao termin na tom terenu.
 // Prijavljeni korisnik dobija i svoju ocenu (my_review) i da li sme da briše tuđe (admin).
@@ -68,18 +69,18 @@ const saveReview = async ({ id, userId, body }) => {
   const rating = Number(body.rating);
 
   if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-    throw new HttpError(400, "Ocena mora biti od 1 do 5 zvezdica.");
+    throw new HttpError(400, msg("review.theRatingMustBeFrom"));
   }
 
   const raw = body.comment;
   const comment = typeof raw === "string" && raw.trim() !== "" ? raw.trim() : null;
 
   if (raw !== undefined && raw !== null && typeof raw !== "string") {
-    throw new HttpError(400, "Neispravan komentar.");
+    throw new HttpError(400, msg("review.invalidComment"));
   }
 
   if (comment && comment.length > MAX_COMMENT) {
-    throw new HttpError(400, `Komentar može imati najviše ${MAX_COMMENT} znakova.`);
+    throw new HttpError(400, msg("review.aCommentCanHaveAt", { n: MAX_COMMENT }));
   }
 
   const result = await pool.query(
@@ -94,7 +95,7 @@ const saveReview = async ({ id, userId, body }) => {
 
   return {
     httpStatus: created ? 201 : 200,
-    message: created ? "Hvala na oceni!" : "Ocena je izmenjena.",
+    message: created ? msg("review.thanksForYourRating") : msg("review.theRatingWasUpdated"),
     review,
   };
 };
@@ -108,17 +109,17 @@ const deleteReview = async ({ reviewId, id, userId }) => {
   const review = result.rows[0];
 
   if (!review) {
-    throw new HttpError(404, "Ocena ne postoji.");
+    throw new HttpError(404, msg("review.theRatingDoesntExist"));
   }
 
   if (Number(review.user_id) !== Number(userId) && !(await isAdmin(userId))) {
-    throw new HttpError(403, "Nemate dozvolu.");
+    throw new HttpError(403, msg("common.youDontHavePermission"));
   }
 
   await pool.query("DELETE FROM venue_reviews WHERE id = $1", [reviewId]);
 
   return {
-    message: "Ocena je obrisana.",
+    message: msg("review.theRatingWasDeleted"),
   };
 };
 

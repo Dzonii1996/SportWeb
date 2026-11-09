@@ -1,3 +1,4 @@
+const { msg } = require("./i18n");
 const pool = require("../database/db");
 const { describeMatch, notifyUsers } = require("./notify");
 const { newShareToken } = require("./privacy");
@@ -190,19 +191,19 @@ const generateNextOccurrences = async () => {
       await notifyUsers(
         client,
         [series.user_id],
-        `🔁 Otvoren je sledeći termin u tvojoj seriji: ${description}.`,
+        msg("common.theNextGameInYour", { match: description }),
         match.id
       );
       await notifyUsers(
         client,
         playing,
-        `🔁 Novi termin: ${description}. Prijavljen si automatski (stalno mesto).`,
+        msg("common.newGameYouWereSigned", { match: description }),
         match.id
       );
       await notifyUsers(
         client,
         waiting,
-        `🔁 Novi termin: ${description}. Termin je pun, upisan si na listu čekanja.`,
+        msg("common.newGameTheGameIs", { match: description }),
         match.id
       );
 

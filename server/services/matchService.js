@@ -1,3 +1,4 @@
+const { msg } = require("../utils/i18n");
 const pool = require("../database/db");
 const { HttpError } = require("../utils/http");
 const { parsePage, pageInfo } = require("../utils/pagination");
@@ -28,28 +29,28 @@ const MAX_DAYS_AHEAD = 365;
 // Proverava podatke termina; vraća poruku greške ili null ako je sve u redu
 const validateMatch = ({ sport, location, match_date, match_time, max_players }) => {
   if (sport !== undefined && !MATCH_SPORTS.includes(sport)) {
-    return "Nepoznat sport.";
+    return msg("common.unknownSport");
   }
 
   if (typeof location !== "string") {
-    return "Neispravna lokacija.";
+    return msg("match.invalidLocation");
   }
 
   const place = location.trim();
 
   if (place.length < 2 || place.length > 100) {
-    return "Lokacija mora imati između 2 i 100 znakova.";
+    return msg("common.locationMustBeBetween2");
   }
 
   const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(match_date || "");
   const timeMatch = /^(\d{2}):(\d{2})(:\d{2})?$/.exec(match_time || "");
 
   if (!dateMatch) {
-    return "Neispravan datum.";
+    return msg("common.invalidDate");
   }
 
   if (!timeMatch) {
-    return "Neispravno vreme.";
+    return msg("match.invalidTime");
   }
 
   const [, y, mo, d] = dateMatch.map(Number);
@@ -64,18 +65,18 @@ const validateMatch = ({ sport, location, match_date, match_time, max_players })
     h > 23 ||
     mi > 59
   ) {
-    return "Neispravan datum ili vreme.";
+    return msg("common.invalidDateOrTime");
   }
 
   if (start < new Date()) {
-    return "Termin ne može biti u prošlosti.";
+    return msg("match.aGameCantBeIn");
   }
 
   const latest = new Date();
   latest.setDate(latest.getDate() + MAX_DAYS_AHEAD);
 
   if (start > latest) {
-    return "Termin može biti najviše godinu dana unapred.";
+    return msg("match.aGameCanBeAt");
   }
 
   const playersNum = Number(max_players);
@@ -85,7 +86,7 @@ const validateMatch = ({ sport, location, match_date, match_time, max_players })
     playersNum < MIN_PLAYERS ||
     playersNum > MAX_PLAYERS
   ) {
-    return `Broj igrača mora biti između ${MIN_PLAYERS} i ${MAX_PLAYERS}.`;
+    return msg("match.theNumberOfPlayersMust", { min: MIN_PLAYERS, max: MAX_PLAYERS });
   }
 
   return null;
@@ -103,18 +104,18 @@ const resolveVenue = async (venueId, sport, currentVenueId = null) => {
   const id = Number(venueId);
 
   if (!Number.isInteger(id)) {
-    return { error: "Neispravan teren." };
+    return { error: msg("match.invalidVenue") };
   }
 
   const result = await pool.query("SELECT * FROM venues WHERE id = $1", [id]);
   const venue = result.rows[0];
 
   if (!venue || (venue.status !== "approved" && id !== Number(currentVenueId))) {
-    return { error: "Izabrani teren ne postoji." };
+    return { error: msg("common.theSelectedVenueDoesntExist") };
   }
 
   if (sport && !venue.sports.includes(sport)) {
-    return { error: `Teren "${venue.name}" nije za ${SPORT_ACCUSATIVE[sport]}.` };
+    return { error: msg("match.theVenueIsNotFor", { name: venue.name, sport: SPORT_ACCUSATIVE[sport] }) };
   }
 
   return { venue };
@@ -154,11 +155,11 @@ const resolveReservation = async (reservationId, userId) => {
   const reservation = result.rows[0];
 
   if (!reservation || !ACTIVE_RESERVATION.includes(reservation.status)) {
-    return { error: "Rezervacija ne postoji ili je otkazana." };
+    return { error: msg("match.theBookingDoesntExistOr") };
   }
 
   if (reservation.match_id) {
-    return { error: "Za ovu rezervaciju je već napravljen termin." };
+    return { error: msg("match.aGameHasAlreadyBeen") };
   }
 
   return { reservation };
@@ -194,11 +195,11 @@ const createMatch = async ({ userId: user_id, body: input }) => {
   const reserve = !linked.reservation && input.reserve === true;
 
   if (reserve && !venue.venue) {
-    throw new HttpError(400, "Izaberi teren sa spiska da bi ga rezervisao.");
+    throw new HttpError(400, msg("match.pickAVenueFromThe"));
   }
 
   if (reserve && !/^\d{2}:00(:00)?$/.test(body.match_time || "")) {
-    throw new HttpError(400, "Za rezervaciju terena termin mora počinjati na pun sat (npr. 19:00).");
+    throw new HttpError(400, msg("match.toBookAVenueThe"));
   }
 
   const {
@@ -216,7 +217,7 @@ max_players,
     !match_time ||
     !max_players
   ) {
-    throw new HttpError(400, "Popuni sva polja.");
+    throw new HttpError(400, msg("match.fillInAllTheFields"));
   }
 
   const validationError = validateMatch(body);
@@ -247,7 +248,7 @@ max_players,
         date: match_date,
         start: Number(match_time.slice(0, 2)),
         hours: Number(input.reservation_hours),
-        note: "Za termin na SportWeb-u",
+        note: msg("match.forAGameOnSportweb"),
       });
 
       if (booked.reservation) {
@@ -306,8 +307,8 @@ RETURNING *`,
   return {
     message:
       reserve && reservation.status === "pending"
-        ? "Termin je kreiran. Zahtev za rezervaciju terena je poslat vlasniku."
-        : "Termin uspešno kreiran.",
+        ? msg("match.theGameWasCreatedThe")
+        : msg("match.gameCreatedSuccessfully"),
     match: {
       ...match,
       repeat_weekly: Boolean(match.series_id),
@@ -351,13 +352,13 @@ const getMatches = async ({ query = {} }) => {
   };
 
   if (query.sport) {
-    if (!MATCH_SPORTS.includes(query.sport)) throw new HttpError(400, "Nepoznat sport.");
+    if (!MATCH_SPORTS.includes(query.sport)) throw new HttpError(400, msg("common.unknownSport"));
     where.push(`matches.sport = ${param(query.sport)}`);
   }
 
   if (query.date) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(query.date) || Number.isNaN(Date.parse(query.date))) {
-      throw new HttpError(400, "Neispravan datum.");
+      throw new HttpError(400, msg("common.invalidDate"));
     }
     where.push(`matches.match_date = ${param(query.date)}`);
   }
@@ -388,7 +389,7 @@ const getMatches = async ({ query = {} }) => {
       !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180 ||
       !Number.isFinite(radius) || radius <= 0 || radius > 200
     ) {
-      throw new HttpError(400, "Neispravna lokacija za pretragu u blizini.");
+      throw new HttpError(400, msg("match.invalidLocationForTheNearby"));
     }
 
     where.push("matches.latitude IS NOT NULL AND matches.longitude IS NOT NULL");
@@ -501,7 +502,7 @@ const getMatch = async ({ id }) => {
   );
 
   if (result.rows.length === 0) {
-    throw new HttpError(404, "Termin ne postoji.");
+    throw new HttpError(404, msg("common.thisGameDoesntExist"));
   }
 
   // Ključ za link šaljemo samo uz privatni termin (ko ga vidi, sme da ga deli)
@@ -519,12 +520,12 @@ const deleteMatch = async ({ id, userId: user_id, query }) => {
   );
 
   if (match.rows.length === 0) {
-    throw new HttpError(404, "Termin ne postoji.");
+    throw new HttpError(404, msg("common.thisGameDoesntExist"));
   }
 
   // Samo kreator može da obriše
   if (match.rows[0].user_id !== user_id) {
-    throw new HttpError(403, "Nemate dozvolu za brisanje ovog termina.");
+    throw new HttpError(403, msg("match.youDontHavePermissionTo"));
   }
 
   // Ko treba da sazna za otkazivanje; posle brisanja prijave više ne postoje
@@ -566,7 +567,7 @@ const deleteMatch = async ({ id, userId: user_id, query }) => {
       await notifyUsers(
         pool,
         [cancelledReservation.owner_id],
-        `🚫 Rezervacija je otkazana (termin je otkazan): ${cancelledReservation.venue_name}, ${describeSlot(cancelledReservation)}.`,
+        msg("match.yourBookingWasCancelledThe", { venue: cancelledReservation.venue_name, slot: describeSlot(cancelledReservation) }),
         null,
         { reservationId: cancelledReservation.id }
       );
@@ -579,7 +580,7 @@ const deleteMatch = async ({ id, userId: user_id, query }) => {
     await notifyUsers(
       pool,
       audience,
-      `❌ Termin je otkazan: ${describeMatch(match.rows[0])}.`
+      msg("match.gameCancelled", { match: describeMatch(match.rows[0]) })
     );
   } catch (error) {
     console.error("Greška pri slanju notifikacija:", error);
@@ -587,8 +588,8 @@ const deleteMatch = async ({ id, userId: user_id, query }) => {
 
   return {
     message: cancelledReservation
-      ? "Termin je obrisan, a rezervacija terena otkazana."
-      : "Termin uspešno obrisan.",
+      ? msg("match.theGameWasDeletedAnd")
+      : msg("match.gameDeletedSuccessfully"),
   };
 };
 const updateMatch = async ({ id, userId: user_id, body: input }) => {
@@ -598,11 +599,11 @@ const updateMatch = async ({ id, userId: user_id, body: input }) => {
   );
 
   if (match.rows.length === 0) {
-    throw new HttpError(404, "Termin ne postoji.");
+    throw new HttpError(404, msg("common.thisGameDoesntExist"));
   }
 
   if (match.rows[0].user_id !== user_id) {
-    throw new HttpError(403, "Nemate dozvolu.");
+    throw new HttpError(403, msg("common.youDontHavePermission"));
   }
 
   const venue = await resolveVenue(
@@ -655,7 +656,7 @@ const updateMatch = async ({ id, userId: user_id, body: input }) => {
       Number(old.venue_id) !== Number(venueId);
 
     if (r && ACTIVE_RESERVATION.includes(r.status) && changed) {
-      throw new HttpError(400, `Termin je vezan za rezervaciju terena (${r.start_hour}–${r.end_hour}h). Da promeniš teren, datum ili vreme, prvo otkaži rezervaciju na stranici Rezervacije.`);
+      throw new HttpError(400, msg("match.thisGameIsTiedTo", { start: r.start_hour, end: r.end_hour }));
     }
   }
 
@@ -665,7 +666,7 @@ const updateMatch = async ({ id, userId: user_id, body: input }) => {
   );
 
   if (Number(max_players) < Number(playersCount.rows[0].count)) {
-    throw new HttpError(400, `Na termin je već prijavljeno ${playersCount.rows[0].count} igrača.`);
+    throw new HttpError(400, msg("match.playersHaveAlreadyJoinedThis", { n: playersCount.rows[0].count }));
   }
 
   // Serija: izmene važe i za sledeće termine; "repeat_weekly" je pokreće ili zaustavlja
@@ -752,7 +753,7 @@ const updateMatch = async ({ id, userId: user_id, body: input }) => {
       await notifyUsers(
         pool,
         audience,
-        `✏️ Termin je izmenjen: ${after} (ranije: ${before}).`,
+        msg("match.gameChangedPreviously", { after, before }),
         id
       );
     } catch (error) {
@@ -768,7 +769,7 @@ const updateMatch = async ({ id, userId: user_id, body: input }) => {
   }
 
   return {
-    message: "Termin uspešno izmenjen.",
+    message: msg("match.gameUpdatedSuccessfully"),
     match: result.rows[0],
   };
 };

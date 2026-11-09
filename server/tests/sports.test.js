@@ -85,8 +85,8 @@ describe("tenis i odbojka", () => {
   test.each([["Tenis"], ["Odbojka"]])("%s nema nerešeno, ni u ligi ni u kupu", (sport) => {
     const base = { sport, scoreA: 1, scoreB: 1 };
 
-    expect(judgeResult({ ...base, format: "league" }).error).toMatch(/osvojene setove/);
-    expect(judgeResult({ ...base, format: "knockout" }).error).toMatch(/osvojene setove/);
+    expect(String(judgeResult({ ...base, format: "league" }).error)).toMatch(/osvojene setove/);
+    expect(String(judgeResult({ ...base, format: "knockout" }).error)).toMatch(/osvojene setove/);
     expect(judgeResult({ ...base, format: "league", scoreA: 3 }).winner).toBe("a");
   });
 

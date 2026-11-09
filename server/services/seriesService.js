@@ -1,3 +1,4 @@
+const { msg } = require("../utils/i18n");
 const pool = require("../database/db");
 const { HttpError } = require("../utils/http");
 
@@ -29,7 +30,7 @@ const getRegular = async ({ id, userId }) => {
   const info = await getSeriesInfo(id, userId);
 
   if (!info) {
-    throw new HttpError(404, "Termin ne postoji.");
+    throw new HttpError(404, msg("common.thisGameDoesntExist"));
   }
 
   return {
@@ -43,22 +44,22 @@ const setRegular = async ({ id, userId: user_id, body }) => {
   const { regular } = body;
 
   if (typeof regular !== "boolean") {
-    throw new HttpError(400, "Neispravan zahtev.");
+    throw new HttpError(400, msg("common.invalidRequest"));
   }
 
   const info = await getSeriesInfo(id, user_id);
 
   if (!info) {
-    throw new HttpError(404, "Termin ne postoji.");
+    throw new HttpError(404, msg("common.thisGameDoesntExist"));
   }
 
   if (!info.series_id || !info.active) {
-    throw new HttpError(400, "Ovaj termin se ne ponavlja.");
+    throw new HttpError(400, msg("series.thisGameDoesntRepeat"));
   }
 
   if (regular) {
     if (!info.joined) {
-      throw new HttpError(400, "Prvo se prijavi na termin.");
+      throw new HttpError(400, msg("series.joinTheGameFirst"));
     }
 
     await pool.query(
@@ -77,8 +78,8 @@ const setRegular = async ({ id, userId: user_id, body }) => {
   return {
     regular,
     message: regular
-      ? "Imaš stalno mesto: biće ti rezervisano i u sledećim terminima."
-      : "Stalno mesto je isključeno.",
+      ? msg("series.youHaveARegularSpot")
+      : msg("series.regularSpotTurnedOff"),
   };
 };
 

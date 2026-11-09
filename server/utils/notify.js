@@ -1,4 +1,5 @@
 const pool = require("../database/db");
+const { isMessage, toData } = require("./i18n");
 
 // "Fudbal, Grabovac, 10. 11. 2026. u 18:00"
 const describeMatch = (match) => {
@@ -8,6 +9,13 @@ const describeMatch = (match) => {
   return `${match.sport}, ${match.location}, ${date} u ${time}`;
 };
 
+// Poruka za tabelu notifications: tekst na srpskom (rezerva) i ključ sa parametrima,
+// da se kasnije prikaže na jeziku onoga ko čita
+const storedMessage = (message) =>
+  isMessage(message)
+    ? { text: String(message), key: message.key, params: JSON.stringify(toData(message.params)) }
+    : { text: String(message), key: null, params: null };
+
 // Šalje istu notifikaciju svim korisnicima iz liste.
 // "db" je pool ili client iz transakcije. links.venueId vodi na stranicu terena,
 // links.reservationId na stranicu rezervacija, a links.tournamentId na turnir.
@@ -16,10 +24,12 @@ const notifyUsers = async (db, userIds, message, matchId = null, links = {}) => 
 
   if (ids.length === 0) return;
 
+  const stored = storedMessage(message);
+
   await db.query(
-    `INSERT INTO notifications(user_id, message, match_id, venue_id, reservation_id, tournament_id)
-     SELECT unnest($1::int[]), $2, $3, $4, $5, $6`,
-    [ids, message, matchId, links.venueId ?? null, links.reservationId ?? null, links.tournamentId ?? null]
+    `INSERT INTO notifications(user_id, message, message_key, message_params, match_id, venue_id, reservation_id, tournament_id)
+     SELECT unnest($1::int[]), $2, $3, $4, $5, $6, $7, $8`,
+    [ids, stored.text, stored.key, stored.params, matchId, links.venueId ?? null, links.reservationId ?? null, links.tournamentId ?? null]
   );
 };
 
@@ -39,6 +49,7 @@ const matchAudience = async (matchId, { exceptUserId, includeWaitlist = false } 
 };
 
 module.exports = {
+  storedMessage,
   describeMatch,
   notifyUsers,
   matchAudience,

@@ -1,3 +1,4 @@
+const { msg } = require("../utils/i18n");
 const pool = require("../database/db");
 const { HttpError } = require("../utils/http");
 const { describeMatch, notifyUsers } = require("../utils/notify");
@@ -20,11 +21,11 @@ const loadOwnMatch = async (match_id, user_id) => {
   const match = result.rows[0];
 
   if (!match) {
-    return { status: 404, message: "Termin ne postoji." };
+    return { status: 404, message: msg("common.thisGameDoesntExist") };
   }
 
   if (Number(match.user_id) !== Number(user_id)) {
-    return { status: 403, message: "Samo kreator poziva igrače." };
+    return { status: 403, message: msg("invite.onlyTheCreatorCanInvite") };
   }
 
   return { match };
@@ -93,11 +94,11 @@ const sendInvites = async ({ id, userId, body }) => {
     : [];
 
   if (ids.length === 0) {
-    throw new HttpError(400, "Izaberi bar jednog igrača.");
+    throw new HttpError(400, msg("invite.pickAtLeastOnePlayer"));
   }
 
   if (ids.length > MAX_INVITES) {
-    throw new HttpError(400, `Najviše ${MAX_INVITES} poziva odjednom.`);
+    throw new HttpError(400, msg("invite.atMostInvitationsAtOnce", { n: MAX_INVITES }));
   }
 
   const { match, status, message } = await loadOwnMatch(id, me);
@@ -107,7 +108,7 @@ const sendInvites = async ({ id, userId, body }) => {
   }
 
   if (match.is_past) {
-    throw new HttpError(400, "Termin je već odigran.");
+    throw new HttpError(400, msg("common.thisGameHasAlreadyBeen"));
   }
 
   // Samo stvarni korisnici, ne kreator, ne već prijavljeni ili na listi,
@@ -130,7 +131,7 @@ const sendInvites = async ({ id, userId, body }) => {
   await notifyUsers(
     pool,
     invited,
-    `📩 ${match.creator_name} te poziva na termin: ${describeMatch(match)}. Prijavi se!`,
+    msg("invite.invitesYouToAGame", { name: match.creator_name, match: describeMatch(match) }),
     id
   );
 
@@ -138,8 +139,8 @@ const sendInvites = async ({ id, userId, body }) => {
     invited: invited.length,
     message:
       invited.length === 0
-        ? "Izabrani igrači su već pozvani."
-        : `Poslato poziva: ${invited.length}.`,
+        ? msg("invite.theSelectedPlayersHaveAlready")
+        : msg("invite.invitationsSent", { n: invited.length }),
   };
 };
 

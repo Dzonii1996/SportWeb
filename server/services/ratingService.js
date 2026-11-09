@@ -1,3 +1,4 @@
+const { msg } = require("../utils/i18n");
 const pool = require("../database/db");
 const { HttpError } = require("../utils/http");
 
@@ -39,7 +40,7 @@ const getMyRatings = async ({ id, userId }) => {
   const window = await getRatingWindow(id);
 
   if (!window) {
-    throw new HttpError(404, "Termin ne postoji.");
+    throw new HttpError(404, msg("common.thisGameDoesntExist"));
   }
 
   const participants = await getParticipants(id);
@@ -68,35 +69,35 @@ const rateParticipant = async ({ id, playerId, userId, body }) => {
   const { vote } = body;
 
   if (vote !== null && !VOTES.includes(vote)) {
-    throw new HttpError(400, "Nepoznata ocena.");
+    throw new HttpError(400, msg("rating.unknownRating"));
   }
 
   if (rater_id === rated_id) {
-    throw new HttpError(400, "Ne možete oceniti sebe.");
+    throw new HttpError(400, msg("rating.youCantRateYourself"));
   }
 
   const window = await getRatingWindow(id);
 
   if (!window) {
-    throw new HttpError(404, "Termin ne postoji.");
+    throw new HttpError(404, msg("common.thisGameDoesntExist"));
   }
 
   if (!window.started) {
-    throw new HttpError(400, "Ocenjivanje je moguće tek posle termina.");
+    throw new HttpError(400, msg("rating.ratingIsOnlyPossibleAfter"));
   }
 
   if (!window.open) {
-    throw new HttpError(400, `Ocenjivanje je moguće ${RATING_DAYS} dana posle termina.`);
+    throw new HttpError(400, msg("rating.ratingIsPossibleForDays", { n: RATING_DAYS }));
   }
 
   const participants = await getParticipants(id);
 
   if (!participants.includes(rater_id)) {
-    throw new HttpError(403, "Samo učesnici termina mogu da ocenjuju.");
+    throw new HttpError(403, msg("rating.onlyGameParticipantsCanRate"));
   }
 
   if (!participants.includes(rated_id)) {
-    throw new HttpError(400, "Korisnik nije učesnik ovog termina.");
+    throw new HttpError(400, msg("rating.thisUserIsntAParticipant"));
   }
 
   if (vote === null) {

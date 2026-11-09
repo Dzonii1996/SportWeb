@@ -1,3 +1,4 @@
+const { msg } = require("./i18n");
 const crypto = require("crypto");
 const pool = require("../database/db");
 
@@ -35,7 +36,7 @@ const requireVisible = async (req, res, next) => {
     if (!Number.isInteger(id) || !(await canViewMatch(id, req.user?.id, req.query.key))) {
       return res.status(404).json({
         success: false,
-        message: "Termin ne postoji.",
+        message: msg("common.thisGameDoesntExist"),
       });
     }
 
@@ -46,7 +47,7 @@ const requireVisible = async (req, res, next) => {
 
     res.status(500).json({
       success: false,
-      message: "Greška servera.",
+      message: msg("common.serverError"),
     });
   }
 };

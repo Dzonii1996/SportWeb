@@ -1,3 +1,4 @@
+const { msg } = require("../utils/i18n");
 const pool = require("../database/db");
 const { parsePage } = require("../utils/pagination");
 const { HttpError } = require("../utils/http");
@@ -7,7 +8,7 @@ const getNotifications = async ({ userId: user_id, query = {} }) => {
   const before = query.before === undefined || query.before === "" ? null : Number(query.before);
 
   if (before !== null && !Number.isInteger(before)) {
-    throw new HttpError(400, "Neispravna strana.");
+    throw new HttpError(400, msg("common.invalidPage"));
   }
 
   // Jedna više od tražene, da se zna da li ima još
@@ -16,6 +17,8 @@ const getNotifications = async ({ userId: user_id, query = {} }) => {
     SELECT
       id,
       message,
+      message_key,
+      message_params,
       is_read,
       created_at,
       match_id,
@@ -63,7 +66,7 @@ const markAsRead = async ({ id, userId }) => {
   );
 
   return {
-    message: "Notifikacija označena kao pročitana.",
+    message: msg("notification.notificationMarkedAsRead"),
   };
 };
 
@@ -78,7 +81,7 @@ const markAllAsRead = async ({ userId: user_id }) => {
   );
 
   return {
-    message: "Sve notifikacije su pročitane.",
+    message: msg("notification.allNotificationsAreRead"),
   };
 };
 

@@ -1,3 +1,4 @@
+const { msg } = require("./i18n");
 const { HttpError } = require("./http");
 
 const DEFAULT_LIMIT = 20;
@@ -9,11 +10,11 @@ const parsePage = (query = {}, defaultLimit = DEFAULT_LIMIT) => {
   const limit = query.limit === undefined || query.limit === "" ? defaultLimit : Number(query.limit);
 
   if (!Number.isInteger(page) || page < 1) {
-    throw new HttpError(400, "Neispravna strana.");
+    throw new HttpError(400, msg("common.invalidPage"));
   }
 
   if (!Number.isInteger(limit) || limit < 1 || limit > MAX_LIMIT) {
-    throw new HttpError(400, `Na jednoj strani može biti od 1 do ${MAX_LIMIT} stavki.`);
+    throw new HttpError(400, msg("common.aPageCanHave1", { value: MAX_LIMIT }));
   }
 
   return { page, limit, offset: (page - 1) * limit };

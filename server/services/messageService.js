@@ -1,6 +1,7 @@
+const { msg } = require("../utils/i18n");
 const pool = require("../database/db");
 const { HttpError } = require("../utils/http");
-const { describeMatch, matchAudience } = require("../utils/notify");
+const { describeMatch, matchAudience, storedMessage } = require("../utils/notify");
 
 // Da li je korisnik kreator ili prijavljeni igrač termina
 const isParticipant = async (match_id, user_id) => {
@@ -30,7 +31,8 @@ const canReadChat = async (match_id, user_id) => {
   return result.rows.length > 0;
 };
 
-const CHAT_PREFIX = "💬 Nove poruke u četu termina";
+const CHAT_KEY = "chat.newMessagesInTheGame";
+const LEGACY_CHAT_PREFIX = "💬 Nove poruke u četu termina";
 
 // Obaveštava ostale učesnike o novoj poruci. Ko već ima nepročitanu
 // notifikaciju za čet ovog termina ne dobija novu, da ne bude spama.
@@ -48,9 +50,11 @@ const notifyChat = async (match_id, sender_id) => {
 
   if (audience.length === 0) return;
 
+  const stored = storedMessage(msg(CHAT_KEY, { match: describeMatch(match.rows[0]) }));
+
   await pool.query(
-    `INSERT INTO notifications(user_id, message, match_id)
-     SELECT u, $2, $3
+    `INSERT INTO notifications(user_id, message, message_key, message_params, match_id)
+     SELECT u, $2, $5, $6, $3
      FROM unnest($1::int[]) AS u
      WHERE NOT EXISTS (
        SELECT 1
@@ -58,20 +62,15 @@ const notifyChat = async (match_id, sender_id) => {
        WHERE n.user_id = u
        AND n.match_id = $3
        AND n.is_read = false
-       AND n.message LIKE $4
+       AND (n.message_key = $5 OR n.message LIKE $4)
      )`,
-    [
-      audience,
-      `${CHAT_PREFIX}: ${describeMatch(match.rows[0])}.`,
-      match_id,
-      `${CHAT_PREFIX}%`,
-    ]
+    [audience, stored.text, match_id, `${LEGACY_CHAT_PREFIX}%`, stored.key, stored.params]
   );
 };
 
 const getMessages = async ({ id, userId, query }) => {
   if (!(await canReadChat(id, userId))) {
-    throw new HttpError(403, "Čet vide samo učesnici termina.");
+    throw new HttpError(403, msg("chat.onlyPlayersInThisGame"));
   }
 
   // Ako je poslat "after", vraćamo samo novije poruke
@@ -103,15 +102,15 @@ const sendMessage = async ({ id, userId: user_id, body }) => {
   const message = (body.message || "").trim();
 
   if (!message) {
-    throw new HttpError(400, "Poruka ne može biti prazna.");
+    throw new HttpError(400, msg("chat.theMessageCantBeEmpty"));
   }
 
   if (message.length > 1000) {
-    throw new HttpError(400, "Poruka je predugačka.");
+    throw new HttpError(400, msg("chat.theMessageIsTooLong"));
   }
 
   if (!(await isParticipant(id, user_id))) {
-    throw new HttpError(403, "Samo učesnici termina mogu da pišu u četu.");
+    throw new HttpError(403, msg("chat.onlyGameParticipantsCanWrite"));
   }
 
   const result = await pool.query(

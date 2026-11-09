@@ -1,10 +1,13 @@
+const { msg } = require("./i18n");
 // Veza između HTTP-a i servisa: servisi ne znaju za req i res. Rezultat vraćaju,
 // a kad nešto ne sme bacaju HttpError sa statusom i porukom za korisnika.
 
 class HttpError extends Error {
   // extra su dodatna polja u odgovoru (npr. { expired: true })
   constructor(status, message, extra = {}) {
-    super(message);
+    super(String(message));
+    // msg(...) ostaje poruka sa ključem, prevodi se na izlazu
+    this.text = message;
     this.status = status;
     this.extra = extra;
   }
@@ -20,14 +23,14 @@ const sendError = (res, error, mapError) => {
   const known = mapError?.(error) || error;
 
   if (known instanceof HttpError) {
-    return res.status(known.status).json({ success: false, message: known.message, ...known.extra });
+    return res.status(known.status).json({ success: false, message: known.text ?? known.message, ...known.extra });
   }
 
   console.error(error);
 
   res.status(500).json({
     success: false,
-    message: "Greška servera.",
+    message: msg("common.serverError"),
   });
 };
 

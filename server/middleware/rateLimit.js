@@ -1,3 +1,4 @@
+const { msg } = require("../utils/i18n");
 const rateLimit = require("express-rate-limit");
 
 const WINDOW_MINUTES = 15;
@@ -16,7 +17,7 @@ const limiter = ({ onlyFailed = false } = {}) =>
     handler: (req, res) =>
       res.status(429).json({
         success: false,
-        message: "Previše pokušaja. Pokušaj ponovo kasnije.",
+        message: msg("common.tooManyAttemptsTryAgain"),
       }),
   });
 

@@ -1,10 +1,11 @@
+const { msg } = require("../utils/i18n");
 const jwt = require("jsonwebtoken");
 const pool = require("../database/db");
 
 const sessionExpired = (res) =>
   res.status(401).json({
     success: false,
-    message: "Sesija je istekla. Prijavite se ponovo.",
+    message: msg("common.yourSessionHasExpiredPlease"),
   });
 
 // Da li token i dalje važi: nalog postoji, a token nije stariji od promene lozinke.
@@ -34,7 +35,7 @@ const protect = async (req, res, next) => {
   if (!token) {
     return res.status(401).json({
       success: false,
-      message: "Morate biti prijavljeni.",
+      message: msg("common.youMustBeSignedIn"),
     });
   }
 
@@ -55,7 +56,7 @@ const protect = async (req, res, next) => {
 
     return res.status(500).json({
       success: false,
-      message: "Greška servera.",
+      message: msg("common.serverError"),
     });
   }
 
@@ -96,7 +97,7 @@ const onlySelf = (req, res, next) => {
   if (Number(req.params.id) !== Number(req.user.id)) {
     return res.status(403).json({
       success: false,
-      message: "Nemate dozvolu.",
+      message: msg("common.youDontHavePermission"),
     });
   }
 

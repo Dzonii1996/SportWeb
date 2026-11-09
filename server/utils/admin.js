@@ -1,3 +1,4 @@
+const { msg } = require("./i18n");
 const pool = require("../database/db");
 
 // Emailovi iz ADMIN_EMAILS (odvojeni zarezom), mala slova
@@ -36,7 +37,7 @@ const requireAdmin = async (req, res, next) => {
     if (!(await isAdmin(req.user.id))) {
       return res.status(403).json({
         success: false,
-        message: "Samo admin može ovo da uradi.",
+        message: msg("common.onlyTheAdminCanDo"),
       });
     }
 
@@ -47,7 +48,7 @@ const requireAdmin = async (req, res, next) => {
 
     res.status(500).json({
       success: false,
-      message: "Greška servera.",
+      message: msg("common.serverError"),
     });
   }
 };

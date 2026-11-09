@@ -1,3 +1,4 @@
+const { msg } = require("../utils/i18n");
 const pool = require("../database/db");
 const withTransaction = require("../database/transaction");
 const { HttpError } = require("../utils/http");
@@ -27,7 +28,7 @@ const findTournament = async (db, id, lock = false) => {
     [Number(id) || 0]
   );
 
-  if (!result.rows[0]) throw new HttpError(404, "Turnir ne postoji.");
+  if (!result.rows[0]) throw new HttpError(404, msg("tournament.thisTournamentDoesntExist"));
 
   return result.rows[0];
 };
@@ -38,13 +39,13 @@ const canManage = async (tournament, userId) =>
 
 const requireManager = async (tournament, userId) => {
   if (!(await canManage(tournament, userId))) {
-    throw new HttpError(403, "Samo organizator može ovo da uradi.");
+    throw new HttpError(403, msg("tournament.onlyTheOrganizerCanDo"));
   }
 };
 
 const requireRegistration = (tournament) => {
   if (tournament.status !== "registration") {
-    throw new HttpError(400, "Prijave za ovaj turnir su zatvorene.");
+    throw new HttpError(400, msg("tournament.registrationForThisTournamentIs"));
   }
 };
 
@@ -54,7 +55,7 @@ const findTeam = async (db, tournamentId, teamId) => {
     [Number(teamId) || 0, tournamentId]
   );
 
-  if (!result.rows[0]) throw new HttpError(404, "Ekipa ne postoji.");
+  if (!result.rows[0]) throw new HttpError(404, msg("tournament.thisTeamDoesntExist"));
 
   return result.rows[0];
 };
@@ -88,35 +89,35 @@ const validateTournament = async (body, userId) => {
   const name = typeof body.name === "string" ? body.name.trim() : "";
 
   if (name.length < 3 || name.length > 100) {
-    throw new HttpError(400, "Naziv mora imati između 3 i 100 znakova.");
+    throw new HttpError(400, msg("tournament.nameMustBeBetween3"));
   }
 
-  if (!SPORTS.includes(body.sport)) throw new HttpError(400, "Nepoznat sport.");
-  if (!FORMATS.includes(body.format)) throw new HttpError(400, "Nepoznat format turnira.");
+  if (!SPORTS.includes(body.sport)) throw new HttpError(400, msg("common.unknownSport"));
+  if (!FORMATS.includes(body.format)) throw new HttpError(400, msg("tournament.unknownTournamentFormat"));
 
   const date = parseDate(body.start_date);
 
-  if (!date) throw new HttpError(400, "Neispravan datum.");
+  if (!date) throw new HttpError(400, msg("common.invalidDate"));
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   if (new Date(date[0], date[1] - 1, date[2]) < today) {
-    throw new HttpError(400, "Turnir ne može biti u prošlosti.");
+    throw new HttpError(400, msg("tournament.aTournamentCantBeIn"));
   }
 
-  const maxTeams = parseInteger(body.max_teams, 2, 32, "Broj ekipa mora biti između 2 i 32.");
-  const maxRoster = parseInteger(body.max_roster, 1, 30, "Broj igrača u ekipi mora biti između 1 i 30.");
+  const maxTeams = parseInteger(body.max_teams, 2, 32, msg("tournament.theNumberOfTeamsMust"));
+  const maxRoster = parseInteger(body.max_roster, 1, 30, msg("tournament.theNumberOfPlayersPer"));
 
   const fee =
     body.entry_fee === undefined || body.entry_fee === null || body.entry_fee === ""
       ? null
-      : parseInteger(body.entry_fee, 0, MAX_PRICE, "Kotizacija mora biti ceo broj dinara (do 1.000.000).");
+      : parseInteger(body.entry_fee, 0, MAX_PRICE, msg("tournament.theEntryFeeMustBe"));
 
   const rules = typeof body.rules === "string" && body.rules.trim() !== "" ? body.rules.trim() : null;
 
   if (rules && rules.length > MAX_RULES) {
-    throw new HttpError(400, `Pravila mogu imati najviše ${MAX_RULES} znakova.`);
+    throw new HttpError(400, msg("tournament.theRulesCanHaveAt", { n: MAX_RULES }));
   }
 
   const admin = await isAdmin(userId);
@@ -130,16 +131,16 @@ const validateTournament = async (body, userId) => {
 
     venue = result.rows[0];
 
-    if (!venue) throw new HttpError(400, "Izabrani teren ne postoji.");
+    if (!venue) throw new HttpError(400, msg("common.theSelectedVenueDoesntExist"));
 
     if (!venue.sports.includes(body.sport)) {
-      throw new HttpError(400, `Teren "${venue.name}" nije za izabrani sport.`);
+      throw new HttpError(400, msg("tournament.theVenueIsNotFor", { name: venue.name }));
     }
   }
 
   // Vlasnik pravi turnire na svojim terenima; admin bilo gde
   if (!admin && (!venue || Number(venue.owner_id) !== Number(userId))) {
-    throw new HttpError(403, "Turnir možeš da napraviš samo na svom terenu.");
+    throw new HttpError(403, msg("tournament.youCanOnlyCreateA"));
   }
 
   const location = venue
@@ -149,7 +150,7 @@ const validateTournament = async (body, userId) => {
     : "";
 
   if (location.length < 2 || location.length > 100) {
-    throw new HttpError(400, "Lokacija mora imati između 2 i 100 znakova.");
+    throw new HttpError(400, msg("common.locationMustBeBetween2"));
   }
 
   return {
@@ -170,7 +171,7 @@ const createTournament = async ({ userId, body }) => {
   const owned = await pool.query("SELECT 1 FROM venues WHERE owner_id = $1 LIMIT 1", [userId]);
 
   if (owned.rows.length === 0 && !(await isAdmin(userId))) {
-    throw new HttpError(403, "Turnire prave admin i vlasnici terena.");
+    throw new HttpError(403, msg("tournament.tournamentsAreCreatedByThe"));
   }
 
   const v = await validateTournament(body, userId);
@@ -186,7 +187,7 @@ const createTournament = async ({ userId, body }) => {
   );
 
   return {
-    message: "Turnir je napravljen. Prijave su otvorene.",
+    message: msg("tournament.theTournamentWasCreatedRegistration"),
     tournament: result.rows[0],
   };
 };
@@ -211,7 +212,7 @@ const updateTournament = async ({ id, userId, body }) => {
   );
 
   return {
-    message: "Turnir je izmenjen.",
+    message: msg("tournament.theTournamentWasUpdated"),
     tournament: result.rows[0],
   };
 };
@@ -224,13 +225,13 @@ const getTournaments = async ({ query }) => {
   const params = [];
 
   if (sport) {
-    if (!SPORTS.includes(sport)) throw new HttpError(400, "Nepoznat sport.");
+    if (!SPORTS.includes(sport)) throw new HttpError(400, msg("common.unknownSport"));
     params.push(sport);
     where.push(`t.sport = $${params.length}`);
   }
 
   if (status) {
-    if (!STATUSES.includes(status)) throw new HttpError(400, "Nepoznat status.");
+    if (!STATUSES.includes(status)) throw new HttpError(400, msg("common.unknownStatus"));
     params.push(status);
     where.push(`t.status = $${params.length}`);
   }
@@ -339,7 +340,7 @@ const registerTeam = async ({ id, userId, body }) => {
   const name = typeof body.name === "string" ? body.name.trim() : "";
 
   if (name.length < 2 || name.length > 50) {
-    throw new HttpError(400, "Naziv ekipe mora imati između 2 i 50 znakova.");
+    throw new HttpError(400, msg("tournament.theTeamNameMustBe"));
   }
 
   const team = await withTransaction(async (client) => {
@@ -354,7 +355,7 @@ const registerTeam = async ({ id, userId, body }) => {
     );
 
     if (taken.rows[0].count >= tournament.max_teams) {
-      throw new HttpError(400, "Turnir je popunjen.");
+      throw new HttpError(400, msg("tournament.theTournamentIsFull"));
     }
 
     const inserted = await client.query(
@@ -373,7 +374,7 @@ const registerTeam = async ({ id, userId, body }) => {
       await notifyUsers(
         client,
         [tournament.organizer_id],
-        `🏆 Nova prijava na turnir "${tournament.name}": ekipa ${name}.`,
+        msg("tournament.newRegistrationForTheTournament", { tournament: tournament.name, team: name }),
         null,
         { tournamentId: tournament.id }
       );
@@ -383,7 +384,7 @@ const registerTeam = async ({ id, userId, body }) => {
   });
 
   return {
-    message: "Ekipa je prijavljena. Čeka potvrdu organizatora.",
+    message: msg("tournament.theTeamIsRegisteredAnd"),
     team,
   };
 };
@@ -399,7 +400,7 @@ const findTeamByToken = async (db, token, lock = false) => {
     [typeof token === "string" ? token : ""]
   );
 
-  if (!result.rows[0]) throw new HttpError(404, "Link nije ispravan.");
+  if (!result.rows[0]) throw new HttpError(404, msg("tournament.theLinkIsntValid"));
 
   return result.rows[0];
 };
@@ -418,11 +419,11 @@ const joinTeam = async ({ token, userId }) => {
     const found = await findTeamByToken(client, token, true);
 
     if (found.tournament_status !== "registration") {
-      throw new HttpError(400, "Prijave za ovaj turnir su zatvorene.");
+      throw new HttpError(400, msg("tournament.registrationForThisTournamentIs"));
     }
 
     if (found.players_count >= found.max_roster) {
-      throw new HttpError(400, "Ekipa je popunjena.");
+      throw new HttpError(400, msg("tournament.theTeamIsFull"));
     }
 
     await client.query(
@@ -434,7 +435,7 @@ const joinTeam = async ({ token, userId }) => {
   });
 
   return {
-    message: `Pridružio/la si se ekipi ${team.name}.`,
+    message: msg("tournament.youJoinedTheTeam", { name: team.name }),
     tournament_id: team.tournament_id,
   };
 };
@@ -452,10 +453,10 @@ const removePlayer = async ({ id, teamId, playerId, userId }) => {
     Number(team.captain_id) === Number(userId) ||
     (await canManage(tournament, userId));
 
-  if (!allowed) throw new HttpError(403, "Nemate dozvolu.");
+  if (!allowed) throw new HttpError(403, msg("common.youDontHavePermission"));
 
   if (target === Number(team.captain_id)) {
-    throw new HttpError(400, "Kapiten ne može da napusti ekipu; može da odjavi celu ekipu.");
+    throw new HttpError(400, msg("tournament.theCaptainCantLeaveThe"));
   }
 
   await pool.query(
@@ -464,7 +465,7 @@ const removePlayer = async ({ id, teamId, playerId, userId }) => {
   );
 
   return {
-    message: "Igrač je uklonjen iz ekipe.",
+    message: msg("tournament.thePlayerWasRemovedFrom"),
   };
 };
 
@@ -479,13 +480,13 @@ const withdrawTeam = async ({ id, teamId, userId }) => {
     Number(team.captain_id) !== Number(userId) &&
     !(await canManage(tournament, userId))
   ) {
-    throw new HttpError(403, "Nemate dozvolu.");
+    throw new HttpError(403, msg("common.youDontHavePermission"));
   }
 
   await pool.query("DELETE FROM tournament_teams WHERE id = $1", [team.id]);
 
   return {
-    message: "Ekipa je odjavljena.",
+    message: msg("tournament.theTeamWasWithdrawn"),
   };
 };
 
@@ -503,14 +504,14 @@ const approveTeam = async ({ id, teamId, userId }) => {
     await notifyUsers(
       client,
       [team.captain_id],
-      `✅ Ekipa ${team.name} je primljena na turnir "${tournament.name}".`,
+      msg("tournament.teamWasAcceptedToThe", { team: team.name, tournament: tournament.name }),
       null,
       { tournamentId: tournament.id }
     );
   });
 
   return {
-    message: "Ekipa je potvrđena.",
+    message: msg("tournament.theTeamWasConfirmed"),
   };
 };
 
@@ -522,7 +523,7 @@ const rejectTeamRow = async (client, tournament, team) => {
   await notifyUsers(
     client,
     [team.captain_id],
-    `❌ Ekipa ${team.name} nije primljena na turnir "${tournament.name}".`,
+    msg("tournament.teamWasntAcceptedToThe", { team: team.name, tournament: tournament.name }),
     null,
     { tournamentId: tournament.id }
   );
@@ -539,7 +540,7 @@ const rejectTeam = async ({ id, teamId, userId }) => {
   });
 
   return {
-    message: "Ekipa je odbijena.",
+    message: msg("tournament.theTeamWasRejected"),
   };
 };
 
@@ -556,7 +557,7 @@ const setTeamPaid = async ({ id, teamId, userId, body }) => {
   ]);
 
   return {
-    message: "Sačuvano.",
+    message: msg("tournament.saved"),
   };
 };
 
@@ -575,11 +576,11 @@ const startTournament = async ({ id, userId }) => {
     const approved = teams.rows.filter((t) => t.status === "approved");
 
     if (approved.length < 2) {
-      throw new HttpError(400, "Za početak turnira trebaju bar 2 potvrđene ekipe.");
+      throw new HttpError(400, msg("tournament.atLeast2ConfirmedTeams"));
     }
 
     if (approved.length > tournament.max_teams) {
-      throw new HttpError(400, `Potvrđeno je više ekipa nego što turnir prima (${tournament.max_teams}).`);
+      throw new HttpError(400, msg("tournament.moreTeamsAreConfirmedThan", { n: tournament.max_teams }));
     }
 
     for (const team of teams.rows.filter((t) => t.status === "pending")) {
@@ -603,14 +604,14 @@ const startTournament = async ({ id, userId }) => {
     await notifyUsers(
       client,
       await playersOf(client, tournament.id),
-      `🏆 Turnir "${tournament.name}" je počeo. Raspored je objavljen.`,
+      msg("tournament.theTournamentHasStartedThe", { tournament: tournament.name }),
       null,
       { tournamentId: tournament.id }
     );
   });
 
   return {
-    message: "Turnir je počeo, raspored je napravljen.",
+    message: msg("tournament.theTournamentHasStartedAnd"),
   };
 };
 
@@ -620,7 +621,7 @@ const findGame = async (db, tournamentId, gameId) => {
     [Number(gameId) || 0, tournamentId]
   );
 
-  if (!result.rows[0]) throw new HttpError(404, "Utakmica ne postoji.");
+  if (!result.rows[0]) throw new HttpError(404, msg("tournament.thisMatchDoesntExist"));
 
   return result.rows[0];
 };
@@ -656,7 +657,7 @@ const updateTournamentState = async (client, tournament) => {
   await notifyUsers(
     client,
     await playersOf(client, tournament.id),
-    `🏆 Turnir "${tournament.name}" je završen. Pobednik: ${winner.rows[0].name}!`,
+    msg("tournament.theTournamentIsFinishedWinner", { tournament: tournament.name, winner: winner.rows[0].name }),
     null,
     { tournamentId: tournament.id }
   );
@@ -671,13 +672,13 @@ const saveResult = async ({ id, gameId, userId, body }) => {
     await requireManager(tournament, userId);
 
     if (!["in_progress", "finished"].includes(tournament.status)) {
-      throw new HttpError(400, "Turnir nije u toku.");
+      throw new HttpError(400, msg("tournament.theTournamentIsntInProgress"));
     }
 
     const game = await findGame(client, tournament.id, gameId);
 
     if (!game.team_a_id || !game.team_b_id) {
-      throw new HttpError(400, "Utakmica još nema obe ekipe.");
+      throw new HttpError(400, msg("tournament.thisMatchDoesntHaveBoth"));
     }
 
     const judged = judgeResult({
@@ -708,7 +709,7 @@ const saveResult = async ({ id, gameId, userId, body }) => {
           game.winner_team_id !== null &&
           Number(game.winner_team_id) !== Number(winnerId)
         ) {
-          throw new HttpError(400, "Sledeća utakmica je već odigrana, pa pobednik ne može da se menja.");
+          throw new HttpError(400, msg("tournament.theNextMatchHasAlready"));
         }
 
         await client.query(`UPDATE tournament_games SET ${next.slot} = $2 WHERE id = $1`, [
@@ -736,7 +737,7 @@ const saveResult = async ({ id, gameId, userId, body }) => {
   });
 
   return {
-    message: "Rezultat je sačuvan.",
+    message: msg("common.theResultWasSaved"),
   };
 };
 
@@ -777,7 +778,7 @@ const scheduleGame = async ({ id, gameId, userId, body }) => {
     await requireManager(tournament, userId);
 
     if (tournament.status !== "in_progress") {
-      throw new HttpError(400, "Turnir nije u toku.");
+      throw new HttpError(400, msg("tournament.theTournamentIsntInProgress"));
     }
 
     const game = await findGame(client, tournament.id, gameId);
@@ -786,15 +787,15 @@ const scheduleGame = async ({ id, gameId, userId, body }) => {
       const date = parseDate(gameDate);
 
       if (!date || !/^\d{2}:\d{2}$/.test(gameTime || "")) {
-        throw new HttpError(400, "Neispravan datum ili vreme.");
+        throw new HttpError(400, msg("common.invalidDateOrTime"));
       }
 
       const [hours, minutes] = gameTime.split(":").map(Number);
 
-      if (hours > 23 || minutes > 59) throw new HttpError(400, "Neispravan datum ili vreme.");
+      if (hours > 23 || minutes > 59) throw new HttpError(400, msg("common.invalidDateOrTime"));
 
       if (new Date(date[0], date[1] - 1, date[2], hours, minutes) < new Date()) {
-        throw new HttpError(400, "Utakmica ne može biti u prošlosti.");
+        throw new HttpError(400, msg("tournament.aMatchCantBeIn"));
       }
     }
 
@@ -809,7 +810,7 @@ const scheduleGame = async ({ id, gameId, userId, body }) => {
         await notifyUsers(
           client,
           [venue.owner_id],
-          `🚫 Rezervacija za turnir "${tournament.name}" je otkazana (promenjen raspored).`,
+          msg("tournament.theBookingForTheTournament", { tournament: tournament.name }),
           null,
           { reservationId: game.reservation_id }
         );
@@ -818,7 +819,7 @@ const scheduleGame = async ({ id, gameId, userId, body }) => {
 
     if (!clearing && bookable) {
       if (!gameTime.endsWith(":00")) {
-        throw new HttpError(400, "Teren se rezerviše na pun sat; izaberi vreme kao 19:00.");
+        throw new HttpError(400, msg("tournament.venuesAreBookedByThe"));
       }
 
       const booked = await bookSlot(client, {
@@ -850,7 +851,7 @@ const scheduleGame = async ({ id, gameId, userId, body }) => {
       await notifyUsers(
         client,
         await playersOf(client, tournament.id, teamIds),
-        `📅 Turnir "${tournament.name}": utakmica tvoje ekipe je ${date} u ${gameTime}.`,
+        msg("tournament.tournamentYourTeamsMatchIs", { tournament: tournament.name, date, time: gameTime }),
         null,
         { tournamentId: tournament.id }
       );
@@ -858,7 +859,7 @@ const scheduleGame = async ({ id, gameId, userId, body }) => {
   });
 
   return {
-    message: clearing ? "Vreme utakmice je uklonjeno." : "Vreme utakmice je sačuvano.",
+    message: clearing ? msg("tournament.theMatchTimeWasRemoved") : msg("tournament.theMatchTimeWasSaved"),
   };
 };
 
@@ -870,7 +871,7 @@ const cancelTournament = async ({ id, userId }) => {
     await requireManager(tournament, userId);
 
     if (["finished", "cancelled"].includes(tournament.status)) {
-      throw new HttpError(400, "Turnir je već završen ili otkazan.");
+      throw new HttpError(400, msg("tournament.theTournamentIsAlreadyFinished"));
     }
 
     const games = await client.query(
@@ -884,7 +885,7 @@ const cancelTournament = async ({ id, userId }) => {
       await notifyUsers(
         client,
         [venue.owner_id],
-        `🚫 Turnir "${tournament.name}" je otkazan; rezervacije terena su oslobođene.`,
+        msg("tournament.theTournamentWasCancelledVenue", { tournament: tournament.name }),
         null,
         { tournamentId: tournament.id }
       );
@@ -900,14 +901,14 @@ const cancelTournament = async ({ id, userId }) => {
     await notifyUsers(
       client,
       [...(await playersOf(client, tournament.id)), ...captains.rows.map((c) => c.captain_id)],
-      `❌ Turnir "${tournament.name}" je otkazan.`,
+      msg("tournament.theTournamentWasCancelled2", { tournament: tournament.name }),
       null,
       { tournamentId: tournament.id }
     );
   });
 
   return {
-    message: "Turnir je otkazan.",
+    message: msg("tournament.theTournamentWasCancelled"),
   };
 };
 
