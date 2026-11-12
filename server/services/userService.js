@@ -2,6 +2,7 @@ const { msg } = require("../utils/i18n");
 const pool = require("../database/db");
 const { HttpError } = require("../utils/http");
 const { getPlayerStats, getResultStats } = require("./playerStatsService");
+const { getMvpCount } = require("./mvpService");
 const bcrypt = require("bcrypt");
 const { validatePassword, signToken } = require("../utils/password");
 
@@ -95,6 +96,7 @@ const getProfile = async ({ id, userId }) => {
       joined: Number(joined.rows[0].total),
       ...(await getPlayerStats(id)),
       ...(await getResultStats(id)),
+      mvp: await getMvpCount(id),
     },
   };
 };

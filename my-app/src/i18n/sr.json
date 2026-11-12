@@ -365,7 +365,8 @@
     "afterTheGameTheOrganizer": "Posle termina organizator podeli timove i upiše rezultat.",
     "player": "Igrač",
     "winsDrawsLosses": "Pobede / Nerešeno / Porazi",
-    "pts": "Bod."
+    "pts": "Bod.",
+    "mvpTitle": "Najbolji igrač termina (broj puta)"
   },
   "login": {
     "signedInSuccessfully": "Uspešna prijava!",
@@ -462,7 +463,10 @@
     "win": "Pobeda",
     "draw": "Nerešeno",
     "loss": "Poraz",
-    "backToGames": "⚽ Nazad na termine"
+    "backToGames": "⚽ Nazad na termine",
+    "mvpCount_one": "🏅 Najbolji igrač termina {{count}} put",
+    "mvpCount_few": "🏅 Najbolji igrač termina {{count}} puta",
+    "mvpCount_other": "🏅 Najbolji igrač termina {{count}} puta"
   },
   "registration": {
     "passwordsDoNotMatch": "Lozinke se ne poklapaju",
@@ -713,5 +717,33 @@
     "Šljaka": "Šljaka",
     "Pesak": "Pesak",
     "Ostalo": "Ostalo"
+  },
+  "urgentCall": {
+    "title_one": "🚨 Fali još {{count}} igrač?",
+    "title_few": "🚨 Fali još {{count}} igrača?",
+    "title_other": "🚨 Fali još {{count}} igrača?",
+    "hint": "Javi igračima iz okoline koji su skoro igrali ovaj sport. Poziv može da se pošalje jednom.",
+    "send": "Pošalji hitni poziv",
+    "confirm_one": "Poslati hitni poziv? Igrači iz okoline dobijaju obaveštenje da fali {{count}} igrač.",
+    "confirm_few": "Poslati hitni poziv? Igrači iz okoline dobijaju obaveštenje da fale {{count}} igrača.",
+    "confirm_other": "Poslati hitni poziv? Igrači iz okoline dobijaju obaveštenje da fali {{count}} igrača.",
+    "sentTitle": "🚨 Hitni poziv je poslat igračima iz okoline.",
+    "couldNotSend": "Greška pri slanju hitnog poziva."
+  },
+  "matchMvp": {
+    "title": "🏅 Najbolji igrač termina",
+    "hint_one": "Glasaj za igrača koji je obeležio termin. Najbolji postaje onaj sa najviše glasova (bar {{count}}).",
+    "hint_few": "Glasaj za igrača koji je obeležio termin. Najbolji postaje onaj sa najviše glasova (bar {{count}}).",
+    "hint_other": "Glasaj za igrača koji je obeležio termin. Najbolji postaje onaj sa najviše glasova (bar {{count}}).",
+    "winner_one": "🏅 {{names}} ({{count}} glas)",
+    "winner_few": "🏅 {{names}} ({{count}} glasa)",
+    "winner_other": "🏅 {{names}} ({{count}} glasova)",
+    "pickOne": "Tvoj glas (jedan po terminu):",
+    "changeVote": "Glas možeš da promeniš ili povučeš ponovnim klikom.",
+    "yourVote": "✓ Tvoj glas",
+    "votes_one": "{{count}} glas",
+    "votes_few": "{{count}} glasa",
+    "votes_other": "{{count}} glasova",
+    "couldNotSave": "Greška pri čuvanju glasa."
   }
 }

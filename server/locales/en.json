@@ -112,6 +112,12 @@
     "youDontHavePermissionTo": "You don't have permission to delete this game.",
     "yourBookingWasCancelledThe": "🚫 Your booking was cancelled (the game was cancelled): {venue}, {slot}."
   },
+  "mvp": {
+    "cantVoteForYourself": "You can't vote for yourself.",
+    "onlyAfterTheGame": "Voting starts once the game has begun.",
+    "onlyParticipants": "Only game participants can vote.",
+    "votingClosed": "Voting lasts {n} days after the game."
+  },
   "notification": {
     "allNotificationsAreRead": "All notifications are read.",
     "notificationMarkedAsRead": "Notification marked as read."
@@ -268,6 +274,16 @@
     "youCanOnlyCreateA": "You can only create a tournament at your own venue.",
     "youJoinedTheTeam": "You joined the team {name}.",
     "youreAlreadyOnATeam": "You're already on a team in this tournament."
+  },
+  "urgent": {
+    "alreadySent": "An urgent call for this game has already been sent.",
+    "gameIsFull": "The game is full, so no urgent call is needed.",
+    "nobodyNearby": "There are no players nearby to notify. Try sharing the game link.",
+    "notForPrivate": "Urgent calls aren't available for private games; send invitations to teammates instead.",
+    "onlyTheCreator": "Only the game's creator can send an urgent call.",
+    "playersNeeded": "🚨 Players needed: {n}. {match}. Jump in and join!",
+    "sent": "Urgent call sent to players nearby: {n}.",
+    "tooEarly": "An urgent call can be sent when the game is at most {hours} hours away."
   },
   "user": {
     "nameMustBeBetween2": "Name must be between 2 and 100 characters.",

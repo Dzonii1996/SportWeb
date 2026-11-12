@@ -202,6 +202,13 @@ function PublicProfile() {
 
               </div>
 
+              {/* Koliko puta je bio najbolji igrač termina */}
+              {profile.stats.mvp > 0 && (
+                <p className="mt-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 font-semibold text-amber-900">
+                  {t("publicProfile.mvpCount", { count: profile.stats.mvp })}
+                </p>
+              )}
+
               {/* Učinak iz upisanih rezultata */}
               {profile.stats.wins + profile.stats.draws + profile.stats.losses > 0 && (
                 <div className="mt-4 bg-gray-50 rounded-xl p-4">

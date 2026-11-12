@@ -112,6 +112,12 @@
     "youDontHavePermissionTo": "Nemate dozvolu za brisanje ovog termina.",
     "yourBookingWasCancelledThe": "🚫 Rezervacija je otkazana (termin je otkazan): {venue}, {slot}."
   },
+  "mvp": {
+    "cantVoteForYourself": "Ne možeš da glasaš za sebe.",
+    "onlyAfterTheGame": "Glasanje počinje posle početka termina.",
+    "onlyParticipants": "Glasaju samo učesnici termina.",
+    "votingClosed": "Glasanje traje {n} dana posle termina."
+  },
   "notification": {
     "allNotificationsAreRead": "Sve notifikacije su pročitane.",
     "notificationMarkedAsRead": "Notifikacija označena kao pročitana."
@@ -268,6 +274,16 @@
     "youCanOnlyCreateA": "Turnir možeš da napraviš samo na svom terenu.",
     "youJoinedTheTeam": "Pridružio/la si se ekipi {name}.",
     "youreAlreadyOnATeam": "Već si u jednoj ekipi na ovom turniru."
+  },
+  "urgent": {
+    "alreadySent": "Hitni poziv za ovaj termin je već poslat.",
+    "gameIsFull": "Termin je popunjen, hitni poziv nije potreban.",
+    "nobodyNearby": "Nema igrača iz okoline kojima bismo javili. Probaj da podeliš link termina.",
+    "notForPrivate": "Hitni poziv ne postoji za privatne termine; pošalji pozivnice saigračima.",
+    "onlyTheCreator": "Samo kreator termina može da pošalje hitni poziv.",
+    "playersNeeded": "🚨 Fali igrača: {n}. {match}. Uskoči i prijavi se!",
+    "sent": "Hitni poziv je poslat igračima iz okoline: {n}.",
+    "tooEarly": "Hitni poziv može da se pošalje kad do termina ostane najviše {hours} sati."
   },
   "user": {
     "nameMustBeBetween2": "Ime mora imati između 2 i 100 znakova.",

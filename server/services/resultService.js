@@ -1,5 +1,6 @@
 const { msg } = require("../utils/i18n");
 const pool = require("../database/db");
+const { mvpAwardsSql } = require("./mvpService");
 const { HttpError } = require("../utils/http");
 const { outcome } = require("./playerStatsService");
 const { SPORTS, HIKING } = require("../utils/fields");
@@ -133,9 +134,13 @@ const getLeaderboard = async ({ query }) => {
        COUNT(*) FILTER (WHERE result = 'D')::int AS draws,
        COUNT(*) FILTER (WHERE result = 'L')::int AS losses,
        (3 * COUNT(*) FILTER (WHERE result = 'W')
-          + COUNT(*) FILTER (WHERE result = 'D'))::int AS points
+          + COUNT(*) FILTER (WHERE result = 'D'))::int AS points,
+       COALESCE(MAX(mvp.awards), 0)::int AS mvp
      FROM outcomes
      JOIN users ON users.id = outcomes.user_id
+     LEFT JOIN (
+       SELECT player_id, COUNT(*) AS awards FROM (${mvpAwardsSql("$1")}) a GROUP BY player_id
+     ) mvp ON mvp.player_id = users.id
      GROUP BY users.id
      ORDER BY points DESC, wins DESC, played ASC, users.name
      LIMIT 50`,

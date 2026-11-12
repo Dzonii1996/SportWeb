@@ -87,6 +87,7 @@ function Leaderboard() {
                   <th className="text-left font-semibold py-3">{t("leaderboard.player")}</th>
                   <th className="font-semibold py-3 w-12" title={t("common.played2")}>U</th>
                   <th className="font-semibold py-3 w-24 hidden sm:table-cell" title={t("leaderboard.winsDrawsLosses")}>P-N-I</th>
+                  <th className="font-semibold py-3 w-12" title={t("leaderboard.mvpTitle")}>🏅</th>
                   <th className="font-semibold py-3 pr-4 w-16 text-right">{t("leaderboard.pts")}</th>
                 </tr>
               </thead>
@@ -133,6 +134,8 @@ function Leaderboard() {
                     <td className="py-3 text-center text-gray-600 hidden sm:table-cell">
                       {p.wins}-{p.draws}-{p.losses}
                     </td>
+
+                    <td className="py-3 text-center text-gray-600">{p.mvp || "–"}</td>
 
                     <td className="py-3 pr-4 text-right text-lg font-extrabold">
                       {p.points}

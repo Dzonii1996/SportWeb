@@ -3,11 +3,13 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { MapPin, Calendar, Users, ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import MatchChat from "../components/MatchChat";
 import MatchRatings from "../components/MatchRatings";
+import MatchMvp from "../components/MatchMvp";
 import RegularSpot from "../components/RegularSpot";
 import ShareMatch from "../components/ShareMatch";
 import MatchCosts from "../components/MatchCosts";
 import MatchResult from "../components/MatchResult";
 import InvitePlayers, { InviteBanner } from "../components/InvitePlayers";
+import UrgentCall, { canCallUrgently } from "../components/UrgentCall";
 import { hasPrice } from "../utils/price";
 import { LocationView } from "../components/LocationMap";
 import { hasCoords } from "../utils/geo";
@@ -546,6 +548,15 @@ function MatchDetails() {
                   </p>
                 )}
 
+                {isCreator && !isPast && (match.urgent_call_at || canCallUrgently(match, freeSpots)) && (
+                  <UrgentCall
+                    matchId={id}
+                    freeSpots={freeSpots}
+                    sentAt={match.urgent_call_at}
+                    onSent={loadMatch}
+                  />
+                )}
+
                 {isCreator && !isPast && <InvitePlayers matchId={id} />}
 
                 {!isPast && (
@@ -571,6 +582,14 @@ function MatchDetails() {
               <MatchRatings
                 matchId={id}
                 people={rateablePeople}
+              />
+            )}
+
+            {isPast && user && !match.hike && (
+              <MatchMvp
+                matchId={id}
+                people={[...rateablePeople, { id: user.id, name: user.name }]}
+                userId={user.id}
               />
             )}
 

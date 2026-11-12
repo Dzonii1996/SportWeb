@@ -123,6 +123,9 @@ const rateParticipant = async ({ id, playerId, userId, body }) => {
 
 
 module.exports = {
+  RATING_DAYS,
+  getRatingWindow,
+  getParticipants,
   getMyRatings,
   rateParticipant,
 };

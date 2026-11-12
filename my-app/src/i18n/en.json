@@ -361,7 +361,8 @@
     "afterTheGameTheOrganizer": "After the game, the organizer splits the teams and enters the result.",
     "player": "Player",
     "winsDrawsLosses": "Wins / Draws / Losses",
-    "pts": "Pts"
+    "pts": "Pts",
+    "mvpTitle": "Player of the game (times)"
   },
   "login": {
     "signedInSuccessfully": "Signed in successfully!",
@@ -458,7 +459,9 @@
     "win": "Win",
     "draw": "Draw",
     "loss": "Loss",
-    "backToGames": "⚽ Back to games"
+    "backToGames": "⚽ Back to games",
+    "mvpCount_one": "🏅 Player of the game {{count}} time",
+    "mvpCount_other": "🏅 Player of the game {{count}} times"
   },
   "registration": {
     "passwordsDoNotMatch": "Passwords do not match",
@@ -709,5 +712,28 @@
     "Šljaka": "Clay",
     "Pesak": "Sand",
     "Ostalo": "Other"
+  },
+  "urgentCall": {
+    "title_one": "🚨 Still {{count}} player short?",
+    "title_other": "🚨 Still {{count}} players short?",
+    "hint": "Notify players nearby who recently played this sport. The call can be sent once.",
+    "send": "Send urgent call",
+    "confirm_one": "Send an urgent call? Players nearby will be notified that {{count}} player is needed.",
+    "confirm_other": "Send an urgent call? Players nearby will be notified that {{count}} players are needed.",
+    "sentTitle": "🚨 An urgent call was sent to players nearby.",
+    "couldNotSend": "Could not send the urgent call."
+  },
+  "matchMvp": {
+    "title": "🏅 Player of the game",
+    "hint_one": "Vote for the player who stood out. The one with the most votes (at least {{count}}) wins.",
+    "hint_other": "Vote for the player who stood out. The one with the most votes (at least {{count}}) wins.",
+    "winner_one": "🏅 {{names}} ({{count}} vote)",
+    "winner_other": "🏅 {{names}} ({{count}} votes)",
+    "pickOne": "Your vote (one per game):",
+    "changeVote": "Click again to change or withdraw your vote.",
+    "yourVote": "✓ Your vote",
+    "votes_one": "{{count}} vote",
+    "votes_other": "{{count}} votes",
+    "couldNotSave": "Could not save your vote."
   }
 }
