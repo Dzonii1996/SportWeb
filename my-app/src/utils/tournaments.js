@@ -16,7 +16,7 @@ export const STATUS = {
 
 export { sportEmoji as sportIcon } from "./sports";
 
-// "Finale", "Polufinale", "Četvrtfinale", "1. kolo"
+// "Finale", "Polufinale", "Četvrtfinale", "Osmina finala", "1. kolo"
 export const roundLabel = (format, round, totalRounds) => {
   if (format === "knockout") {
     const fromEnd = totalRounds - round;
@@ -24,6 +24,7 @@ export const roundLabel = (format, round, totalRounds) => {
     if (fromEnd === 0) return i18n.t("tournaments.final");
     if (fromEnd === 1) return i18n.t("tournaments.semifinal");
     if (fromEnd === 2) return i18n.t("tournaments.quarterfinal");
+    if (fromEnd === 3) return i18n.t("tournaments.roundOf16");
   }
 
   return i18n.t("tournaments.round", { round });

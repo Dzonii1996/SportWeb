@@ -11,6 +11,7 @@ const {
 const {
   roundRobin,
   knockoutBracket,
+  validatePairs,
   judgeResult,
   computeStandings,
 } = require("../utils/tournament");
@@ -586,6 +587,72 @@ describe("tok turnira", () => {
   });
 });
 
+describe("parovi iz žreba održanog van aplikacije", () => {
+  const startWith = (t, organizer, pairs) =>
+    api.post(`/api/tournaments/${t.id}/start`).set(auth(organizer)).send({ pairs });
+
+  test("validatePairs: svaka ekipa tačno jednom, tačan broj parova", () => {
+    expect(validatePairs([[1, 2], [3, 4]], [1, 2, 3, 4])).toEqual([[1, 2], [3, 4]]);
+    // Slobodan prolaz može biti bilo gde, i sa bilo koje strane para
+    expect(validatePairs([[1, 2], [null, 3]], [1, 2, 3])).toEqual([[1, 2], [3, null]]);
+    expect(validatePairs([[1, 2], [3, 3]], [1, 2, 3, 4])).toBeNull();
+    expect(validatePairs([[1, 2], [3, 9]], [1, 2, 3, 4])).toBeNull();
+    expect(validatePairs([[1, 2]], [1, 2, 3, 4])).toBeNull();
+    expect(validatePairs([[1, 2], [null, null]], [1, 2])).toBeNull();
+  });
+
+  test("16 ekipa: kostur ide tačno po žrebu", async () => {
+    const organizer = await adminUser();
+    const t = await create(organizer, { format: "knockout", sport: "Odbojka", max_teams: 16 });
+    const teams = await approvedTeams(t, organizer, 16);
+    // Žreb: 16-1, 15-2, 14-3 ...
+    const pairs = Array.from({ length: 8 }, (_, i) => [teams[15 - i].id, teams[i].id]);
+
+    const res = await startWith(t, organizer, pairs);
+
+    expect(res.status).toBe(200);
+
+    const { games } = await details(t);
+    const first = games.filter((g) => g.round === 1).sort((a, b) => a.position - b.position);
+
+    expect(games).toHaveLength(15);
+    expect(first.map((g) => [g.team_a_id, g.team_b_id])).toEqual(pairs);
+  });
+
+  test("slobodan prolaz tamo gde je izvučen ide odmah dalje", async () => {
+    const organizer = await adminUser();
+    const t = await create(organizer, { format: "knockout" });
+    const [a, b, c] = await approvedTeams(t, organizer, 3);
+
+    expect((await startWith(t, organizer, [[a.id, b.id], [null, c.id]])).status).toBe(200);
+
+    const { games } = await details(t);
+    const final = games.find((g) => g.round === 2);
+
+    expect(final.team_b_id).toBe(c.id);
+    expect(final.team_a_id).toBeNull();
+  });
+
+  test("neispravan žreb ili liga: greška i turnir ne počinje", async () => {
+    const organizer = await adminUser();
+    const cup = await create(organizer, { format: "knockout" });
+    const [a, b, c, d] = await approvedTeams(cup, organizer, 4);
+
+    const twice = await startWith(cup, organizer, [[a.id, b.id], [a.id, c.id]]);
+
+    expect(twice.status).toBe(400);
+    expect(twice.body.message).toBe(
+      "Parovi iz žreba nisu ispravni: broj parova mora biti 2, a svaka potvrđena ekipa tačno jednom."
+    );
+    expect((await details(cup)).tournament.status).toBe("registration");
+    expect((await startWith(cup, organizer, [[a.id, b.id], [c.id, d.id]])).status).toBe(200);
+
+    const league = await create(organizer);
+    const [x, y] = await approvedTeams(league, organizer, 2);
+    expect((await startWith(league, organizer, [[x.id, y.id]])).status).toBe(400);
+  });
+});
+
 describe("raspored na terenu i otkazivanje", () => {
   const bookableVenue = async (owner) => {
     const venue = await createVenue({ name: "SC Sunce" });
@@ -667,6 +734,57 @@ describe("raspored na terenu i otkazivanje", () => {
     await schedule(t, game, organizer, dateIn(5), "20:00");
 
     expect((await reservations()).map((r) => r.status)).toEqual(["cancelled", "pending"]);
+  });
+
+  const scheduleRound = (t, round, user, date, time, interval) =>
+    api
+      .put(`/api/tournaments/${t.id}/rounds/${round}/schedule`)
+      .set(auth(user))
+      .send({ game_date: date, start_time: time, interval });
+
+  test("celo kolo odjednom: utakmice redom na razmak, slobodan prolaz se preskače", async () => {
+    const [organizer, player] = [await adminUser(), await createUser()];
+    const t = await create(organizer, { format: "knockout" });
+    await approvedTeams(t, organizer, 6);
+    await start(t, organizer);
+
+    // 6 ekipa: dva slobodna prolaza i dve utakmice u 1. kolu
+    const res = await scheduleRound(t, 1, organizer, dateIn(5), "17:00", 90);
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("Zakazane su utakmice kola: 2.");
+
+    const first = (await details(t)).games.filter((g) => g.round === 1).sort((a, b) => a.position - b.position);
+
+    expect(first.map((g) => g.game_time)).toEqual([null, null, "17:00:00", "18:30:00"]);
+
+    // Polufinale (ekipe još nisu poznate) može da se zakaže unapred, za drugi dan
+    expect((await scheduleRound(t, 2, organizer, dateIn(6), "18:00")).status).toBe(200);
+    expect((await scheduleRound(t, 2, player, dateIn(6), "18:00")).status).toBe(403);
+  });
+
+  test("kolo koje ne staje u dan, pogrešan razmak i zauzet teren", async () => {
+    const [owner, organizer, player] = [await createUser(), await adminUser(), await createUser()];
+    const venue = await bookableVenue(owner);
+    const t = await create(organizer, { venue_id: venue.id, format: "knockout" });
+    await approvedTeams(t, organizer, 8);
+    await start(t, organizer);
+
+    expect((await scheduleRound(t, 1, organizer, dateIn(5), "22:00")).status).toBe(400);
+    expect((await scheduleRound(t, 1, organizer, dateIn(5), "18:00", 50)).status).toBe(400);
+
+    // Treća utakmica (20h) je zauzeta: ništa iz kola se ne zakazuje
+    await api
+      .post(`/api/venues/${venue.id}/reservations`)
+      .set(auth(player))
+      .send({ date: dateIn(5), start_hour: 20, hours: 1 });
+
+    expect((await scheduleRound(t, 1, organizer, dateIn(5), "18:00")).status).toBe(409);
+    expect((await details(t)).games.every((g) => g.game_time === null)).toBe(true);
+    expect((await reservations()).filter((r) => r.status === "pending")).toHaveLength(1);
+
+    expect((await scheduleRound(t, 1, organizer, dateIn(6), "18:00")).status).toBe(200);
+    expect((await reservations()).filter((r) => r.status === "pending")).toHaveLength(5);
   });
 
   test("otkazivanje turnira oslobađa teren i javlja ekipama", async () => {

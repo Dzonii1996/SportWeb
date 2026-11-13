@@ -25,6 +25,7 @@ const inviteRoutes = require("./routes/inviteRoutes");
 const venueRoutes = require("./routes/venueRoutes");
 const reservationRoutes = require("./routes/reservationRoutes");
 const tournamentRoutes = require("./routes/tournamentRoutes");
+const photoRoutes = require("./routes/photoRoutes");
 const language = require("./middleware/language");
 const runMigrations = require("./database/migrate");
 const { sendDueReminders } = require("./utils/reminders");
@@ -52,6 +53,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/venues", venueRoutes);
 app.use("/api/reservations", reservationRoutes);
 app.use("/api/tournaments", tournamentRoutes);
+app.use(photoRoutes);
 app.use(express.json());
 
 app.get("/", (req, res) => {

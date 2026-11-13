@@ -569,7 +569,22 @@
     "teams": "Teams",
     "bracket": "Cup bracket",
     "champion": "Champion",
-    "bye": "bye"
+    "bye": "bye",
+    "firstRoundPairs": "First round pairs",
+    "drawRandom": "Let the app draw randomly",
+    "drawManual": "Enter pairs from our draw",
+    "chooseTeam": "Choose a team",
+    "drawSlot": "Game {{n}}, team {{side}}",
+    "drawHint": "Winners of games 1 and 2 meet in the next round, 3 and 4 as well, and so on. Games above the dashed line are the left side of the bracket, below it the right side.",
+    "drawIncomplete": "Place every team before starting ({{placed}} of {{total}}).",
+    "scheduleRound": "Schedule the whole round",
+    "day": "Day",
+    "firstGameAt": "First game at",
+    "everyMinutes": "Interval",
+    "minutes": "{{n}} min",
+    "gameDays": "Schedule by day",
+    "today": "today",
+    "unscheduledGames": "Games not scheduled yet: {{n}}."
   },
   "tournamentForm": {
     "onlyTheOrganizerCanEdit": "Only the organizer can edit the tournament.",
@@ -611,7 +626,8 @@
     "final": "Final",
     "semifinal": "Semifinal",
     "quarterfinal": "Quarterfinal",
-    "round": "Round {{round}}"
+    "round": "Round {{round}}",
+    "roundOf16": "Round of 16"
   },
   "venueAdmin": {
     "pending": "Pending",
@@ -738,5 +754,32 @@
     "votes_one": "{{count}} vote",
     "votes_other": "{{count}} votes",
     "couldNotSave": "Could not save your vote."
+  },
+  "photos": {
+    "title": "Photos",
+    "gallery": "Gallery",
+    "gallerySubtitle": "Photos from played tournaments and games",
+    "empty": "No photos yet. Add the first ones!",
+    "emptyGallery": "No photos from tournaments and games yet.",
+    "choose": "Choose photos",
+    "selected": "Selected: {{n}}",
+    "captionPlaceholder": "Caption (e.g. Final, Eagles – Wolves)",
+    "add": "Add",
+    "uploading": "Uploading…",
+    "uploadFailed": "Upload failed. Try again.",
+    "tooMany": "You can upload at most {{n}} photos at once.",
+    "hint": "Up to {{n}} photos at once, at most 10 MB each. Only add photos the people in them are OK with; phone location data is removed.",
+    "by": "Added by {{name}}",
+    "delete": "Delete",
+    "confirmDelete": "Delete this photo?",
+    "report": "Report",
+    "reportMe": "I'm in this photo, remove it",
+    "reportInappropriate": "Inappropriate content",
+    "reports": "Reports: {{n}}",
+    "close": "Close",
+    "prev": "Previous",
+    "next": "Next",
+    "fromTournament": "Tournament: {{name}}",
+    "fromMatch": "Game: {{place}}"
   }
 }

@@ -4,7 +4,8 @@ test("roundLabel imenuje poslednja kola kupa", () => {
   expect(roundLabel("knockout", 4, 4)).toBe("Finale");
   expect(roundLabel("knockout", 3, 4)).toBe("Polufinale");
   expect(roundLabel("knockout", 2, 4)).toBe("Četvrtfinale");
-  expect(roundLabel("knockout", 1, 4)).toBe("1. kolo");
+  expect(roundLabel("knockout", 1, 4)).toBe("Osmina finala");
+  expect(roundLabel("knockout", 1, 5)).toBe("1. kolo");
   expect(roundLabel("league", 3, 3)).toBe("3. kolo");
 });
 

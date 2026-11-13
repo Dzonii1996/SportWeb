@@ -273,7 +273,13 @@
     "venuesAreBookedByThe": "Venues are booked by the full hour; pick a time like 19:00.",
     "youCanOnlyCreateA": "You can only create a tournament at your own venue.",
     "youJoinedTheTeam": "You joined the team {name}.",
-    "youreAlreadyOnATeam": "You're already on a team in this tournament."
+    "youreAlreadyOnATeam": "You're already on a team in this tournament.",
+    "drawOnlyForCup": "Draw pairs can only be set for a cup.",
+    "drawInvalid": "The draw pairs aren't valid: there must be {n} pairs with every confirmed team exactly once.",
+    "invalidInterval": "The interval between games isn't valid.",
+    "noGamesInThisRound": "There are no games to schedule in this round.",
+    "roundDoesntFitInDay": "All the round's games don't fit into that day. Pick an earlier start or a shorter interval.",
+    "roundScheduled": "Games scheduled in the round: {n}."
   },
   "urgent": {
     "alreadySent": "An urgent call for this game has already been sent.",
@@ -323,5 +329,23 @@
     "youreAlreadyOnTheWaitlist": "You're already on the waitlist.",
     "youreOnTheWaitlistWell": "You're on the waitlist. We'll let you know when a spot opens up.",
     "youveLeftTheWaitlist": "You've left the waitlist."
+  },
+  "photo": {
+    "notFound": "This photo doesn't exist.",
+    "cantUpload": "Only the organizer and players can add photos.",
+    "notStarted": "Photos can be added once the game has started.",
+    "noneSelected": "No photos selected.",
+    "invalidImage": "One of the files isn't a valid image.",
+    "tooMany": "There can be at most {n} photos here.",
+    "captionTooLong": "The caption can have at most {n} characters.",
+    "added": "Photos added.",
+    "deleted": "Photo deleted.",
+    "cantDelete": "You can't delete this photo.",
+    "reported": "Thanks, your report was sent.",
+    "alreadyReported": "You've already reported this photo.",
+    "invalidReason": "Unknown report reason.",
+    "reportNotification": "🚩 A photo was reported ({reason}): {place}.",
+    "reasonMe": "a person in it asks for removal",
+    "reasonInappropriate": "inappropriate content"
   }
 }

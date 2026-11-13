@@ -574,7 +574,22 @@
     "teams": "Ekipe",
     "bracket": "Kostur kupa",
     "champion": "Šampion",
-    "bye": "slobodan prolaz"
+    "bye": "slobodan prolaz",
+    "firstRoundPairs": "Parovi prvog kola",
+    "drawRandom": "Aplikacija izvlači nasumično",
+    "drawManual": "Upisujem parove iz žreba",
+    "chooseTeam": "Izaberi ekipu",
+    "drawSlot": "Utakmica {{n}}, ekipa {{side}}",
+    "drawHint": "Pobednici utakmica 1 i 2 igraju međusobno u sledećem kolu, 3 i 4 takođe, i tako dalje. Utakmice iznad isprekidane linije su leva strana kostura, ispod nje desna.",
+    "drawIncomplete": "Rasporedi sve ekipe pre početka ({{placed}} od {{total}}).",
+    "scheduleRound": "Zakaži celo kolo",
+    "day": "Dan",
+    "firstGameAt": "Prva utakmica u",
+    "everyMinutes": "Razmak",
+    "minutes": "{{n}} min",
+    "gameDays": "Raspored po danima",
+    "today": "danas",
+    "unscheduledGames": "Još nije zakazano utakmica: {{n}}."
   },
   "tournamentForm": {
     "onlyTheOrganizerCanEdit": "Samo organizator može da menja turnir.",
@@ -616,7 +631,8 @@
     "final": "Finale",
     "semifinal": "Polufinale",
     "quarterfinal": "Četvrtfinale",
-    "round": "{{round}}. kolo"
+    "round": "{{round}}. kolo",
+    "roundOf16": "Osmina finala"
   },
   "venueAdmin": {
     "pending": "Na čekanju",
@@ -748,5 +764,32 @@
     "votes_few": "{{count}} glasa",
     "votes_other": "{{count}} glasova",
     "couldNotSave": "Greška pri čuvanju glasa."
+  },
+  "photos": {
+    "title": "Fotografije",
+    "gallery": "Galerija",
+    "gallerySubtitle": "Fotografije sa odigranih turnira i termina",
+    "empty": "Još nema fotografija. Dodaj prve!",
+    "emptyGallery": "Još nema fotografija sa turnira i termina.",
+    "choose": "Izaberi fotografije",
+    "selected": "Izabrano: {{n}}",
+    "captionPlaceholder": "Opis (npr. Finale, Orlovi – Vukovi)",
+    "add": "Dodaj",
+    "uploading": "Šaljem…",
+    "uploadFailed": "Slanje nije uspelo. Pokušaj ponovo.",
+    "tooMany": "Odjednom možeš poslati najviše {{n}} fotografija.",
+    "hint": "Do {{n}} fotografija odjednom, najviše 10 MB po slici. Dodaj samo slike na kojima se ljudi slažu da budu objavljeni; lokacija iz telefona se briše.",
+    "by": "Dodao/la: {{name}}",
+    "delete": "Obriši",
+    "confirmDelete": "Obrisati ovu fotografiju?",
+    "report": "Prijavi",
+    "reportMe": "Ja sam na slici, uklonite je",
+    "reportInappropriate": "Neprimeren sadržaj",
+    "reports": "Prijava: {{n}}",
+    "close": "Zatvori",
+    "prev": "Prethodna",
+    "next": "Sledeća",
+    "fromTournament": "Turnir: {{name}}",
+    "fromMatch": "Termin: {{place}}"
   }
 }

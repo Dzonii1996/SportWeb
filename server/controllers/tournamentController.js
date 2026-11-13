@@ -30,5 +30,6 @@ module.exports = {
   startTournament: route(tournaments.startTournament, { mapError }),
   saveResult: route(tournaments.saveResult, { mapError }),
   scheduleGame: route(tournaments.scheduleGame, { mapError }),
+  scheduleRound: route(tournaments.scheduleRound, { mapError }),
   cancelTournament: route(tournaments.cancelTournament, { mapError }),
 };

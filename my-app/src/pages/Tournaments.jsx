@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Calendar, MapPin, Plus, Users, Wallet } from "lucide-react";
 import { API_URL } from "../config";
+import { photoUrl } from "../components/PhotoGallery";
 import LoadMore from "../components/LoadMore";
 import { formatRSD } from "../utils/price";
 import { useAdminStatus } from "../utils/venues";
@@ -34,7 +35,14 @@ function TournamentCard({ tournament: t }) {
       to={`/turniri/${t.id}`}
       className="flex flex-col rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-lg transition overflow-hidden"
     >
-      <div className="p-5 text-white bg-gradient-to-br from-green-600 to-emerald-500">
+      <div
+        className="p-5 text-white bg-gradient-to-br from-green-600 to-emerald-500 bg-cover bg-center"
+        style={
+          t.cover_photo
+            ? { backgroundImage: `linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.6)), url(${photoUrl(t.cover_photo)})` }
+            : undefined
+        }
+      >
         <div className="flex items-center gap-3">
           <span className="w-12 h-12 shrink-0 rounded-xl bg-white/20 flex items-center justify-center text-2xl">
             {sportIcon(t.sport)}

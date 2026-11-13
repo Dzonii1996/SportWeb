@@ -18,6 +18,7 @@ const {
   startTournament,
   saveResult,
   scheduleGame,
+  scheduleRound,
   cancelTournament,
 } = require("../controllers/tournamentController");
 
@@ -42,5 +43,6 @@ router.delete("/:id/teams/:teamId/players/:playerId", protect, removePlayer);
 
 router.put("/:id/games/:gameId/result", protect, saveResult);
 router.put("/:id/games/:gameId/schedule", protect, scheduleGame);
+router.put("/:id/rounds/:round/schedule", protect, scheduleRound);
 
 module.exports = router;

@@ -273,7 +273,13 @@
     "venuesAreBookedByThe": "Teren se rezerviše na pun sat; izaberi vreme kao 19:00.",
     "youCanOnlyCreateA": "Turnir možeš da napraviš samo na svom terenu.",
     "youJoinedTheTeam": "Pridružio/la si se ekipi {name}.",
-    "youreAlreadyOnATeam": "Već si u jednoj ekipi na ovom turniru."
+    "youreAlreadyOnATeam": "Već si u jednoj ekipi na ovom turniru.",
+    "drawOnlyForCup": "Parovi iz žreba se upisuju samo za kup.",
+    "drawInvalid": "Parovi iz žreba nisu ispravni: broj parova mora biti {n}, a svaka potvrđena ekipa tačno jednom.",
+    "invalidInterval": "Razmak između utakmica nije ispravan.",
+    "noGamesInThisRound": "U ovom kolu nema utakmica za zakazivanje.",
+    "roundDoesntFitInDay": "Sve utakmice kola ne staju u taj dan. Izaberi raniji početak ili kraći razmak.",
+    "roundScheduled": "Zakazane su utakmice kola: {n}."
   },
   "urgent": {
     "alreadySent": "Hitni poziv za ovaj termin je već poslat.",
@@ -323,5 +329,23 @@
     "youreAlreadyOnTheWaitlist": "Već ste na listi čekanja.",
     "youreOnTheWaitlistWell": "Upisani ste na listu čekanja. Javićemo vam kad se oslobodi mesto.",
     "youveLeftTheWaitlist": "Izašli ste sa liste čekanja."
+  },
+  "photo": {
+    "notFound": "Fotografija ne postoji.",
+    "cantUpload": "Fotografije mogu da dodaju samo organizator i igrači.",
+    "notStarted": "Fotografije mogu da se dodaju kad igra počne.",
+    "noneSelected": "Nisi izabrao nijednu fotografiju.",
+    "invalidImage": "Jedan od fajlova nije ispravna slika.",
+    "tooMany": "Ovde može biti najviše {n} fotografija.",
+    "captionTooLong": "Opis može imati najviše {n} znakova.",
+    "added": "Fotografije su dodate.",
+    "deleted": "Fotografija je obrisana.",
+    "cantDelete": "Ne možeš da obrišeš ovu fotografiju.",
+    "reported": "Hvala, prijava je poslata.",
+    "alreadyReported": "Već si prijavio ovu fotografiju.",
+    "invalidReason": "Nepoznat razlog prijave.",
+    "reportNotification": "🚩 Prijavljena je fotografija ({reason}): {place}.",
+    "reasonMe": "osoba sa slike traži uklanjanje",
+    "reasonInappropriate": "neprimeren sadržaj"
   }
 }

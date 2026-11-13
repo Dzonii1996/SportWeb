@@ -17,6 +17,9 @@ import {
 } from "../utils/tournaments";
 import { useTranslation } from "react-i18next";
 import KnockoutBracket from "../components/KnockoutBracket";
+import PhotoGallery from "../components/PhotoGallery";
+import { DaySchedule, RoundScheduler } from "../components/TournamentSchedule";
+import DrawPairs, { drawStatus, emptyPairs, pairsForServer } from "../components/DrawPairs";
 import i18n, { sportLabel } from "../i18n";
 
 const card = "bg-white rounded-2xl border border-gray-100 shadow-sm p-6";
@@ -366,6 +369,17 @@ function Organizer({ tournament, teams, onChange }) {
   const approved = teams.filter((t) => t.status === "approved");
   const pending = teams.filter((t) => t.status === "pending");
   const active = ["registration", "in_progress"].includes(tournament.status);
+  const canDraw = tournament.format === "knockout" && tournament.status === "registration" && approved.length >= 2;
+
+  // Kup: parove izvlači aplikacija ili ih organizator upisuje iz žreba
+  const [manualDraw, setManualDraw] = useState(false);
+  const [pairs, setPairs] = useState(() => emptyPairs(approved.length));
+  const draw = drawStatus(pairs, approved);
+
+  // Kad se promeni broj potvrđenih ekipa, menja se i broj parova
+  useEffect(() => {
+    setPairs(emptyPairs(approved.length));
+  }, [approved.length]);
 
   const act = async (path, options) => {
     if (await tournamentRequest(path, options)) onChange();
@@ -377,7 +391,7 @@ function Organizer({ tournament, teams, onChange }) {
       : "";
 
     if (window.confirm(t("tournamentDetails.closeRegistrationAndCreateThe", { length: approved.length, warning }))) {
-      act(`${base}/start`);
+      act(`${base}/start`, manualDraw && canDraw ? { body: { pairs: pairsForServer(pairs) } } : undefined);
     }
   };
 
@@ -441,11 +455,43 @@ function Organizer({ tournament, teams, onChange }) {
         </div>
       )}
 
+      {canDraw && (
+        <div className="space-y-3 border rounded-xl p-4">
+          <p className="font-medium">{t("tournamentDetails.firstRoundPairs")}</p>
+
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-5">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="draw" checked={!manualDraw} onChange={() => setManualDraw(false)} />
+              {t("tournamentDetails.drawRandom")}
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="draw" checked={manualDraw} onChange={() => setManualDraw(true)} />
+              {t("tournamentDetails.drawManual")}
+            </label>
+          </div>
+
+          {manualDraw && (
+            <>
+              <DrawPairs teams={approved} pairs={pairs} onChange={setPairs} />
+              {!draw.complete && (
+                <p className="text-sm text-amber-700">
+                  {t("tournamentDetails.drawIncomplete", { placed: draw.placed, total: approved.length })}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
       {active && (
         <div className="flex flex-wrap gap-2">
           {tournament.status === "registration" && (
             <>
-              <button onClick={start} disabled={approved.length < 2} className={`${primary} disabled:opacity-50`}>
+              <button
+                onClick={start}
+                disabled={approved.length < 2 || (manualDraw && canDraw && !draw.complete)}
+                className={`${primary} disabled:opacity-50`}
+              >
                 {t("tournamentDetails.startTournament")}
               </button>
               <Link to={`/turniri/${tournament.id}/izmeni`} className={`${outline} inline-flex items-center gap-1.5`}>
@@ -634,6 +680,8 @@ function TournamentDetails() {
           <KnockoutBracket rounds={rounds} winnerName={t.winner_name} />
         )}
 
+        <DaySchedule tournament={t} games={games} totalRounds={totalRounds} />
+
         {/* Raspored */}
         {rounds.length > 0 && (
           <div className={`${card} space-y-5`}>
@@ -641,7 +689,12 @@ function TournamentDetails() {
 
             {rounds.map(({ round, games: list }) => (
               <div key={round} className="space-y-2">
-                <h3 className="font-semibold text-gray-700">{roundLabel(t.format, round, totalRounds)}</h3>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="font-semibold text-gray-700">{roundLabel(t.format, round, totalRounds)}</h3>
+                  {editableGames && t.status === "in_progress" && (
+                    <RoundScheduler tournament={t} round={round} onDone={load} />
+                  )}
+                </div>
 
                 {list.map((game) => (
                   <GameRow
@@ -656,6 +709,8 @@ function TournamentDetails() {
             ))}
           </div>
         )}
+
+        <PhotoGallery kind="tournaments" id={t.id} />
 
         {/* Ekipe */}
         {approved.length > 0 && (

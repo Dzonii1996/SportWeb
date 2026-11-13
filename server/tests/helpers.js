@@ -12,7 +12,8 @@ const resetDb = () =>
              match_messages, match_waitlist, match_ratings, match_reminders,
              match_series, series_regulars, password_resets, match_invites,
              venues, venue_images, venue_reviews, venue_claims, venue_reservations,
-             tournaments, tournament_teams, tournament_team_players, tournament_games
+             tournaments, tournament_teams, tournament_team_players, tournament_games,
+             photos, photo_reports
     RESTART IDENTITY CASCADE
   `);
 

@@ -41,9 +41,9 @@ const upload = multer({
 });
 
 // Greške multer-a vraćamo kao JSON umesto opšte greške servera
-const sendUploadError = (res, err, maxFiles = 1) => {
+const sendUploadError = (res, err, maxFiles = 1, maxSizeMb = MAX_SIZE_MB) => {
   const messages = {
-    LIMIT_FILE_SIZE: msg("common.anImageCanBeAt", { n: MAX_SIZE_MB }),
+    LIMIT_FILE_SIZE: msg("common.anImageCanBeAt", { n: maxSizeMb }),
     LIMIT_FILE_COUNT: msg("common.youCanSendAtMost", { n: maxFiles }),
     LIMIT_UNEXPECTED_FILE: msg("common.youCanSendAtMost", { n: maxFiles }),
   };
@@ -63,13 +63,14 @@ const uploadSingle = (field) => (req, res, next) => {
   });
 };
 
-// Više slika odjednom (npr. slike terena); fajlovi su u req.files
-const uploadMany = (field, maxFiles) => {
+// Više slika odjednom (npr. slike terena); fajlovi su u req.files.
+// maxSizeMb: fotografije sa telefona su veće, server ih posle smanji.
+const uploadMany = (field, maxFiles, { maxSizeMb = MAX_SIZE_MB } = {}) => {
   const many = multer({
     storage,
     fileFilter,
     limits: {
-      fileSize: MAX_SIZE_MB * 1024 * 1024,
+      fileSize: maxSizeMb * 1024 * 1024,
       files: maxFiles,
     },
   });
@@ -81,7 +82,7 @@ const uploadMany = (field, maxFiles) => {
       // Slike sačuvane pre greške ne ostavljamo na disku
       (req.files || []).forEach((f) => fs.unlink(f.path, () => {}));
 
-      sendUploadError(res, err, maxFiles);
+      sendUploadError(res, err, maxFiles, maxSizeMb);
     });
   };
 };

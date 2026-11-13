@@ -14,6 +14,7 @@ const LINKS = [
   { to: "/tereni", get label() { return i18n.t("nav.venues"); } },
   { to: "/turniri", get label() { return i18n.t("common.tournaments"); } },
   { to: "/rang-lista", get label() { return i18n.t("common.leaderboard"); } },
+  { to: "/galerija", get label() { return i18n.t("photos.gallery"); } },
 ];
 
 const USER_LINKS = [

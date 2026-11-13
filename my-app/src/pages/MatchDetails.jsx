@@ -4,6 +4,7 @@ import { MapPin, Calendar, Users, ArrowLeft, Pencil, Trash2 } from "lucide-react
 import MatchChat from "../components/MatchChat";
 import MatchRatings from "../components/MatchRatings";
 import MatchMvp from "../components/MatchMvp";
+import PhotoGallery from "../components/PhotoGallery";
 import RegularSpot from "../components/RegularSpot";
 import ShareMatch from "../components/ShareMatch";
 import MatchCosts from "../components/MatchCosts";
@@ -584,6 +585,8 @@ function MatchDetails() {
                 people={rateablePeople}
               />
             )}
+
+            {isPast && <PhotoGallery kind="matches" id={id} linkKey={accessKey} />}
 
             {isPast && user && !match.hike && (
               <MatchMvp

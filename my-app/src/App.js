@@ -17,6 +17,7 @@ import MatchDetails from "./pages/MatchDetails";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Leaderboard from "./pages/Leaderboard";
+import Gallery from "./pages/Gallery";
 import Venues from "./pages/Venues";
 import VenueDetails from "./pages/VenueDetails";
 import VenueForm from "./pages/VenueForm";
@@ -42,6 +43,7 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/matches" element={<Matches />} />
         <Route path="/rang-lista" element={<Leaderboard />} />
+        <Route path="/galerija" element={<Gallery />} />
         <Route path="/tereni" element={<Venues />} />
         <Route
           path="/tereni/predlozi"

@@ -13,6 +13,9 @@ const {
   roundRobin,
   nextSlot,
   knockoutBracket,
+  knockoutFromPairs,
+  validatePairs,
+  bracketSize,
   judgeResult,
   computeStandings,
 } = require("../utils/tournament");
@@ -243,6 +246,7 @@ const getTournaments = async ({ query }) => {
        w.name AS winner_name,
        (SELECT COUNT(*) FROM tournament_teams x
         WHERE x.tournament_id = t.id AND x.status = 'approved')::int AS teams_count,
+       (SELECT thumb_path FROM photos ph WHERE ph.tournament_id = t.id ORDER BY ph.id LIMIT 1) AS cover_photo,
        COUNT(*) OVER() AS total_count
      FROM tournaments t
      JOIN users u ON u.id = t.organizer_id
@@ -562,7 +566,9 @@ const setTeamPaid = async ({ id, teamId, userId, body }) => {
 };
 
 // Zatvara prijave i žreba raspored; ekipe na čekanju se odbijaju
-const startTournament = async ({ id, userId }) => {
+// body.pairs (po želji, samo za kup): parovi prvog kola iz žreba održanog van aplikacije.
+// Bez toga aplikacija sama izvlači parove.
+const startTournament = async ({ id, userId, body = {} }) => {
   await withTransaction(async (client) => {
     const tournament = await findTournament(client, id, true);
 
@@ -587,8 +593,25 @@ const startTournament = async ({ id, userId }) => {
       await rejectTeamRow(client, tournament, team);
     }
 
-    const ids = shuffle(approved.map((t) => t.id));
-    const games = tournament.format === "league" ? roundRobin(ids) : knockoutBracket(ids);
+    const ids = approved.map((t) => t.id);
+    let games;
+
+    if (body.pairs !== undefined && body.pairs !== null) {
+      if (tournament.format !== "knockout") {
+        throw new HttpError(400, msg("tournament.drawOnlyForCup"));
+      }
+
+      const pairs = validatePairs(body.pairs, ids);
+
+      if (!pairs) {
+        throw new HttpError(400, msg("tournament.drawInvalid", { n: bracketSize(ids.length) / 2 }));
+      }
+
+      games = knockoutFromPairs(pairs);
+    } else {
+      const drawn = shuffle(ids);
+      games = tournament.format === "league" ? roundRobin(drawn) : knockoutBracket(drawn);
+    }
 
     for (const g of games) {
       await client.query(
@@ -766,100 +789,177 @@ const venueOwner = async (client, tournament) => {
   return result.rows[0] || null;
 };
 
+// Proverava "YYYY-MM-DD" i "HH:MM"; vreme ne sme biti u prošlosti
+const checkDateTime = (gameDate, gameTime) => {
+  const date = parseDate(gameDate);
+
+  if (!date || !/^\d{2}:\d{2}$/.test(gameTime || "")) {
+    throw new HttpError(400, msg("common.invalidDateOrTime"));
+  }
+
+  const [hours, minutes] = gameTime.split(":").map(Number);
+
+  if (hours > 23 || minutes > 59) throw new HttpError(400, msg("common.invalidDateOrTime"));
+
+  if (new Date(date[0], date[1] - 1, date[2], hours, minutes) < new Date()) {
+    throw new HttpError(400, msg("tournament.aMatchCantBeIn"));
+  }
+};
+
+// Postavlja (ili briše, bez datuma) vreme jedne utakmice u otvorenoj transakciji:
+// stara rezervacija terena se otkazuje, nova pravi, a igrači obe ekipe dobijaju obaveštenje
+const setGameTime = async (client, { tournament, game, userId, venue, gameDate, gameTime }) => {
+  const clearing = !gameDate;
+  const bookable = Boolean(venue?.accepts_reservations && venue.owner_id);
+  let reservationId = null;
+
+  if (game.reservation_id) {
+    const cancelled = await cancelReservations(client, [game.reservation_id]);
+
+    if (cancelled > 0 && venue?.owner_id && Number(venue.owner_id) !== Number(userId)) {
+      await notifyUsers(
+        client,
+        [venue.owner_id],
+        msg("tournament.theBookingForTheTournament", { tournament: tournament.name }),
+        null,
+        { reservationId: game.reservation_id }
+      );
+    }
+  }
+
+  if (!clearing && bookable) {
+    if (!gameTime.endsWith(":00")) {
+      throw new HttpError(400, msg("tournament.venuesAreBookedByThe"));
+    }
+
+    const booked = await bookSlot(client, {
+      venueId: tournament.venue_id,
+      userId: userId,
+      date: gameDate,
+      start: Number(gameTime.slice(0, 2)),
+      hours: 1,
+      note: `Turnir: ${tournament.name}`.slice(0, 300),
+    });
+
+    if (!booked.reservation) {
+      throw new HttpError(booked.status === 404 ? 400 : booked.status, booked.message);
+    }
+
+    reservationId = booked.reservation.id;
+  }
+
+  await client.query(
+    "UPDATE tournament_games SET game_date = $2, game_time = $3, reservation_id = $4 WHERE id = $1",
+    [game.id, clearing ? null : gameDate, clearing ? null : gameTime, reservationId]
+  );
+
+  const teamIds = [game.team_a_id, game.team_b_id].filter(Boolean);
+
+  if (!clearing && teamIds.length > 0) {
+    const date = new Date(`${gameDate}T00:00`).toLocaleDateString("sr-Latn-RS");
+
+    await notifyUsers(
+      client,
+      await playersOf(client, tournament.id, teamIds),
+      msg("tournament.tournamentYourTeamsMatchIs", { tournament: tournament.name, date, time: gameTime }),
+      null,
+      { tournamentId: tournament.id }
+    );
+  }
+};
+
+// Turnir koji je u toku, zaključan za izmenu, i samo za organizatora
+const openForScheduling = async (client, id, userId) => {
+  const tournament = await findTournament(client, id, true);
+
+  await requireManager(tournament, userId);
+
+  if (tournament.status !== "in_progress") {
+    throw new HttpError(400, msg("tournament.theTournamentIsntInProgress"));
+  }
+
+  return tournament;
+};
+
 // Datum i vreme utakmice. Na terenu koji prima rezervacije utakmica rezerviše
 // jedan sat (vlasnik potvrđuje); promena vremena otkazuje staru rezervaciju.
 const scheduleGame = async ({ id, gameId, userId, body }) => {
   const { game_date: gameDate, game_time: gameTime } = body;
   const clearing = !gameDate && !gameTime;
 
+  if (!clearing) checkDateTime(gameDate, gameTime);
+
   await withTransaction(async (client) => {
-    const tournament = await findTournament(client, id, true);
-
-    await requireManager(tournament, userId);
-
-    if (tournament.status !== "in_progress") {
-      throw new HttpError(400, msg("tournament.theTournamentIsntInProgress"));
-    }
-
+    const tournament = await openForScheduling(client, id, userId);
     const game = await findGame(client, tournament.id, gameId);
-
-    if (!clearing) {
-      const date = parseDate(gameDate);
-
-      if (!date || !/^\d{2}:\d{2}$/.test(gameTime || "")) {
-        throw new HttpError(400, msg("common.invalidDateOrTime"));
-      }
-
-      const [hours, minutes] = gameTime.split(":").map(Number);
-
-      if (hours > 23 || minutes > 59) throw new HttpError(400, msg("common.invalidDateOrTime"));
-
-      if (new Date(date[0], date[1] - 1, date[2], hours, minutes) < new Date()) {
-        throw new HttpError(400, msg("tournament.aMatchCantBeIn"));
-      }
-    }
-
     const venue = await venueOwner(client, tournament);
-    const bookable = Boolean(venue?.accepts_reservations && venue.owner_id);
-    let reservationId = null;
 
-    if (game.reservation_id) {
-      const cancelled = await cancelReservations(client, [game.reservation_id]);
-
-      if (cancelled > 0 && venue?.owner_id && Number(venue.owner_id) !== Number(userId)) {
-        await notifyUsers(
-          client,
-          [venue.owner_id],
-          msg("tournament.theBookingForTheTournament", { tournament: tournament.name }),
-          null,
-          { reservationId: game.reservation_id }
-        );
-      }
-    }
-
-    if (!clearing && bookable) {
-      if (!gameTime.endsWith(":00")) {
-        throw new HttpError(400, msg("tournament.venuesAreBookedByThe"));
-      }
-
-      const booked = await bookSlot(client, {
-        venueId: tournament.venue_id,
-        userId: userId,
-        date: gameDate,
-        start: Number(gameTime.slice(0, 2)),
-        hours: 1,
-        note: `Turnir: ${tournament.name}`.slice(0, 300),
-      });
-
-      if (!booked.reservation) {
-        throw new HttpError(booked.status === 404 ? 400 : booked.status, booked.message);
-      }
-
-      reservationId = booked.reservation.id;
-    }
-
-    await client.query(
-      "UPDATE tournament_games SET game_date = $2, game_time = $3, reservation_id = $4 WHERE id = $1",
-      [game.id, clearing ? null : gameDate, clearing ? null : gameTime, reservationId]
-    );
-
-    const teamIds = [game.team_a_id, game.team_b_id].filter(Boolean);
-
-    if (!clearing && teamIds.length > 0) {
-      const date = new Date(`${gameDate}T00:00`).toLocaleDateString("sr-Latn-RS");
-
-      await notifyUsers(
-        client,
-        await playersOf(client, tournament.id, teamIds),
-        msg("tournament.tournamentYourTeamsMatchIs", { tournament: tournament.name, date, time: gameTime }),
-        null,
-        { tournamentId: tournament.id }
-      );
-    }
+    await setGameTime(client, {
+      tournament,
+      game,
+      userId,
+      venue,
+      gameDate: clearing ? null : gameDate,
+      gameTime,
+    });
   });
 
   return {
     message: clearing ? msg("tournament.theMatchTimeWasRemoved") : msg("tournament.theMatchTimeWasSaved"),
+  };
+};
+
+const ROUND_INTERVALS = [30, 45, 60, 75, 90, 120];
+
+// Celo kolo odjednom, kad se turnir igra više dana: prva utakmica u start_time,
+// svaka sledeća "interval" minuta kasnije. Slobodni prolazi se preskaču.
+// Sve ili ništa: ako jedan termin ne može (npr. teren zauzet), kolo ostaje kako je bilo.
+const scheduleRound = async ({ id, round, userId, body }) => {
+  const { game_date: gameDate, start_time: startTime } = body;
+  const interval = body.interval === undefined ? 60 : Number(body.interval);
+
+  if (!ROUND_INTERVALS.includes(interval)) {
+    throw new HttpError(400, msg("tournament.invalidInterval"));
+  }
+
+  checkDateTime(gameDate, startTime);
+
+  const [hours, minutes] = startTime.split(":").map(Number);
+  let scheduled = 0;
+
+  await withTransaction(async (client) => {
+    const tournament = await openForScheduling(client, id, userId);
+    const games = await client.query(
+      `SELECT * FROM tournament_games
+       WHERE tournament_id = $1 AND round = $2
+       ORDER BY position`,
+      [tournament.id, Number(round) || 0]
+    );
+    // Slobodan prolaz: ima pobednika, a fali jedna ekipa
+    const playable = games.rows.filter(
+      (g) => !(g.winner_team_id !== null && (g.team_a_id === null || g.team_b_id === null))
+    );
+
+    if (playable.length === 0) throw new HttpError(404, msg("tournament.noGamesInThisRound"));
+
+    const last = hours * 60 + minutes + (playable.length - 1) * interval;
+
+    if (last >= 24 * 60) throw new HttpError(400, msg("tournament.roundDoesntFitInDay"));
+
+    const venue = await venueOwner(client, tournament);
+
+    for (const [i, game] of playable.entries()) {
+      const start = hours * 60 + minutes + i * interval;
+      const time = `${String(Math.floor(start / 60)).padStart(2, "0")}:${String(start % 60).padStart(2, "0")}`;
+
+      await setGameTime(client, { tournament, game, userId, venue, gameDate, gameTime: time });
+    }
+
+    scheduled = playable.length;
+  });
+
+  return {
+    message: msg("tournament.roundScheduled", { n: scheduled }),
   };
 };
 
@@ -928,5 +1028,6 @@ module.exports = {
   startTournament,
   saveResult,
   scheduleGame,
+  scheduleRound,
   cancelTournament,
 };

@@ -48,18 +48,62 @@ const nextSlot = ({ round, position }) => ({
   slot: position % 2 === 1 ? "team_a_id" : "team_b_id",
 });
 
-// Kup: sve utakmice do finala. Ako broj ekipa nije stepen dvojke,
-// višak u prvom kolu dobija slobodan prolaz i odmah ide dalje.
-const knockoutBracket = (teamIds) => {
-  const size = 2 ** Math.ceil(Math.log2(teamIds.length));
-  const rounds = Math.log2(size);
+// Broj mesta u kosturu: 6 ekipa -> 8 mesta (dva slobodna prolaza)
+const bracketSize = (teams) => 2 ** Math.ceil(Math.log2(teams));
+
+// Parovi prvog kola po redu ekipa: višak dobija slobodan prolaz (null)
+const defaultPairs = (teamIds) => {
+  const size = bracketSize(teamIds.length);
   const byes = size - teamIds.length;
-  const games = [];
   const queue = [...teamIds];
+  const pairs = [];
 
   for (let position = 1; position <= size / 2; position++) {
-    const a = queue.shift();
-    const b = position <= byes ? null : queue.shift();
+    pairs.push([queue.shift(), position <= byes ? null : queue.shift()]);
+  }
+
+  return pairs;
+};
+
+// Parovi iz žreba koji je održan van aplikacije: [[a, b], [c, null], ...].
+// Mora ih biti tačno pola mesta u kosturu, svaka ekipa tačno jednom i u svakom
+// paru bar jedna ekipa. Vraća parove (ekipa sa slobodnim prolazom prva) ili null.
+const validatePairs = (pairs, teamIds) => {
+  const size = bracketSize(teamIds.length);
+
+  if (!Array.isArray(pairs) || pairs.length !== size / 2) return null;
+
+  const allowed = new Set(teamIds.map(Number));
+  const seen = new Set();
+  const normalized = [];
+
+  for (const pair of pairs) {
+    if (!Array.isArray(pair) || pair.length !== 2) return null;
+
+    const ids = pair.filter((x) => x !== null && x !== undefined && x !== "").map(Number);
+
+    if (ids.length === 0) return null;
+
+    for (const id of ids) {
+      if (!allowed.has(id) || seen.has(id)) return null;
+      seen.add(id);
+    }
+
+    normalized.push([ids[0], ids[1] ?? null]);
+  }
+
+  return seen.size === allowed.size ? normalized : null;
+};
+
+// Kup: sve utakmice do finala. Ekipa bez protivnika (slobodan prolaz) odmah ide dalje.
+// Pobednici utakmica 1 i 2 se sreću u sledećem kolu, 3 i 4 takođe, itd.
+const knockoutFromPairs = (pairs) => {
+  const size = pairs.length * 2;
+  const rounds = Math.log2(size);
+  const games = [];
+
+  for (let position = 1; position <= size / 2; position++) {
+    const [a, b] = pairs[position - 1];
 
     games.push({
       round: 1,
@@ -87,6 +131,8 @@ const knockoutBracket = (teamIds) => {
 
   return games;
 };
+
+const knockoutBracket = (teamIds) => knockoutFromPairs(defaultPairs(teamIds));
 
 // Proverava rezultat; vraća { error } ili { winner: "a" | "b" | null, penalties }.
 // null kao pobednik znači nerešeno (samo fudbal u ligi).
@@ -217,6 +263,9 @@ module.exports = {
   roundRobin,
   nextSlot,
   knockoutBracket,
+  knockoutFromPairs,
+  validatePairs,
+  bracketSize,
   judgeResult,
   computeStandings,
 };
