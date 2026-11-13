@@ -16,6 +16,7 @@ import {
   tournamentRequest,
 } from "../utils/tournaments";
 import { useTranslation } from "react-i18next";
+import KnockoutBracket from "../components/KnockoutBracket";
 import i18n, { sportLabel } from "../i18n";
 
 const card = "bg-white rounded-2xl border border-gray-100 shadow-sm p-6";
@@ -142,7 +143,7 @@ function GameRow({ game, tournament, canEdit, onChange }) {
   const isWinner = (id) => id !== null && Number(game.winner_team_id) === Number(id);
 
   return (
-    <div className="border rounded-xl p-3 space-y-2">
+    <div id={`game-${game.id}`} className="border rounded-xl p-3 space-y-2 scroll-mt-24">
       <div className="flex items-center gap-2">
         <span className={`flex-1 min-w-0 text-right break-words ${isWinner(game.team_a_id) ? "font-bold" : "font-medium"}`}>
           {nameOf(game.team_a_name)}
@@ -628,6 +629,10 @@ function TournamentDetails() {
         )}
 
         {standings.length > 0 && <Standings rows={standings} sport={t.sport} />}
+
+        {t.format === "knockout" && rounds.length > 0 && (
+          <KnockoutBracket rounds={rounds} winnerName={t.winner_name} />
+        )}
 
         {/* Raspored */}
         {rounds.length > 0 && (

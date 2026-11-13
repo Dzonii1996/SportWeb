@@ -566,7 +566,10 @@
     "toRegisterATeam": "to register a team.",
     "youBecomeTheCaptainAnd": "You become the captain and get a link for inviting players. If you have a link from a captain, open that instead.",
     "scheduleAndResults": "Schedule and results",
-    "teams": "Teams"
+    "teams": "Teams",
+    "bracket": "Cup bracket",
+    "champion": "Champion",
+    "bye": "bye"
   },
   "tournamentForm": {
     "onlyTheOrganizerCanEdit": "Only the organizer can edit the tournament.",

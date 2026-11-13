@@ -571,7 +571,10 @@
     "toRegisterATeam": "da prijaviš ekipu.",
     "youBecomeTheCaptainAnd": "Postaješ kapiten i dobijaš link kojim pozivaš igrače. Ako imaš link od kapitena, otvori njega.",
     "scheduleAndResults": "Raspored i rezultati",
-    "teams": "Ekipe"
+    "teams": "Ekipe",
+    "bracket": "Kostur kupa",
+    "champion": "Šampion",
+    "bye": "slobodan prolaz"
   },
   "tournamentForm": {
     "onlyTheOrganizerCanEdit": "Samo organizator može da menja turnir.",
