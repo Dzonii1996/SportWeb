@@ -21,6 +21,10 @@ describe("registracija i prijava", () => {
 
     expect(reg.status).toBe(201);
 
+    // Registracija odmah prijavljuje korisnika
+    expect(reg.body.token).toBeTruthy();
+    expect(reg.body.user.email).toBe("marko@test.rs");
+
     const login = await api.post("/api/auth/login").send({
       email: "marko@test.rs",
       password: "tajna123",

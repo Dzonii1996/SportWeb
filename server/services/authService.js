@@ -72,9 +72,12 @@ const register = async ({ body }) => {
 
 
 
+  // Odmah prijavljen: frontend posle registracije ne traži ponovni unos lozinke
   return {
 
     message: msg("auth.userRegisteredSuccessfully"),
+
+    token: signToken(newUser.rows[0]),
 
     user: newUser.rows[0]
 

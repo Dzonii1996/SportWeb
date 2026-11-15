@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { User, Mail, Lock, UserPlus } from "lucide-react";
 import { API_URL } from "../config";
 import { useTranslation } from "react-i18next";
@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 function Register() {
   const { t } = useTranslation();
 
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -56,7 +57,19 @@ function Register() {
       const data = await response.json();
 
 
-      alert(data.message);
+      if (!data.success) {
+        alert(data.message);
+        return;
+      }
+
+      // Server posle registracije vraća i token, pa je korisnik odmah prijavljen
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      // "storage" se ne okida u istom tabu, pa javljamo NavBar-u ručno
+      window.dispatchEvent(new Event("storage"));
+
+      navigate("/");
 
 
     } catch (error) {
