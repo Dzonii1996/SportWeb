@@ -21,6 +21,14 @@ import PhotoGallery from "../components/PhotoGallery";
 import { DaySchedule, RoundScheduler } from "../components/TournamentSchedule";
 import DrawPairs, { drawStatus, emptyPairs, pairsForServer } from "../components/DrawPairs";
 import i18n, { sportLabel } from "../i18n";
+import { sportColors } from "../utils/sports";
+import TeamRoster, { memberLabel } from "../components/TeamRoster";
+import TournamentLogo, { LogoBadge } from "../components/TournamentLogo";
+
+// Ceo sastav: igrači sa nalogom i upisani igrači bez naloga
+const rosterSize = (team) => team.players.length + (team.members_count ?? team.members?.length ?? 0);
+
+const ROSTER_OPEN = ["registration", "in_progress"];
 
 const card = "bg-white rounded-2xl border border-gray-100 shadow-sm p-6";
 const primary = "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl font-semibold";
@@ -349,7 +357,14 @@ function MyTeam({ team, tournament, me, onChange }) {
         })}
       </ul>
 
-      <p className="text-sm text-gray-600">{t("tournamentDetails.players", { length: team.players.length, max_roster: tournament.max_roster })}</p>
+      <TeamRoster
+        tournament={tournament}
+        team={team}
+        canEdit={isCaptain && ROSTER_OPEN.includes(tournament.status)}
+        onChange={onChange}
+      />
+
+      <p className="text-sm text-gray-600">{t("tournamentDetails.players", { length: rosterSize(team), max_roster: tournament.max_roster })}</p>
 
       {isCaptain && open && (
         <div className="flex flex-wrap gap-2">
@@ -405,6 +420,8 @@ function Organizer({ tournament, teams, onChange }) {
     <div className={`${card} space-y-4`}>
       <h2 className="text-xl font-bold">{t("tournamentDetails.organizer")}</h2>
 
+      <TournamentLogo tournament={tournament} onChange={onChange} />
+
       {pending.length > 0 && (
         <div className="space-y-2">
           <p className="font-medium">{t("tournamentDetails.pendingRegistrations")}</p>
@@ -414,7 +431,7 @@ function Organizer({ tournament, teams, onChange }) {
               <span className="font-semibold">
                 {team.name}{" "}
                 <span className="text-sm font-normal text-gray-500">
-                  {t("tournamentDetails.players2", { length: team.players.length })}
+                  {t("tournamentDetails.players2", { length: rosterSize(team) })}
                 </span>
               </span>
 
@@ -576,11 +593,15 @@ function TournamentDetails() {
         </Link>
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="p-6 text-white bg-gradient-to-br from-green-600 to-emerald-500">
+          <div className={`p-6 text-white bg-gradient-to-br ${sportColors(t.sport).header}`}>
             <div className="flex items-center gap-3">
-              <span className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-xl bg-white/20 flex items-center justify-center text-2xl">
-                {sportIcon(t.sport)}
-              </span>
+              {t.logo_path ? (
+                <LogoBadge path={t.logo_path} alt={t.name} className="w-14 h-14 sm:w-16 sm:h-16" />
+              ) : (
+                <span className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-xl bg-white/20 flex items-center justify-center text-2xl">
+                  {sportIcon(t.sport)}
+                </span>
+              )}
 
               <div className="min-w-0">
                 <h1 className="text-2xl sm:text-3xl font-bold leading-tight break-words">{t.name}</h1>
@@ -677,7 +698,7 @@ function TournamentDetails() {
         {standings.length > 0 && <Standings rows={standings} sport={t.sport} />}
 
         {t.format === "knockout" && rounds.length > 0 && (
-          <KnockoutBracket rounds={rounds} winnerName={t.winner_name} />
+          <KnockoutBracket rounds={rounds} winnerName={t.winner_name} logo={t.logo_path} title={t.name} />
         )}
 
         <DaySchedule tournament={t} games={games} totalRounds={totalRounds} />
@@ -719,11 +740,33 @@ function TournamentDetails() {
 
             <div className="grid sm:grid-cols-2 gap-3">
               {approved.map((team) => (
-                <div key={team.id} className="border rounded-xl p-3">
-                  <p className="font-semibold">{team.name}</p>
+                <div key={team.id} className={`border rounded-xl p-3 space-y-2 ${canManage ? "sm:col-span-2" : ""}`}>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <p className="font-semibold">{team.name}</p>
+                    <span className="text-xs text-gray-500 whitespace-nowrap">
+                      {tr("tournamentDetails.players2", { length: rosterSize(team) })}
+                    </span>
+                  </div>
                   <p className="text-sm text-gray-600">
-                    {team.players.map((p) => p.name).join(", ")}
+                    {[
+                      ...team.players.map((p) => p.name),
+                      ...(canManage ? [] : (team.members ?? []).map(memberLabel)),
+                    ].join(", ")}
+                    {!canManage && !team.members?.length && team.members_count > 0 && (
+                      <span className="text-gray-500">
+                        {team.players.length > 0 ? " · " : ""}
+                        {tr("teamRoster.moreWithoutAccount", { count: team.members_count })}
+                      </span>
+                    )}
                   </p>
+                  {canManage && (
+                    <TeamRoster
+                      tournament={t}
+                      team={team}
+                      canEdit={ROSTER_OPEN.includes(t.status)}
+                      onChange={load}
+                    />
+                  )}
                 </div>
               ))}
             </div>

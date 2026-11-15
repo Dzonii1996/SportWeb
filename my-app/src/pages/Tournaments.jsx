@@ -3,11 +3,12 @@ import { Link } from "react-router-dom";
 import { Calendar, MapPin, Plus, Users, Wallet } from "lucide-react";
 import { API_URL } from "../config";
 import { photoUrl } from "../components/PhotoGallery";
+import { LogoBadge } from "../components/TournamentLogo";
 import LoadMore from "../components/LoadMore";
 import { formatRSD } from "../utils/price";
 import { useAdminStatus } from "../utils/venues";
 import { FORMATS, STATUS, formatDate, sportIcon } from "../utils/tournaments";
-import { sportFilters } from "../utils/sports";
+import { sportFilters, sportColors } from "../utils/sports";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n";
 
@@ -29,6 +30,7 @@ function TournamentCard({ tournament: t }) {
   const { t: tr } = useTranslation();
 
   const status = STATUS[t.status];
+  const colors = sportColors(t.sport);
 
   return (
     <Link
@@ -36,7 +38,7 @@ function TournamentCard({ tournament: t }) {
       className="flex flex-col rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-lg transition overflow-hidden"
     >
       <div
-        className="p-5 text-white bg-gradient-to-br from-green-600 to-emerald-500 bg-cover bg-center"
+        className={`p-5 text-white bg-gradient-to-br ${colors.header} bg-cover bg-center`}
         style={
           t.cover_photo
             ? { backgroundImage: `linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.6)), url(${photoUrl(t.cover_photo)})` }
@@ -44,9 +46,13 @@ function TournamentCard({ tournament: t }) {
         }
       >
         <div className="flex items-center gap-3">
-          <span className="w-12 h-12 shrink-0 rounded-xl bg-white/20 flex items-center justify-center text-2xl">
-            {sportIcon(t.sport)}
-          </span>
+          {t.logo_path ? (
+            <LogoBadge path={t.logo_path} alt={t.name} className="w-12 h-12" />
+          ) : (
+            <span className="w-12 h-12 shrink-0 rounded-xl bg-white/20 flex items-center justify-center text-2xl">
+              {sportIcon(t.sport)}
+            </span>
+          )}
 
           <div className="min-w-0">
             <h2 className="text-xl font-bold leading-tight break-words">{t.name}</h2>
@@ -63,23 +69,23 @@ function TournamentCard({ tournament: t }) {
         {t.winner_name && <p className="font-semibold">🏆 {t.winner_name}</p>}
 
         <div className="flex items-center gap-3">
-          <Calendar className="text-green-600 shrink-0" size={18} />
+          <Calendar className={`${colors.icon} shrink-0`} size={18} />
           <span className="capitalize">{formatDate(t.start_date)}</span>
         </div>
 
         <div className="flex items-center gap-3">
-          <MapPin className="text-green-600 shrink-0" size={18} />
+          <MapPin className={`${colors.icon} shrink-0`} size={18} />
           <span className="truncate">{t.location}</span>
         </div>
 
         <div className="flex items-center gap-3">
-          <Users className="text-green-600 shrink-0" size={18} />
+          <Users className={`${colors.icon} shrink-0`} size={18} />
           <span>{tr("tournaments.teams", { teams_count: t.teams_count, max_teams: t.max_teams })}</span>
         </div>
 
         {t.entry_fee !== null && (
           <div className="flex items-center gap-3">
-            <Wallet className="text-green-600 shrink-0" size={18} />
+            <Wallet className={`${colors.icon} shrink-0`} size={18} />
             <span>{tr("tournaments.entryFee", { amount: formatRSD(t.entry_fee) })}</span>
           </div>
         )}

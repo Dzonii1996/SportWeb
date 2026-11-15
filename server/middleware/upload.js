@@ -1,6 +1,13 @@
 const { msg } = require("../utils/i18n");
 const fs = require("fs");
+const path = require("path");
 const multer = require("multer");
+
+// Pun put, da ne zavisi od foldera iz kog je server pokrenut.
+// Na hostingu ovde je montiran trajni disk (volume).
+const UPLOAD_DIR = path.join(__dirname, "..", "uploads");
+
+fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 // Dozvoljeni tipovi slika i ekstenzija pod kojom se čuvaju.
 // Ekstenziju određujemo mi, da server nikad ne vrati npr. .html fajl.
@@ -14,7 +21,7 @@ const MAX_SIZE_MB = 5;
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/");
+    cb(null, UPLOAD_DIR);
   },
 
   filename: (req, file, cb) => {

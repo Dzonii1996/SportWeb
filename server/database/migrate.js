@@ -1,19 +1,13 @@
 const path = require("path");
 const { runner } = require("node-pg-migrate");
-require("dotenv").config({ quiet: true });
+const { connectionConfig } = require("./config");
 
 // Migracije su u server/migrations. Koje su primenjene piše u tabeli pgmigrations.
 // Nova izmena baze: npm run migrate:create -- naziv-izmene, pa popuni napravljeni fajl.
 // Pokreću se same pri startu servera; ručno: npm run migrate i npm run migrate:down.
 const migrate = (direction, { database = process.env.DB_NAME, count, log = () => {} } = {}) =>
   runner({
-    databaseUrl: {
-      user: process.env.DB_USER,
-      host: process.env.DB_HOST,
-      database,
-      password: process.env.DB_PASSWORD,
-      port: process.env.DB_PORT,
-    },
+    databaseUrl: connectionConfig(database),
     dir: path.join(__dirname, "..", "migrations"),
     migrationsTable: "pgmigrations",
     direction,

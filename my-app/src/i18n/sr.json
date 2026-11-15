@@ -324,6 +324,9 @@
     "scheduleAGame": "Zakaži termin.",
     "play": "Igraj {{play}}.",
     "noMoreGroupChatsJust": "Više nema dopisivanja po grupama da bi se skupilo deset ljudi. Napravi termin, podeli link i neka se ekipa sama prijavi.",
+    "basketballIntro": "Više nema dopisivanja po grupama da bi se skupilo šest ljudi za basket. Napravi termin, podeli link i neka se ekipa sama prijavi.",
+    "tennisIntro": "Više nema dopisivanja po grupama da bi se našao partner za tenis. Napravi termin, podeli link i neka se protivnik sam prijavi.",
+    "hikingIntro": "Više nema dopisivanja po grupama da bi se dogovorila tura. Napravi termin, podeli link i neka se društvo samo prijavi.",
     "createAnAccount": "Napravi nalog",
     "nextGame": "Sledeći termin · {{emoji}} {{sport}}",
     "noGamesScheduledAtThe": "Trenutno nema zakazanih termina.",
@@ -791,5 +794,24 @@
     "next": "Sledeća",
     "fromTournament": "Turnir: {{name}}",
     "fromMatch": "Termin: {{place}}"
+  },
+  "teamRoster": {
+    "number": "Br.",
+    "jerseyNumber": "Broj na dresu",
+    "nameAndSurname": "Ime i prezime",
+    "grade": "Razred",
+    "add": "Dodaj",
+    "addPlayerWithoutAccount": "Dodaj igrača bez naloga (npr. učenika)",
+    "rosterFull": "Sastav je popunjen.",
+    "moreWithoutAccount_one": "{{count}} igrač bez naloga",
+    "moreWithoutAccount_few": "{{count}} igrača bez naloga",
+    "moreWithoutAccount_other": "{{count}} igrača bez naloga"
+  },
+  "tournamentLogo": {
+    "logo": "Logo turnira",
+    "hint": "Npr. logo škole domaćina. Vidi se u zaglavlju i iznad kostura.",
+    "add": "Dodaj logo",
+    "change": "Promeni",
+    "removeConfirm": "Ukloniti logo turnira?"
   }
 }

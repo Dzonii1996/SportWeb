@@ -300,7 +300,13 @@ const getTournament = async ({ id, userId }) => {
          json_agg(json_build_object('id', u.id, 'name', u.name, 'avatar', u.avatar) ORDER BY p.created_at)
            FILTER (WHERE u.id IS NOT NULL),
          '[]'
-       ) AS players
+       ) AS players,
+       COALESCE(
+         (SELECT json_agg(json_build_object('id', m.id, 'name', m.name, 'jersey_number', m.jersey_number, 'grade', m.grade)
+                          ORDER BY m.jersey_number NULLS LAST, m.created_at, m.id)
+          FROM tournament_team_members m WHERE m.team_id = t.id),
+         '[]'
+       ) AS members
      FROM tournament_teams t
      LEFT JOIN tournament_team_players p ON p.team_id = t.id
      LEFT JOIN users u ON u.id = p.user_id
@@ -317,11 +323,18 @@ const getTournament = async ({ id, userId }) => {
 
   const visible = teams.rows
     .filter((t) => t.status === "approved" || manager || isMine(t))
-    .map(({ invite_token: token, ...team }) =>
-      manager || Number(team.captain_id) === Number(userId)
-        ? { ...team, invite_token: token }
-        : team
-    );
+    .map(({ invite_token: token, members, ...team }) => {
+      // Imena upisanih (često maloletnih) igrača vide samo organizator i ekipa
+      const shown = {
+        ...team,
+        members: manager || isMine(team) ? members : [],
+        members_count: members.length,
+      };
+
+      return manager || Number(team.captain_id) === Number(userId)
+        ? { ...shown, invite_token: token }
+        : shown;
+    });
 
   const games = await getGames(pool, tournament.id);
   const approved = teams.rows.filter((t) => t.status === "approved");
@@ -396,7 +409,8 @@ const registerTeam = async ({ id, userId, body }) => {
 const findTeamByToken = async (db, token, lock = false) => {
   const result = await db.query(
     `SELECT e.*, t.name AS tournament_name, t.sport, t.status AS tournament_status, t.max_roster,
-            (SELECT COUNT(*) FROM tournament_team_players p WHERE p.team_id = e.id)::int AS players_count
+            ((SELECT COUNT(*) FROM tournament_team_players p WHERE p.team_id = e.id)
+             + (SELECT COUNT(*) FROM tournament_team_members m WHERE m.team_id = e.id))::int AS players_count
      FROM tournament_teams e
      JOIN tournaments t ON t.id = e.tournament_id
      WHERE e.invite_token = $1 AND e.status <> 'rejected'
@@ -473,6 +487,133 @@ const removePlayer = async ({ id, teamId, playerId, userId }) => {
   };
 };
 
+// Igrači bez naloga (npr. učenici): upisuje ih kapiten ili organizator,
+// dok traju prijave i dok se turnir igra
+const parseMember = (body) => {
+  const name = typeof body.name === "string" ? body.name.trim().replace(/\s+/g, " ") : "";
+
+  if (name.length < 2 || name.length > 60) {
+    throw new HttpError(400, msg("tournament.memberNameLength"));
+  }
+
+  const rawNumber = body.jersey_number;
+  let jerseyNumber = null;
+
+  if (rawNumber !== undefined && rawNumber !== null && rawNumber !== "") {
+    jerseyNumber = Number(rawNumber);
+
+    if (!Number.isInteger(jerseyNumber) || jerseyNumber < 0 || jerseyNumber > 99) {
+      throw new HttpError(400, msg("tournament.jerseyNumberRange"));
+    }
+  }
+
+  const grade = typeof body.grade === "string" ? body.grade.trim() : "";
+
+  if (grade.length > 20) throw new HttpError(400, msg("tournament.gradeTooLong"));
+
+  return { name, jerseyNumber, grade: grade || null };
+};
+
+const requireRosterEditor = async (client, id, teamId, userId) => {
+  const tournament = await findTournament(client, id, true);
+
+  if (!["registration", "in_progress"].includes(tournament.status)) {
+    throw new HttpError(400, msg("tournament.rosterLocked"));
+  }
+
+  const team = await findTeam(client, tournament.id, teamId);
+
+  if (team.status === "rejected") throw new HttpError(404, msg("tournament.thisTeamDoesntExist"));
+
+  if (
+    Number(team.captain_id) !== Number(userId) &&
+    !(await canManage(tournament, userId))
+  ) {
+    throw new HttpError(403, msg("common.youDontHavePermission"));
+  }
+
+  return { tournament, team };
+};
+
+const findMember = async (client, teamId, memberId) => {
+  const result = await client.query(
+    "SELECT * FROM tournament_team_members WHERE id = $1 AND team_id = $2",
+    [Number(memberId) || 0, teamId]
+  );
+
+  if (!result.rows[0]) throw new HttpError(404, msg("tournament.memberNotFound"));
+
+  return result.rows[0];
+};
+
+const addMember = async ({ id, teamId, userId, body }) => {
+  const member = parseMember(body);
+
+  const added = await withTransaction(async (client) => {
+    const { tournament, team } = await requireRosterEditor(client, id, teamId, userId);
+
+    const count = await client.query(
+      `SELECT (SELECT COUNT(*) FROM tournament_team_players WHERE team_id = $1)
+             + (SELECT COUNT(*) FROM tournament_team_members WHERE team_id = $1) AS count`,
+      [team.id]
+    );
+
+    if (Number(count.rows[0].count) >= tournament.max_roster) {
+      throw new HttpError(400, msg("tournament.theTeamIsFull"));
+    }
+
+    const inserted = await client.query(
+      `INSERT INTO tournament_team_members(team_id, name, jersey_number, grade)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, name, jersey_number, grade`,
+      [team.id, member.name, member.jerseyNumber, member.grade]
+    );
+
+    return inserted.rows[0];
+  });
+
+  return {
+    message: msg("tournament.memberAdded", { name: added.name }),
+    member: added,
+  };
+};
+
+const updateMember = async ({ id, teamId, memberId, userId, body }) => {
+  const member = parseMember(body);
+
+  const updated = await withTransaction(async (client) => {
+    const { team } = await requireRosterEditor(client, id, teamId, userId);
+    const found = await findMember(client, team.id, memberId);
+
+    const result = await client.query(
+      `UPDATE tournament_team_members SET name = $2, jersey_number = $3, grade = $4
+       WHERE id = $1
+       RETURNING id, name, jersey_number, grade`,
+      [found.id, member.name, member.jerseyNumber, member.grade]
+    );
+
+    return result.rows[0];
+  });
+
+  return {
+    message: msg("tournament.memberUpdated"),
+    member: updated,
+  };
+};
+
+const removeMember = async ({ id, teamId, memberId, userId }) => {
+  await withTransaction(async (client) => {
+    const { team } = await requireRosterEditor(client, id, teamId, userId);
+    const member = await findMember(client, team.id, memberId);
+
+    await client.query("DELETE FROM tournament_team_members WHERE id = $1", [member.id]);
+  });
+
+  return {
+    message: msg("tournament.thePlayerWasRemovedFrom"),
+  };
+};
+
 // Kapiten ili organizator odjavljuje ekipu (dok traju prijave)
 const withdrawTeam = async ({ id, teamId, userId }) => {
   const tournament = await findTournament(pool, id);
@@ -523,6 +664,7 @@ const approveTeam = async ({ id, teamId, userId }) => {
 const rejectTeamRow = async (client, tournament, team) => {
   await client.query("UPDATE tournament_teams SET status = 'rejected' WHERE id = $1", [team.id]);
   await client.query("DELETE FROM tournament_team_players WHERE team_id = $1", [team.id]);
+  await client.query("DELETE FROM tournament_team_members WHERE team_id = $1", [team.id]);
 
   await notifyUsers(
     client,
@@ -1021,6 +1163,9 @@ module.exports = {
   getInvite,
   joinTeam,
   removePlayer,
+  addMember,
+  updateMember,
+  removeMember,
   withdrawTeam,
   approveTeam,
   rejectTeam,

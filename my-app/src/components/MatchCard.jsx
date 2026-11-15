@@ -14,7 +14,7 @@ import { Link } from "react-router-dom";
 import { authHeader } from "../utils/auth";
 import { API_URL } from "../config";
 import { formatDistance } from "../utils/geo";
-import { sportEmoji } from "../utils/sports";
+import { sportEmoji, sportColors } from "../utils/sports";
 import { difficultyLabel } from "../utils/hike";
 import { formatRSD, pricePerPlayer } from "../utils/price";
 import { matchStart, inConfirmWindow } from "../utils/matchDate";
@@ -44,6 +44,7 @@ function MatchCard({
   hike = null,
 }) {
   const { t } = useTranslation();
+  const colors = sportColors(sport);
 
   const [showPlayers, setShowPlayers] = useState(false);
   const [playersList, setPlayersList] = useState([]);
@@ -235,7 +236,7 @@ function MatchCard({
     return (
       <button
         onClick={joinMatch}
-        className={`${base} bg-green-600 hover:bg-green-700 text-white shadow-sm`}
+        className={`${base} ${colors.button} text-white shadow-sm`}
       >
         {t("common.join")}
       </button>
@@ -258,7 +259,7 @@ function MatchCard({
             ? "bg-gray-400"
             : isFull
             ? "bg-gradient-to-br from-gray-500 to-gray-600"
-            : "bg-gradient-to-br from-green-600 to-emerald-500"
+            : `bg-gradient-to-br ${colors.header}`
         }`}
       >
         <div className="flex items-start justify-between gap-3">
@@ -294,7 +295,7 @@ function MatchCard({
                     {t("common.full")}
                   </span>
                 ) : (
-                  <span className="text-xs font-bold bg-white text-green-700 px-2 py-0.5 rounded-full">
+                  <span className={`text-xs font-bold bg-white ${colors.text} px-2 py-0.5 rounded-full`}>
                     {t("matchCard.spots", { count: freeSpots })}
                   </span>
                 )}
@@ -337,7 +338,7 @@ function MatchCard({
               className="w-7 h-7 rounded-full object-cover border-2 border-white/70"
             />
           ) : (
-            <span className="w-7 h-7 rounded-full bg-white text-green-700 flex items-center justify-center font-bold text-xs">
+            <span className={`w-7 h-7 rounded-full bg-white ${colors.text} flex items-center justify-center font-bold text-xs`}>
               {creatorName?.charAt(0).toUpperCase()}
             </span>
           )}
@@ -360,7 +361,7 @@ function MatchCard({
 
         <div className="space-y-2.5 text-gray-700">
           <div className="flex items-center gap-3">
-            <MapPin className="text-green-600 shrink-0" size={18} />
+            <MapPin className={`${colors.icon} shrink-0`} size={18} />
             <span className="truncate">{location}</span>
 
             {distance !== null && (
@@ -372,7 +373,7 @@ function MatchCard({
 
           {hike && (
             <div className="flex items-center gap-3">
-              <Mountain className="text-green-600 shrink-0" size={18} />
+              <Mountain className={`${colors.icon} shrink-0`} size={18} />
               <span className="truncate">{hike.route}</span>
               <span className="ml-auto text-xs bg-green-50 text-green-700 font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
                 {difficultyLabel(hike.difficulty)}
@@ -381,7 +382,7 @@ function MatchCard({
           )}
 
           <div className="flex items-center gap-3">
-            <Calendar className="text-green-600 shrink-0" size={18} />
+            <Calendar className={`${colors.icon} shrink-0`} size={18} />
             <span>
               <span className="capitalize">{formattedDate}</span>
               {" • "}
@@ -391,7 +392,7 @@ function MatchCard({
 
           {fieldPrice !== null && fieldPrice !== undefined && (
             <div className="flex items-center gap-3">
-              <Wallet className="text-green-600 shrink-0" size={18} />
+              <Wallet className={`${colors.icon} shrink-0`} size={18} />
               <span>
                 <span className="font-semibold">
                   {formatRSD(pricePerPlayer(fieldPrice, players))}

@@ -14,7 +14,7 @@ import UrgentCall, { canCallUrgently } from "../components/UrgentCall";
 import { hasPrice } from "../utils/price";
 import { LocationView } from "../components/LocationMap";
 import { hasCoords } from "../utils/geo";
-import { sportEmoji } from "../utils/sports";
+import { sportEmoji, sportColors } from "../utils/sports";
 import HikeInfo from "../components/HikeInfo";
 import { API_URL } from "../config";
 import { authHeader } from "../utils/auth";
@@ -183,6 +183,7 @@ function MatchDetails() {
   const joined = players.some((p) => p.id === user?.id);
   const isFull = players.length >= Number(match.max_players);
   const isPast = isPastMatch(match.match_date, match.match_time);
+  const colors = sportColors(match.sport);
   const confirmWindow = inConfirmWindow(match.match_date, match.match_time);
   const me = players.find((p) => p.id === user?.id);
   const confirmedCount = players.filter((p) => p.confirmed).length;
@@ -332,7 +333,7 @@ function MatchDetails() {
                     ? "bg-gray-400"
                     : isFull
                     ? "bg-gradient-to-br from-gray-500 to-gray-600"
-                    : "bg-gradient-to-br from-green-600 to-emerald-500"
+                    : `bg-gradient-to-br ${colors.header}`
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -368,7 +369,7 @@ function MatchDetails() {
                             {t("common.full")}
                           </span>
                         ) : (
-                          <span className="text-xs font-bold bg-white text-green-700 px-2 py-0.5 rounded-full">
+                          <span className={`text-xs font-bold bg-white ${colors.text} px-2 py-0.5 rounded-full`}>
                             {freeSpots} {freeSpots === 1 ? t("matchDetails.freeSpot") : t("matchDetails.freeSpots")}
                           </span>
                         )}
@@ -424,7 +425,7 @@ function MatchDetails() {
 
               <div className="p-6 space-y-4">
                 <div className="flex items-center gap-3 text-gray-700">
-                  <MapPin className="text-green-600 shrink-0" size={18} />
+                  <MapPin className={`${colors.icon} shrink-0`} size={18} />
                   <span>{match.location}</span>
 
                   {match.venue_id && (
@@ -455,7 +456,7 @@ function MatchDetails() {
                 )}
 
                 <div className="flex items-center gap-3 text-gray-700">
-                  <Calendar className="text-green-600 shrink-0" size={18} />
+                  <Calendar className={`${colors.icon} shrink-0`} size={18} />
                   <span>
                     <span className="capitalize">{formattedDate}</span>
                     {" • "}
@@ -501,7 +502,7 @@ function MatchDetails() {
                       ? "border-2 border-red-200 text-red-600 hover:bg-green-600 hover:border-green-600 hover:text-white"
                       : isFull
                       ? "bg-orange-500 hover:bg-orange-600 text-white shadow-sm"
-                      : "bg-green-600 hover:bg-green-700 text-white shadow-sm"
+                      : `${colors.button} text-white shadow-sm`
                   }`}
                 >
                   {isPast

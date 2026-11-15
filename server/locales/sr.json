@@ -279,7 +279,16 @@
     "invalidInterval": "Razmak između utakmica nije ispravan.",
     "noGamesInThisRound": "U ovom kolu nema utakmica za zakazivanje.",
     "roundDoesntFitInDay": "Sve utakmice kola ne staju u taj dan. Izaberi raniji početak ili kraći razmak.",
-    "roundScheduled": "Zakazane su utakmice kola: {n}."
+    "roundScheduled": "Zakazane su utakmice kola: {n}.",
+    "memberNameLength": "Ime igrača mora imati između 2 i 60 znakova.",
+    "jerseyNumberRange": "Broj na dresu mora biti između 0 i 99.",
+    "gradeTooLong": "Razred može imati najviše 20 znakova.",
+    "rosterLocked": "Sastav ekipe više ne može da se menja.",
+    "memberNotFound": "Taj igrač nije u ekipi.",
+    "memberAdded": "{name} je dodat u ekipu.",
+    "memberUpdated": "Podaci o igraču su sačuvani.",
+    "logoSaved": "Logo turnira je sačuvan.",
+    "logoRemoved": "Logo turnira je uklonjen."
   },
   "urgent": {
     "alreadySent": "Hitni poziv za ovaj termin je već poslat.",

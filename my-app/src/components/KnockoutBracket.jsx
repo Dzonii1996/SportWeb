@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Trophy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { isBye, roundLabel } from "../utils/tournaments";
+import { LogoBadge } from "./TournamentLogo";
 
 // Kostur kupa kao na velikim takmičenjima: polovina ekipa ide sleva, polovina zdesna,
 // a finale sa peharom je u sredini. Na užem ekranu se kostur pomera vodoravno.
@@ -83,7 +84,7 @@ function GameCard({ game, final, style }) {
   );
 }
 
-function KnockoutBracket({ rounds, winnerName }) {
+function KnockoutBracket({ rounds, winnerName, logo = null, title = null }) {
   const { t } = useTranslation();
   const scroller = useRef(null);
   const total = rounds.length;
@@ -171,13 +172,20 @@ function KnockoutBracket({ rounds, winnerName }) {
           backgroundSize: "100% 100%, 140px 140px, 190px 190px, 230px 230px, 100% 100%",
         }}
       >
-        <h2 className="text-2xl font-bold">{t("tournamentDetails.bracket")}</h2>
+        <div className="flex items-center gap-4">
+          {logo && <LogoBadge path={logo} alt={title ?? ""} className="w-16 h-16 sm:w-20 sm:h-20" />}
 
-        {winnerName && (
-          <p className="mt-1 text-amber-200 font-semibold">
-            {t("tournamentDetails.champion")}: {winnerName}
-          </p>
-        )}
+          <div className="min-w-0">
+            <h2 className="text-2xl font-bold">{t("tournamentDetails.bracket")}</h2>
+            {logo && title && <p className="text-sky-100/80 font-medium break-words">{title}</p>}
+
+            {winnerName && (
+              <p className="mt-1 text-amber-200 font-semibold">
+                {t("tournamentDetails.champion")}: {winnerName}
+              </p>
+            )}
+          </div>
+        </div>
 
         <div ref={scroller} className="mt-4 -mx-5 sm:-mx-6 px-5 sm:px-6 overflow-x-auto pb-2">
           <div className="relative mx-auto" style={{ width, height: LABEL_H + height + 8 }}>

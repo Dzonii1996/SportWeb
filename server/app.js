@@ -1,6 +1,12 @@
+require("dotenv").config();
+const { TIMEZONE } = require("./database/config");
+
+// Datumi u JS-u (tekst notifikacija, provere vremena) po istoj zoni kao baza;
+// hosting je obično u UTC-u
+process.env.TZ = process.env.TZ || TIMEZONE;
+
 const express = require("express");
 const path = require("path");
-require("dotenv").config();
 
 const app = express();
 
@@ -63,40 +69,60 @@ app.get("/", (req, res) => {
   });
 });
 
+const MIN_SECRET_LENGTH = 32;
+
+// JWT_SECRET mora da postoji; u produkciji mora i da bude dovoljno dug
+const checkSecret = () => {
+  const secret = process.env.JWT_SECRET || "";
+
+  if (!secret) throw new Error("JWT_SECRET nije podešen.");
+
+  if (secret.length < MIN_SECRET_LENGTH) {
+    const message = `JWT_SECRET je kratak (${secret.length} znakova, treba bar ${MIN_SECRET_LENGTH}).`;
+
+    if (process.env.NODE_ENV === "production") throw new Error(message);
+
+    console.warn(`Upozorenje: ${message}`);
+  }
+};
+
+// Server prima zahteve tek kad su baza i migracije spremne. Ako nešto od toga
+// ne uspe, proces se gasi sa greškom, pa hosting prijavi neuspeli deploy
+// i pokuša ponovo, umesto da server radi bez baze.
+const start = async () => {
+  checkSecret();
+
+  const now = await pool.query("SELECT NOW()");
+  console.log("Baza povezana, vreme baze:", now.rows[0].now);
+
+  const applied = await runMigrations();
+  if (applied.length > 0) console.log("Primenjene migracije:", applied.map((m) => m.name).join(", "));
+
+  const PORT = process.env.PORT || 5000;
+
+  await new Promise((resolve) => app.listen(PORT, resolve));
+  console.log(`Server pokrenut na portu ${PORT}`);
+
+  // Svakog minuta: novi termini iz serija, pa podsetnici pred termin
+  const runScheduled = async () => {
+    try {
+      await generateNextOccurrences();
+      await sendDueReminders();
+    } catch (error) {
+      console.error("Greška u zakazanim poslovima:", error.message);
+    }
+  };
+
+  runScheduled();
+  setInterval(runScheduled, 60 * 1000);
+};
+
 // Server se pokreće samo kad se app.js pokrene direktno (npm start),
 // a ne kad ga testovi učitaju
 if (require.main === module) {
-  const PORT = process.env.PORT || 5000;
-
-  pool.query("SELECT NOW()", (err, res) => {
-    if (err) {
-      console.log("Greška pri povezivanju sa bazom:", err.message);
-    } else {
-      console.log("Baza povezana!");
-      console.log("Vreme baze:", res.rows[0].now);
-      runMigrations()
-        .then(() => {
-          // Svakog minuta: novi termini iz serija, pa podsetnici pred termin
-          const runScheduled = async () => {
-            try {
-              await generateNextOccurrences();
-              await sendDueReminders();
-            } catch (error) {
-              console.log("Greška u zakazanim poslovima:", error.message);
-            }
-          };
-
-          runScheduled();
-          setInterval(runScheduled, 60 * 1000);
-        })
-        .catch((error) =>
-          console.log("Greška pri migraciji baze:", error.message)
-        );
-    }
-  });
-
-  app.listen(PORT, () => {
-    console.log(`Server pokrenut na portu ${PORT}`);
+  start().catch((error) => {
+    console.error("Server nije pokrenut:", error.message || error.code || String(error));
+    process.exit(1);
   });
 }
 

@@ -33,6 +33,7 @@ const HERO_SLIDES = [
     get play() { return i18n.t("home.playBasketball"); },
     get tagline() { return i18n.t("home.3On3BasketballOr"); },
     get cta() { return i18n.t("home.findABasketballGame"); },
+    get intro() { return i18n.t("home.basketballIntro"); },
     accent: "text-amber-300",
     Background: BasketballCourt,
   },
@@ -42,6 +43,7 @@ const HERO_SLIDES = [
     get play() { return i18n.t("home.playTennis"); },
     get tagline() { return i18n.t("home.tennisTagline"); },
     get cta() { return i18n.t("home.findATennisGame"); },
+    get intro() { return i18n.t("home.tennisIntro"); },
     accent: "text-lime-300",
     Background: TennisCourt,
   },
@@ -60,6 +62,7 @@ const HERO_SLIDES = [
     get headline() { return i18n.t("home.goHiking"); },
     get tagline() { return i18n.t("home.hikingTagline"); },
     get cta() { return i18n.t("home.findAHike"); },
+    get intro() { return i18n.t("home.hikingIntro"); },
     accent: "text-sky-200",
     Background: MountainTrail,
   },
@@ -286,7 +289,7 @@ function Home() {
             </h1>
 
             <p className="text-lg text-white/85 max-w-xl mt-6">
-              {t("home.noMoreGroupChatsJust")}
+              {slide.intro ?? t("home.noMoreGroupChatsJust")}
             </p>
 
             <div className="flex flex-wrap gap-3 mt-8">

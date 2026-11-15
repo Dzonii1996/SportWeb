@@ -321,6 +321,9 @@
     "scheduleAGame": "Schedule a game.",
     "play": "Play {{play}}.",
     "noMoreGroupChatsJust": "No more group chats just to get ten people together. Create a game, share the link and let the team sign up on their own.",
+    "basketballIntro": "No more group chats just to get six people together for a pickup game. Create a game, share the link and let the team sign up on their own.",
+    "tennisIntro": "No more group chats just to find a tennis partner. Create a game, share the link and let your opponent sign up on their own.",
+    "hikingIntro": "No more group chats just to plan a hike. Create a hike, share the link and let your friends sign up on their own.",
     "createAnAccount": "Create an account",
     "nextGame": "Next game · {{emoji}} {{sport}}",
     "noGamesScheduledAtThe": "No games scheduled at the moment.",
@@ -781,5 +784,23 @@
     "next": "Next",
     "fromTournament": "Tournament: {{name}}",
     "fromMatch": "Game: {{place}}"
+  },
+  "teamRoster": {
+    "number": "No.",
+    "jerseyNumber": "Jersey number",
+    "nameAndSurname": "Full name",
+    "grade": "Class",
+    "add": "Add",
+    "addPlayerWithoutAccount": "Add a player without an account (e.g. a student)",
+    "rosterFull": "The roster is full.",
+    "moreWithoutAccount_one": "{{count}} player without an account",
+    "moreWithoutAccount_other": "{{count}} players without an account"
+  },
+  "tournamentLogo": {
+    "logo": "Tournament logo",
+    "hint": "E.g. the host school's logo. Shown in the header and above the bracket.",
+    "add": "Add logo",
+    "change": "Change",
+    "removeConfirm": "Remove the tournament logo?"
   }
 }

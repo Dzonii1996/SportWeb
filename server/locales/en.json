@@ -279,7 +279,16 @@
     "invalidInterval": "The interval between games isn't valid.",
     "noGamesInThisRound": "There are no games to schedule in this round.",
     "roundDoesntFitInDay": "All the round's games don't fit into that day. Pick an earlier start or a shorter interval.",
-    "roundScheduled": "Games scheduled in the round: {n}."
+    "roundScheduled": "Games scheduled in the round: {n}.",
+    "memberNameLength": "The player's name must be between 2 and 60 characters.",
+    "jerseyNumberRange": "The jersey number must be between 0 and 99.",
+    "gradeTooLong": "The class can have at most 20 characters.",
+    "rosterLocked": "The team roster can no longer be changed.",
+    "memberNotFound": "That player isn't on the team.",
+    "memberAdded": "{name} was added to the team.",
+    "memberUpdated": "The player's details were saved.",
+    "logoSaved": "The tournament logo was saved.",
+    "logoRemoved": "The tournament logo was removed."
   },
   "urgent": {
     "alreadySent": "An urgent call for this game has already been sent.",

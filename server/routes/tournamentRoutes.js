@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 
 const { protect, optionalAuth } = require("../middleware/authMiddleware");
+const { uploadSingle } = require("../middleware/upload");
+const logo = require("../controllers/tournamentLogoController");
 const {
   createTournament,
   updateTournament,
@@ -11,6 +13,9 @@ const {
   getInvite,
   joinTeam,
   removePlayer,
+  addMember,
+  updateMember,
+  removeMember,
   withdrawTeam,
   approveTeam,
   rejectTeam,
@@ -33,6 +38,8 @@ router.get("/:id", optionalAuth, getTournament);
 router.put("/:id", protect, updateTournament);
 router.post("/:id/start", protect, startTournament);
 router.post("/:id/cancel", protect, cancelTournament);
+router.post("/:id/logo", protect, uploadSingle("logo"), logo.setLogo);
+router.delete("/:id/logo", protect, logo.removeLogo);
 
 router.post("/:id/teams", protect, registerTeam);
 router.delete("/:id/teams/:teamId", protect, withdrawTeam);
@@ -40,6 +47,11 @@ router.post("/:id/teams/:teamId/approve", protect, approveTeam);
 router.post("/:id/teams/:teamId/reject", protect, rejectTeam);
 router.put("/:id/teams/:teamId/paid", protect, setTeamPaid);
 router.delete("/:id/teams/:teamId/players/:playerId", protect, removePlayer);
+
+// Igrači bez naloga (upisuje ih kapiten ili organizator)
+router.post("/:id/teams/:teamId/members", protect, addMember);
+router.put("/:id/teams/:teamId/members/:memberId", protect, updateMember);
+router.delete("/:id/teams/:teamId/members/:memberId", protect, removeMember);
 
 router.put("/:id/games/:gameId/result", protect, saveResult);
 router.put("/:id/games/:gameId/schedule", protect, scheduleGame);

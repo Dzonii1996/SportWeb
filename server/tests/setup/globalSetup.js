@@ -4,14 +4,8 @@ const { Client } = require("pg");
 module.exports = async () => {
   require("./env");
 
-  const config = {
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT,
-  };
-
-  const admin = new Client({ ...config, database: "postgres" });
+  const { connectionConfig } = require("../../database/config");
+  const admin = new Client(connectionConfig("postgres"));
   await admin.connect();
 
   const exists = await admin.query(
