@@ -302,6 +302,11 @@
     "backToSignIn": "Back to sign in"
   },
   "home": {
+    "announcement": "Announcement",
+    "tournamentRegistrationOpen": "Team registration is open",
+    "tournamentInProgress": "The tournament is under way",
+    "registerYourTeam": "Register your team",
+    "followTheTournament": "Follow the tournament",
     "smallSidedFootballFutsalOr": "Small-sided football, futsal or a full pitch in your city",
     "findAFootballGame": "Find a football game",
     "3On3BasketballOr": "3-on-3 basketball or a full team in your city",

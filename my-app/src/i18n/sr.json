@@ -305,6 +305,11 @@
     "backToSignIn": "Nazad na prijavu"
   },
   "home": {
+    "announcement": "Obaveštenje",
+    "tournamentRegistrationOpen": "Prijave ekipa su otvorene",
+    "tournamentInProgress": "Turnir je u toku",
+    "registerYourTeam": "Prijavi ekipu",
+    "followTheTournament": "Prati turnir",
     "smallSidedFootballFutsalOr": "Mali fudbal, futsal i veliki teren u tvom gradu",
     "findAFootballGame": "Pronađi fudbalski termin",
     "3On3BasketballOr": "Basket 3 na 3 ili puna ekipa u tvom gradu",

@@ -15,6 +15,7 @@ import { FootballPitch, BasketballCourt, TennisCourt, VolleyballCourt, MountainT
 import { useTranslation } from "react-i18next";
 import i18n, { locale, sportLabel } from "../i18n";
 import { sportEmoji } from "../utils/sports";
+import TournamentAnnouncement from "../components/TournamentAnnouncement";
 
 // Slajdovi u hero delu: pozadina, tekst i dugme za svaki sport
 const HERO_SLIDES = [
@@ -359,6 +360,9 @@ function Home() {
           ))}
         </div>
       </section>
+
+      {/* Obaveštenje o turnirima (otvorene prijave ili u toku) */}
+      <TournamentAnnouncement />
 
       {/* Uskoro */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16">
