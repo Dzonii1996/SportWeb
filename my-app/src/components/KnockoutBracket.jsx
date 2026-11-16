@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Trophy } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { isBye, roundLabel } from "../utils/tournaments";
+import { formatDate, isBye, roundLabel } from "../utils/tournaments";
 import { LogoBadge } from "./TournamentLogo";
 
 // Kostur kupa kao na velikim takmičenjima: polovina ekipa ide sleva, polovina zdesna,
@@ -14,8 +14,17 @@ const FINAL_H = 76;
 const SLOT = 84;
 const LABEL_H = 30;
 const MIN_HEIGHT = 220;
+// Prostor ispod poslednje utakmice, da stane njen datum
+const DATE_SPACE = 20;
 
 const columnX = (column) => column * (CARD_W + GAP);
+
+// "Pet, 13. 11. 2026." (veliko početno slovo i kad ga CSS ne bi uhvatio)
+const gameDate = (date) => {
+  const text = formatDate(date);
+
+  return text.charAt(0).toUpperCase() + text.slice(1);
+};
 
 function Team({ name, score, penalties, winner, decided, bye }) {
   const { t } = useTranslation();
@@ -188,7 +197,7 @@ function KnockoutBracket({ rounds, winnerName, logo = null, title = null }) {
         </div>
 
         <div ref={scroller} className="mt-4 -mx-5 sm:-mx-6 px-5 sm:px-6 overflow-x-auto pb-2">
-          <div className="relative mx-auto" style={{ width, height: LABEL_H + height + 8 }}>
+          <div className="relative mx-auto" style={{ width, height: LABEL_H + height + DATE_SPACE }}>
             {labels.map((label, i) =>
               label.final ? null : (
                 <span
@@ -201,7 +210,7 @@ function KnockoutBracket({ rounds, winnerName, logo = null, title = null }) {
               )
             )}
 
-            <svg className="absolute inset-0 pointer-events-none" width={width} height={LABEL_H + height + 8} aria-hidden="true">
+            <svg className="absolute inset-0 pointer-events-none" width={width} height={LABEL_H + height + DATE_SPACE} aria-hidden="true">
               {lines.map((line) => (
                 <path
                   key={line.key}
@@ -229,6 +238,19 @@ function KnockoutBracket({ rounds, winnerName, logo = null, title = null }) {
             {cards.map(({ game, final, x, y, h }) => (
               <GameCard key={game.id} game={game} final={final} style={{ left: x, top: y, width: CARD_W, height: h }} />
             ))}
+
+            {/* Datum utakmice ispod kartice, kad je zakazana */}
+            {cards.map(({ game, final, x, y, h }) =>
+              game.game_date ? (
+                <span
+                  key={`date-${game.id}`}
+                  className={`absolute text-center text-[11px] font-medium ${final ? "text-amber-200/90" : "text-sky-100/70"}`}
+                  style={{ left: x, top: y + h + 3, width: CARD_W }}
+                >
+                  {gameDate(game.game_date)}
+                </span>
+              ) : null
+            )}
           </div>
         </div>
       </div>
