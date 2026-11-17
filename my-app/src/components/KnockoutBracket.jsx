@@ -1,11 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Trophy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { formatDate, isBye, roundLabel } from "../utils/tournaments";
 import { LogoBadge } from "./TournamentLogo";
 
 // Kostur kupa kao na velikim takmičenjima: polovina ekipa ide sleva, polovina zdesna,
-// a finale sa peharom je u sredini. Na užem ekranu se kostur pomera vodoravno.
+// a finale sa peharom je u sredini. Na telefonu se kolo bira gore, a utakmice idu jedna ispod druge.
 
 const CARD_W = 146;
 const GAP = 24;
@@ -90,6 +90,54 @@ function GameCard({ game, final, style }) {
         bye={bye}
       />
     </button>
+  );
+}
+
+// Kolo koje se prvo prikazuje na telefonu: prvo u kom ima neodigranih utakmica
+const currentRound = (rounds) =>
+  (rounds.find(({ games }) => games.some((g) => g.winner_team_id === null)) ?? rounds[rounds.length - 1]).round;
+
+// Kostur na telefonu: dugmad za kola, pa utakmice izabranog kola jedna ispod druge
+function MobileBracket({ rounds }) {
+  const total = rounds.length;
+  const [selected, setSelected] = useState(() => currentRound(rounds));
+  const { games } = rounds.find((r) => r.round === selected) ?? rounds[0];
+  const isFinal = selected === total;
+
+  return (
+    <div className="sm:hidden mt-4">
+      <div className="-mx-5 px-5 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+        {rounds.map(({ round }) => (
+          <button
+            key={round}
+            type="button"
+            onClick={(e) => {
+              setSelected(round);
+              e.currentTarget.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+            }}
+            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide transition ${
+              round === selected ? "bg-amber-300 text-gray-900" : "bg-white/10 text-sky-100 hover:bg-white/20"
+            }`}
+          >
+            {round === total && "🏆 "}
+            {roundLabel("knockout", round, total)}
+          </button>
+        ))}
+      </div>
+
+      <ul className="mt-4 space-y-3">
+        {games.map((game) => (
+          <li key={game.id}>
+            <GameCard game={game} final={isFinal} style={{ position: "relative", width: "100%", height: isFinal ? FINAL_H : CARD_H }} />
+            {game.game_date && (
+              <p className={`mt-1 text-center text-[11px] font-medium ${isFinal ? "text-amber-200/90" : "text-sky-100/70"}`}>
+                {gameDate(game.game_date)}
+              </p>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -196,7 +244,9 @@ function KnockoutBracket({ rounds, winnerName, logo = null, title = null }) {
           </div>
         </div>
 
-        <div ref={scroller} className="mt-4 -mx-5 sm:-mx-6 px-5 sm:px-6 overflow-x-auto pb-2">
+        <MobileBracket key={total} rounds={rounds} />
+
+        <div ref={scroller} className="hidden sm:block mt-4 -mx-5 sm:-mx-6 px-5 sm:px-6 overflow-x-auto pb-2">
           <div className="relative mx-auto" style={{ width, height: LABEL_H + height + DATE_SPACE }}>
             {labels.map((label, i) =>
               label.final ? null : (
