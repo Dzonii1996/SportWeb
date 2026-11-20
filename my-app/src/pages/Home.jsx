@@ -476,7 +476,7 @@ function Home() {
               <h2 className="text-2xl sm:text-3xl font-extrabold">
                 {t("home.readyForYourNextGame")}
               </h2>
-              <p className="text-gray-300 mt-2">
+              <p className="text-white/70 mt-2">
                 {t("home.signingUpTakesHalfA")}
               </p>
             </div>

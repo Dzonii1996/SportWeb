@@ -116,7 +116,7 @@ function MobileBracket({ rounds }) {
               e.currentTarget.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
             }}
             className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide transition ${
-              round === selected ? "bg-amber-300 text-gray-900" : "bg-white/10 text-sky-100 hover:bg-white/20"
+              round === selected ? "bg-amber-300 text-slate-900" : "bg-white/10 text-sky-100 hover:bg-white/20"
             }`}
           >
             {round === total && "🏆 "}

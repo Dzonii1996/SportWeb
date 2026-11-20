@@ -4,6 +4,7 @@ import { Menu, X, Plus, ChevronDown, User, CalendarCheck, CalendarClock, LogOut 
 import { logout } from "../utils/auth";
 import Logo from "../components/Logo";
 import LanguageSwitcher from "../components/LanguageSwitcher";
+import ThemeToggle from "../components/ThemeToggle";
 import NotificationBell from "../components/NotificationBell";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n";
@@ -134,6 +135,8 @@ useEffect(() => {
         {/* Desna strana */}
         <div className="flex items-center gap-2">
 
+          <ThemeToggle className="hidden lg:inline-flex" />
+
           <LanguageSwitcher className="hidden lg:inline-flex" />
 
           {user ? (
@@ -160,7 +163,7 @@ useEffect(() => {
                   <span className="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold">
                     {initial}
                   </span>
-                  <span className="hidden xl:inline font-medium text-gray-800 max-w-[8rem] truncate">
+                  <span className="hidden 2xl:inline font-medium text-gray-800 max-w-[8rem] truncate">
                     {user.name}
                   </span>
                   <ChevronDown size={16} className="text-gray-500" />
@@ -243,6 +246,11 @@ useEffect(() => {
           <div className="flex items-center justify-between px-4 py-2">
             <span className="font-medium text-gray-700">{t("nav.language")}</span>
             <LanguageSwitcher />
+          </div>
+
+          <div className="flex items-center justify-between px-4 py-2">
+            <span className="font-medium text-gray-700">{t("theme.theme")}</span>
+            <ThemeToggle withLabel className="inline-flex" />
           </div>
 
           {user && (

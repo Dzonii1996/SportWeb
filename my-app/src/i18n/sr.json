@@ -818,5 +818,12 @@
     "add": "Dodaj logo",
     "change": "Promeni",
     "removeConfirm": "Ukloniti logo turnira?"
+  },
+  "theme": {
+    "theme": "Tema",
+    "light": "Svetlo",
+    "dark": "Tamno",
+    "switchToLight": "Uključi svetli režim",
+    "switchToDark": "Uključi tamni režim"
   }
 }

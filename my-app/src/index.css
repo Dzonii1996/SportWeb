@@ -2,6 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Tamni režim: boje klasa su u tailwind.config.js / theme-colors.js, ovde je ostatak */
+@layer base {
+  :root {
+    --page-bg: theme("colors.gray.100");
+  }
+
+  :root.dark {
+    color-scheme: dark;
+    --page-bg: #0d1117;
+  }
+
+  body {
+    background-color: var(--page-bg);
+  }
+
+  :root.dark body {
+    color: #f0f3f6;
+  }
+
+  /* Polja bez sopstvene pozadine (browser ih inače boji u belo) */
+  :where(:root.dark) :where(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]), select, textarea) {
+    background-color: #0d1117;
+  }
+
+  :root.dark ::placeholder {
+    color: #6e7781;
+  }
+}
+
+/* Pozadina stranice je tamnija od kartica */
+:root.dark .min-h-screen:is(.bg-gray-50, .bg-gray-100) {
+  background-color: var(--page-bg);
+}
+
+/* Mapa: tamne pločice i kontrole */
+:root.dark .leaflet-container {
+  background: #1b2129;
+}
+
+:root.dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9) saturate(0.6);
+}
+
+:root.dark .leaflet-bar a,
+:root.dark .leaflet-popup-content-wrapper,
+:root.dark .leaflet-popup-tip {
+  background: #161b22;
+  color: #f0f3f6;
+  border-color: #2d353f;
+}
+
+:root.dark .leaflet-control-attribution {
+  background: rgb(22 27 34 / 0.8);
+  color: #8f98a3;
+}
+
+:root.dark .leaflet-control-attribution a,
+:root.dark .leaflet-popup-content a {
+  color: #4ade80;
+}
+
 @layer components {
   /* Red dugmića: na telefonu se prevlači, na većem ekranu prelazi u novi red */
   .pill-row {

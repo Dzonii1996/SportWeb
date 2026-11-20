@@ -807,5 +807,12 @@
     "add": "Add logo",
     "change": "Change",
     "removeConfirm": "Remove the tournament logo?"
+  },
+  "theme": {
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "switchToLight": "Switch to light mode",
+    "switchToDark": "Switch to dark mode"
   }
 }
