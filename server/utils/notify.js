@@ -1,4 +1,6 @@
 const pool = require("../database/db");
+const { afterCommit } = require("../database/db");
+const { pushToUsers } = require("./push");
 const { isMessage, toData } = require("./i18n");
 
 // "Fudbal, Grabovac, 10. 11. 2026. u 18:00"
@@ -31,6 +33,9 @@ const notifyUsers = async (db, userIds, message, matchId = null, links = {}) => 
      SELECT unnest($1::int[]), $2, $3, $4, $5, $6, $7, $8`,
     [ids, stored.text, stored.key, stored.params, matchId, links.venueId ?? null, links.reservationId ?? null, links.tournamentId ?? null]
   );
+
+  // I na telefon, kad je notifikacija sigurno upisana (ne čeka se slanje)
+  afterCommit(db, () => pushToUsers(ids, message, matchId, links));
 };
 
 // Kreator, igrači i (po želji) lista čekanja, bez korisnika koji je izazvao događaj

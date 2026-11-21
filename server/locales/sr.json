@@ -122,6 +122,10 @@
     "allNotificationsAreRead": "Sve notifikacije su pročitane.",
     "notificationMarkedAsRead": "Notifikacija označena kao pročitana."
   },
+  "push": {
+    "invalidSubscription": "Neispravna pretplata za obaveštenja.",
+    "notConfigured": "Obaveštenja na telefonu trenutno nisu dostupna."
+  },
   "owner": {
     "aMessageCanHaveAt": "Poruka može imati najviše {n} znakova.",
     "ownershipRequestForTheVenue": "🔑 Zahtev za vlasništvo terena \"{venue}\". Čeka odobrenje.",

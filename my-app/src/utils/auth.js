@@ -1,6 +1,7 @@
 import axios from "axios";
 import i18n from "../i18n";
 import { API_URL } from "../config";
+import { disablePush } from "./push";
 
 // Header sa JWT tokenom za zaštićene rute na serveru
 export const authHeader = () => {
@@ -10,6 +11,9 @@ export const authHeader = () => {
 };
 
 export const logout = () => {
+  // Sledeći korisnik na ovom uređaju ne sme da dobija tuđa obaveštenja
+  disablePush(authHeader()).catch(() => {});
+
   localStorage.removeItem("token");
   localStorage.removeItem("user");
 
