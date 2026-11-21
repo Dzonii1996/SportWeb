@@ -122,6 +122,10 @@
     "allNotificationsAreRead": "All notifications are read.",
     "notificationMarkedAsRead": "Notification marked as read."
   },
+  "push": {
+    "invalidSubscription": "Invalid notification subscription.",
+    "notConfigured": "Phone notifications are not available right now."
+  },
   "owner": {
     "aMessageCanHaveAt": "A message can have at most {n} characters.",
     "ownershipRequestForTheVenue": "🔑 Ownership request for the venue \"{venue}\". Awaiting approval.",

@@ -825,5 +825,25 @@
     "dark": "Tamno",
     "switchToLight": "Uključi svetli režim",
     "switchToDark": "Uključi tamni režim"
+  },
+  "install": {
+    "title": "Instaliraj Sport KM",
+    "text": "Dodaj aplikaciju na početni ekran: otvara se brže, preko celog ekrana, i može da šalje obaveštenja.",
+    "install": "Instaliraj",
+    "iosBefore": "Na iPhone-u dodirni",
+    "iosAfter": "pa „Dodaj na početni ekran“.",
+    "share": "Podeli",
+    "close": "Zatvori"
+  },
+  "push": {
+    "title": "📱 Obaveštenja na telefonu",
+    "description": "Javićemo ti kad se neko prijavi na termin, stigne poruka u četu ili se promeni rezervacija.",
+    "enable": "Uključi obaveštenja",
+    "disable": "Isključi",
+    "on": "Obaveštenja su uključena na ovom uređaju.",
+    "installFirst": "Na iPhone-u obaveštenja rade samo u instaliranoj aplikaciji: dodirni Podeli, pa „Dodaj na početni ekran“, i otvori Sport KM sa početnog ekrana.",
+    "blocked": "Obaveštenja su blokirana. Dozvoli ih u podešavanjima browsera ili telefona.",
+    "unsupported": "Ovaj browser ne podržava obaveštenja.",
+    "couldNotEnable": "Obaveštenja nije moguće uključiti. Pokušaj ponovo kasnije."
   }
 }

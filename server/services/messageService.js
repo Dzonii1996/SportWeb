@@ -2,6 +2,7 @@ const { msg } = require("../utils/i18n");
 const pool = require("../database/db");
 const { HttpError } = require("../utils/http");
 const { describeMatch, matchAudience, storedMessage } = require("../utils/notify");
+const { pushToUsers } = require("../utils/push");
 
 // Da li je korisnik kreator ili prijavljeni igrač termina
 const isParticipant = async (match_id, user_id) => {
@@ -50,9 +51,10 @@ const notifyChat = async (match_id, sender_id) => {
 
   if (audience.length === 0) return;
 
-  const stored = storedMessage(msg(CHAT_KEY, { match: describeMatch(match.rows[0]) }));
+  const message = msg(CHAT_KEY, { match: describeMatch(match.rows[0]) });
+  const stored = storedMessage(message);
 
-  await pool.query(
+  const inserted = await pool.query(
     `INSERT INTO notifications(user_id, message, message_key, message_params, match_id)
      SELECT u, $2, $5, $6, $3
      FROM unnest($1::int[]) AS u
@@ -63,9 +65,13 @@ const notifyChat = async (match_id, sender_id) => {
        AND n.match_id = $3
        AND n.is_read = false
        AND (n.message_key = $5 OR n.message LIKE $4)
-     )`,
+     )
+     RETURNING user_id`,
     [audience, stored.text, match_id, `${LEGACY_CHAT_PREFIX}%`, stored.key, stored.params]
   );
+
+  // Push samo onima koji su sada dobili notifikaciju
+  pushToUsers(inserted.rows.map((r) => r.user_id), message, match_id);
 };
 
 const getMessages = async ({ id, userId, query }) => {

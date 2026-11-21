@@ -6,8 +6,10 @@ import './i18n';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { setupAuth } from './utils/auth';
+import { registerServiceWorker } from './serviceWorkerRegistration';
 
 setupAuth();
+registerServiceWorker();
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

@@ -8,11 +8,19 @@ const {
   markAsRead,
   markAllAsRead,
   markMatchAsRead,
+  getPushKey,
+  subscribePush,
+  unsubscribePush,
 } = require("../controllers/notificationController");
 const { protect } = require("../middleware/authMiddleware");
 
 // Sve rute za notifikacije traže prijavu
 router.use(protect);
+
+// Push obaveštenja na telefonu (pretplata ovog uređaja)
+router.get("/push/key", getPushKey);
+router.post("/push/subscriptions", subscribePush);
+router.delete("/push/subscriptions", unsubscribePush);
 
 router.get("/:user_id", getNotifications);
 

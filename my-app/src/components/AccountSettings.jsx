@@ -2,6 +2,7 @@ import { useState } from "react";
 import { API_URL } from "../config";
 import { authHeader } from "../utils/auth";
 import { useTranslation } from "react-i18next";
+import PushSettings from "./PushSettings";
 
 const input = "w-full border p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600";
 
@@ -115,6 +116,8 @@ function AccountSettings({ user, onNameChange }) {
 
         <Status status={nameStatus} />
       </form>
+
+      <PushSettings />
 
       <form onSubmit={savePassword} className="space-y-3">
         <label className="block font-semibold">{t("accountSettings.changePassword")}</label>

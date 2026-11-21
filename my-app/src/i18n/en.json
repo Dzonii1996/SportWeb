@@ -814,5 +814,25 @@
     "dark": "Dark",
     "switchToLight": "Switch to light mode",
     "switchToDark": "Switch to dark mode"
+  },
+  "install": {
+    "title": "Install Sport KM",
+    "text": "Add the app to your home screen: it opens faster, full screen, and can send notifications.",
+    "install": "Install",
+    "iosBefore": "On iPhone, tap",
+    "iosAfter": "then “Add to Home Screen”.",
+    "share": "Share",
+    "close": "Close"
+  },
+  "push": {
+    "title": "📱 Phone notifications",
+    "description": "We'll let you know when someone joins a game, a chat message arrives or a booking changes.",
+    "enable": "Turn on notifications",
+    "disable": "Turn off",
+    "on": "Notifications are on for this device.",
+    "installFirst": "On iPhone, notifications only work in the installed app: tap Share, then “Add to Home Screen”, and open Sport KM from the home screen.",
+    "blocked": "Notifications are blocked. Allow them in your browser or phone settings.",
+    "unsupported": "This browser does not support notifications.",
+    "couldNotEnable": "Notifications could not be turned on. Please try again later."
   }
 }

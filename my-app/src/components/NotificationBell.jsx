@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { API_URL } from "../config";
 import { authHeader } from "../utils/auth";
 import { useTranslation } from "react-i18next";
-import { locale } from "../i18n";
+import i18n, { locale } from "../i18n";
+import { syncPush } from "../utils/push";
 
 const POLL_INTERVAL = 30000;
 
@@ -92,8 +93,26 @@ function NotificationBell({ userId }) {
 
     const interval = setInterval(loadUnread, POLL_INTERVAL);
 
-    return () => clearInterval(interval);
+    // Push stigao dok je aplikacija otvorena (service-worker.js): broj odmah
+    const onPush = (e) => {
+      if (e.data?.type === "push") loadUnread();
+    };
+
+    navigator.serviceWorker?.addEventListener("message", onPush);
+
+    return () => {
+      clearInterval(interval);
+      navigator.serviceWorker?.removeEventListener("message", onPush);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  // Push obaveštenja ovog uređaja idu prijavljenom korisniku, na izabranom jeziku
+  useEffect(() => {
+    syncPush();
+    i18n.on("languageChanged", syncPush);
+
+    return () => i18n.off("languageChanged", syncPush);
   }, [userId]);
 
   // Klik van prozora ga zatvara
