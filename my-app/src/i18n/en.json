@@ -834,5 +834,18 @@
     "blocked": "Notifications are blocked. Allow them in your browser or phone settings.",
     "unsupported": "This browser does not support notifications.",
     "couldNotEnable": "Notifications could not be turned on. Please try again later."
+  },
+  "printSchedule": {
+    "print": "Print schedule",
+    "schedule": "Match schedule",
+    "played": "{{played}} of {{total}} matches played",
+    "date": "Date",
+    "time": "Time",
+    "home": "Home",
+    "result": "Result",
+    "away": "Away",
+    "winnerOf": "Winner: {{pair}}",
+    "winnerOfGame": "Winner: {{round}}, match {{n}}",
+    "asOf": "As of {{date}}"
   }
 }

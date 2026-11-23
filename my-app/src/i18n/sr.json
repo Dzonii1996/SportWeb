@@ -845,5 +845,18 @@
     "blocked": "Obaveštenja su blokirana. Dozvoli ih u podešavanjima browsera ili telefona.",
     "unsupported": "Ovaj browser ne podržava obaveštenja.",
     "couldNotEnable": "Obaveštenja nije moguće uključiti. Pokušaj ponovo kasnije."
+  },
+  "printSchedule": {
+    "print": "Štampaj raspored",
+    "schedule": "Raspored utakmica",
+    "played": "Odigrano {{played}} od {{total}} utakmica",
+    "date": "Datum",
+    "time": "Vreme",
+    "home": "Domaćin",
+    "result": "Rezultat",
+    "away": "Gost",
+    "winnerOf": "Pobednik: {{pair}}",
+    "winnerOfGame": "Pobednik: {{round}}, utakmica {{n}}",
+    "asOf": "Stanje na dan {{date}}"
   }
 }
