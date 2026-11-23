@@ -5,10 +5,11 @@ import { API_URL } from "../config";
 import { authHeader } from "../utils/auth";
 import { photoUrl } from "./PhotoGallery";
 
-// Logo na beloj podlozi, da se vidi i na tamnoj i na obojenoj pozadini
+// Logo na beloj podlozi, da se vidi i na tamnoj i na obojenoj pozadini.
+// Bela je stalna (#ffffff, ne bg-white): logo izgleda isto i u tamnom režimu.
 export function LogoBadge({ path, alt = "", className = "w-14 h-14" }) {
   return (
-    <span className={`${className} shrink-0 rounded-xl bg-white p-1 flex items-center justify-center shadow-sm`}>
+    <span className={`${className} shrink-0 rounded-xl bg-[#ffffff] p-1 flex items-center justify-center shadow-sm`}>
       <img src={photoUrl(path)} alt={alt} className="max-w-full max-h-full object-contain" />
     </span>
   );
