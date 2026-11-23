@@ -24,6 +24,7 @@ import i18n, { sportLabel } from "../i18n";
 import { sportColors } from "../utils/sports";
 import TeamRoster, { memberLabel } from "../components/TeamRoster";
 import TournamentLogo, { LogoBadge } from "../components/TournamentLogo";
+import PrintSchedule from "../components/PrintSchedule";
 
 // Ceo sastav: igrači sa nalogom i upisani igrači bez naloga
 const rosterSize = (team) => team.players.length + (team.members_count ?? team.members?.length ?? 0);
@@ -706,7 +707,10 @@ function TournamentDetails() {
         {/* Raspored */}
         {rounds.length > 0 && (
           <div className={`${card} space-y-5`}>
-            <h2 className="text-2xl font-bold">{tr("tournamentDetails.scheduleAndResults")}</h2>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-2xl font-bold">{tr("tournamentDetails.scheduleAndResults")}</h2>
+              <PrintSchedule tournament={t} games={games} />
+            </div>
 
             {rounds.map(({ round, games: list }) => (
               <div key={round} className="space-y-2">
